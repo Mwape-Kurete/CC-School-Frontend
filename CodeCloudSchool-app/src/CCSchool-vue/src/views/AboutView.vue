@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import CardComp from '@/components/CardComp.vue';
+import AccordionCard from '@/components/AccordionCard.vue';
 
 </script>
 
@@ -14,7 +15,12 @@ import CardComp from '@/components/CardComp.vue';
       announcementBody="Lorem Ipsum Dolor Sit Amet, Consectetur Adipiscing Elit..."
       announcementDate="2 Apr 2025, 11:36" />
     
-
+    <AccordionCard 
+      header="Resources"
+      :items="[
+        { title: 'STUDY GUIDE 2025' },
+        { title: 'SEMESTER OVERVIEW'}
+      ]"/>
 
   </div>
 </template>
