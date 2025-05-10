@@ -8,7 +8,6 @@ import LoginSignUpForm from '@/components/LoginSignUpForm.vue';
   <div class="help-view">
     <h1 class="text-3xl font-bold mb-4">This is the help</h1>
     <!-- Add more dashboard content here -->
-     <LoginSignUpForm />
   </div>
 </template>
 
