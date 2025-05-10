@@ -6,10 +6,11 @@
       <!-- Company logo image -->
       <img 
         :src="isCollapsed ? '@/assets/logo-short.png' : '@/assets/logo.png'"
-        :class="{ 'collapsed-logo': isCollapsed }"
-        src="@/assets/logo.png" 
         alt="Cloud & Code Academy Logo"
-        class="w-[260px] h-[56px]"
+        :class="{
+          'w-[260px] h-[56px]': !isCollapsed,
+          'w-[56px] h-[39px]': isCollapsed
+        }"
       >
     </div>
 
