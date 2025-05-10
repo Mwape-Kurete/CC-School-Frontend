@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import LoginSignUpForm from '@/components/LoginSignUpForm.vue';
 
 // You can add component logic here later
 </script>
