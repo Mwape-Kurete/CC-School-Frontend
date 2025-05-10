@@ -11,7 +11,7 @@
   >
     <span v-if="loading" class="c-button__loader" />
     <template v-else-if="icon">
-      <span class="k-button__icon">
+      <span class="c-button__icon">
         <component :is="icon" />
       </span>
       <span class="c-button__droplet" />
