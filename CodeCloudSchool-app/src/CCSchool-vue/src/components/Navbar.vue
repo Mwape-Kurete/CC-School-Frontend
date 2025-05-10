@@ -3,9 +3,8 @@
   <div class="navbar bg-[#D0DFCC] shadow-sm">
     <!-- Logo section at the top of the sidebar -->
     <div class="logo-section flex items-center justify-center px-6 py-4">
-      <!-- Company logo image -->
       <img 
-        :src="isCollapsed ? '@/assets/logo-short.png' : '@/assets/logo.png'"
+        :src="isCollapsed ? '@/assets/logoshort.png' : '@/assets/logo.png'"
         alt="Cloud & Code Academy Logo"
         :class="{
           'w-[260px] h-[56px]': !isCollapsed,
@@ -17,25 +16,60 @@
     <!-- Navigation menu links section -->
     <div class="nav-links py-4">
       <!-- Loop through each navigation item -->
-      <RouterLink
-        v-for="item in navItems" 
-        :key="item.label"
-        :to="item.route"
-        active-class="active-nav-item"
-      >
-        <!-- Individual navigation item container -->
-        <div
-          class="nav-item pl-6 pr-3 py-3 flex items-center transition-colors mx-4 hover:bg-white/50 hover:text-gray-700"
+      <div v-for="item in navItems" :key="item.label">
+        <!-- Main nav item -->
+        <RouterLink
+          :to="item.route"
+          active-class="active-nav-item"
+          @click="handleNavClick(item)"
         >
-          <!-- Navigation icon -->
-          <component :is="item.icon" class="h-5  mr-3" />
-          <!-- Navigation text label -->
-          <span class="font-medium">{{ item.label }}</span>
+          <div
+            class="nav-item pl-6 pr-3 py-3 flex items-center transition-colors mx-4 hover:bg-white/50 hover:text-gray-700"
+          >
+            <component :is="item.icon" class="h-5 mr-3" />
+            <span class="font-medium">{{ item.label }}</span>
+          </div>
+        </RouterLink>
+
+        <!-- Nested Course Navigation -->
+        <div 
+          v-if="item.label === 'Courses' && showCourseNav && !isCollapsed"
+          class="course-nav ml-8"
+        >
+          <!-- Course Selection Level -->
+          <div v-if="!selectedCourse" class="space-y-1">
+            <div 
+              v-for="course in courses" 
+              :key="course"
+              @click.stop="selectCourse(course)"
+              class="course-nav-item"
+            >
+              {{ course }}
+            </div>
+          </div>
+
+          <!-- Course Pages Level -->
+          <div v-else class="space-y-1">
+            <div 
+              class="course-nav-item font-semibold"
+              @click.stop="selectedCourse = null"
+            >
+              ← {{ selectedCourse }}
+            </div>
+            <div 
+              v-for="page in coursePages" 
+              :key="page"
+              class="course-nav-item"
+            >
+              {{ page }}
+            </div>
+          </div>
         </div>
-      </RouterLink>
+      </div>
     </div>
   </div>
 </template>
+
 
 <script setup>
 // Import Vue Router functionality
@@ -50,7 +84,8 @@ import {
   History, 
   User, 
   Settings, 
-  HelpCircle 
+  HelpCircle,
+  ChevronsLeft
 } from 'lucide-vue-next';
 
 // Array containing all navigation items with their labels, icons and routes
@@ -73,6 +108,19 @@ const selectedCourse = ref(null);
 // Course data
 const courses = ref(['CS 101', 'AI 210', 'OOP 101', 'CSP 210']);
 const coursePages = ref(['Home', 'Announcements', 'Modules', 'Assignments', 'Attendance', 'Grades']);
+
+const handleNavClick = (item) => {
+  if (item.label === 'Courses') {
+    showCourseNav.value = !showCourseNav.value;
+    selectedCourse.value = null;
+  } else {
+    showCourseNav.value = false;
+  }
+};
+
+const selectCourse = (course) => {
+  selectedCourse.value = course;
+};
 </script>
 
 <style scoped>
@@ -116,5 +164,22 @@ margin: -6px;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   border-radius: 10px;
   transform: translateX(-4px);
+}
+
+.course-nav {
+  border-left: 2px solid rgba(0, 0, 0, 0.1);
+  margin-top: 4px;
+}
+
+.course-nav-item {
+  padding: 8px 12px;
+  margin-left: -12px;
+  color: #212121;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.course-nav-item:hover {
+  background-color: rgba(236, 236, 236, 0.831);
 }
 </style>
