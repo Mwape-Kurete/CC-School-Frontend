@@ -6,6 +6,9 @@ defineProps({
         default: 'module', // or 'announcement'
     },
 
+    // prop for image
+    moduleImg: String,
+
     // Props for module card
     moduleTitleLine1: String,
     moduleTitleLine2: String,
@@ -23,29 +26,36 @@ defineProps({
 
 
 <template>
-    <div class="card-container">
+    <div class="card-container" :class="{
+        'module-card': cardType === 'module',
+        'announcement-card': cardType === 'announcement'
+    }">
         <!-- MODULE CARD -->
         <template v-if="cardType === 'module'">
             <!-- Left Section -->
-            <div class="left-section">
+            <div class="left-section"
+            :style="moduleImg ? { backgroundImage: `url('${moduleImg}')`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
                 <div class="course-title">
                     <div>{{ moduleTitleLine1 }}</div>
                     <div>{{ moduleTitleLine2 }}</div>
                 </div>
             </div>
 
-            <!-- Right Section -->
-            <div class="right-section">
-                <div class="event-label">{{ moduleEventLabel }}</div>
-                <div class="course-code">{{ moduleCode }}</div>
-                <div class="class-id">{{ moduleClassId }}</div>
+            <!-- Right Section as flex row -->
+            <div class="right-section-row">
+                <div class="details">
+                    <div class="event-label">{{ moduleEventLabel }}</div>
+                    <div class="course-code">{{ moduleCode }}</div>
+                    <div class="class-id">Class: {{ moduleClassId }}</div>
+                </div>
                 <Button :label="moduleTime" class="time-button p-button-rounded p-button-text" />
             </div>
         </template>
 
         <!-- ANNOUNCEMENT CARD -->
         <template v-else-if="cardType === 'announcement'">
-            <div class="announcement-avatar">
+            <div class="announcement-avatar"
+            :style="moduleImg ? { backgroundImage: `url('${moduleImg}')`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
                 <i class="pi pi-image" style="font-size: 1.5rem; color: #999;"></i>
             </div>
             <div class="announcement-content">
@@ -74,6 +84,12 @@ defineProps({
 
 }
 
+.card-container.announcement-card {
+    padding: 1rem !important;
+    display: flex;
+    align-items: center;
+}
+
 /* MODULE CARD STYLES */
 .left-section {
     background-color: #d1d1d1;
@@ -93,12 +109,14 @@ defineProps({
     line-height: 1.4;
 }
 
-.right-section {
-    padding: 1rem 0;
+.right-section-row {
     flex: 1;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 1rem;
+    min-width: 0;
 }
 
 .event-label {
@@ -118,7 +136,6 @@ defineProps({
 .class-id {
     font-size: 0.9rem;
     color: #666;
-    margin-bottom: 0.7rem;
 }
 
 /* ANNOUNCEMENT CARD STYLES */
@@ -138,6 +155,8 @@ defineProps({
     flex-direction: column;
     justify-content: center;
     min-width: 0;
+    margin-left: 1rem;
+    margin-right: 1rem;
 }
 
 .announcement-title {
