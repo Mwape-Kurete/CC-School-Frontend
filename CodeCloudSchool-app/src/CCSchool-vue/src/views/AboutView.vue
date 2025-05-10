@@ -14,23 +14,13 @@ import AccordionCard from '@/components/AccordionCard.vue';
     <CardComp cardType="announcement" announcementTitle="Computer Science Workshop with Jacob Anderson"
       announcementBody="Lorem Ipsum Dolor Sit Amet, Consectetur Adipiscing Elit..."
       announcementDate="2 Apr 2025, 11:36" />
-    
-    <AccordionCard 
-      header="Resources"
-      :items="[
-        { title: 'STUDY GUIDE 2025' },
-        { title: 'SEMESTER OVERVIEW'}
-      ]"/>
+
+    <AccordionCard header="Resources" :items="[
+      { title: 'STUDY GUIDE 2025' },
+      { title: 'SEMESTER OVERVIEW' }
+    ]" />
 
   </div>
 </template>
 
-<style>
-/* @media (min-width: 1024px) {
-  .about {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-  }
-} */
-</style>
+<style></style>
