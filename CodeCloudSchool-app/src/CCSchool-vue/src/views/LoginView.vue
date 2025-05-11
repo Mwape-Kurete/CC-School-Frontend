@@ -7,7 +7,8 @@ import LoginSignUpForm from '@/components/LoginSignUpForm.vue';
 <template>
     <LoginSignUpForm variant="login"/>
     <LoginSignUpForm variant="signup"/>
-    <CreateModuleAssignmentForm />
+    <CreateModuleAssignmentForm variant="assignment" />
+    <CreateModuleAssignmentForm variant="module" />
 </template>
 
 <style scoped>
