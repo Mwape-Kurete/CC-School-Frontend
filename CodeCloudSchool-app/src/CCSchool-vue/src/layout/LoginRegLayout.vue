@@ -7,7 +7,7 @@
     >
       <!-- Form Section -->
       <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-        <slot name="login-form"></slot>
+        <slot name="login-form"> </slot>
       </div>
 
       <!-- Carousel Section -->
@@ -56,7 +56,7 @@
 
       <!-- Form Section -->
       <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center order-2 md:order-1">
-        <slot name="registration-form"></slot>
+        <slot name="registration-form"> </slot>
       </div>
     </div>
   </main>

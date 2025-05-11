@@ -15,9 +15,7 @@
     <header class="layout-header border-b">
       <slot name="header">
         <!-- Dev-only fallback -->
-        <div v-if="isDev" class="p-4 text-center bg-yellow-50">
-          [TEAM: INSERT HEADER COMPONENT HERE]
-        </div>
+        <div v-if="isDev" class="p-4 text-center">[TEAM: INSERT HEADER COMPONENT HERE]</div>
       </slot>
     </header>
 
