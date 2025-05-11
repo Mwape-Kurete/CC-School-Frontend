@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CreateModuleAssignmentForm from '@/components/CreateModuleAssignmentForm.vue';
 import LoginSignUpForm from '@/components/LoginSignUpForm.vue';
 
 </script>
@@ -6,6 +7,7 @@ import LoginSignUpForm from '@/components/LoginSignUpForm.vue';
 <template>
     <LoginSignUpForm variant="login"/>
     <LoginSignUpForm variant="signup"/>
+    <CreateModuleAssignmentForm />
 </template>
 
 <style scoped>

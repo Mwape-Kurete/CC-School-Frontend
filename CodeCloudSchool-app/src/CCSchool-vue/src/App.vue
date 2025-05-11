@@ -6,8 +6,8 @@ import Navbar from './components/Navbar.vue';
 <template>
   <div class="app-container">
     <!-- Navbar (fixed left sidebar) -->
-    <!-- <Navbar /> -->
-    
+    <Navbar />
+
     <!-- Main content area (right side) -->
     <main class="main-content">
       <RouterView />
@@ -17,14 +17,16 @@ import Navbar from './components/Navbar.vue';
 
 <style>
 /* Base layout styles */
-/* .app-container {
+.app-container {
   display: flex;
   min-height: 100vh;
-} */
+  width: 85vw;
+}
 
 .main-content {
   flex: 1;
-  /* margin-left: 250px; Match navbar width */
+  margin-left: 250px;
+  /*Match navbar width*/
   padding: 2rem;
 }
 </style>
