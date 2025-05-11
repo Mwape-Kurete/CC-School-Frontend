@@ -13,6 +13,42 @@ const router = createRouter({
       name: 'courses',
       component: () => import('@/views/CoursesView.vue')
     },
+    // Nested course routes
+    {
+      path: '/courses/:courseId',
+      component: () => import('@/layouts/CourseLayout.vue'),
+      children: [
+        {
+          path: '',
+          redirect: { name: 'CourseHome' }
+        },
+        {
+          path: 'home',
+          name: 'CourseHome',
+          component: () => import('@/views/courses/CourseHome.vue')
+        },
+        {
+          path: 'announcements',
+          name: 'CourseAnnouncements',
+          component: () => import('@/views/courses/CourseAnnouncements.vue')
+        },
+        {
+          path: 'modules',
+          name: 'CourseModules',
+          component: () => import('@/views/courses/CourseModules.vue')
+        },
+        {
+          path: 'assignments',
+          name: 'CourseAssignments',
+          component: () => import('@/views/courses/CourseAssignments.vue')
+        },
+        {
+          path: 'grades',
+          name: 'CourseGrades',
+          component: () => import('@/views/courses/CourseGrades.vue')
+        }
+      ]
+    },
     {
       path: '/groups',
       name: 'groups',
@@ -23,11 +59,7 @@ const router = createRouter({
       name: 'timetable',
       component: () => import('@/views/TimetableView.vue')
     },
-    {
-      path: '/history',
-      name: 'history',
-      component: () => import('@/views/HistoryView.vue')
-    },
+
     {
       path: '/account',
       name: 'account',
@@ -37,11 +69,6 @@ const router = createRouter({
       path: '/settings',
       name: 'settings',
       component: () => import('@/views/SettingsView.vue')
-    },
-    {
-      path: '/help',
-      name: 'help',
-      component: () => import('@/views/HelpView.vue')
     }
   ]
 })

@@ -2,17 +2,15 @@
   <!-- Main navigation bar container -->
   <div class="navbar bg-[#D0DFCC] shadow-sm">
     <!-- Logo section at the top of the sidebar -->
-    <div class="logo-section flex items-center justify-center px-6 py-4">
+
+    <div class="logo-section flex items-center justify-center p-4">
+      <!-- Company logo image -->
       <img 
-        :src="isCollapsed ? '@/assets/logoshort.png' : '@/assets/logo.png'"
+        src="@/assets/logo.png" 
         alt="Cloud & Code Academy Logo"
-        :class="{
-          'w-[260px] h-[56px]': !isCollapsed,
-          'w-[56px] h-[39px]': isCollapsed
-        }"
+        class="w-[260px] h-auto max-h-[56px] object-contain"
       >
     </div>
-
     <!-- Navigation menu links section -->
     <div class="nav-links py-4">
       <!-- Loop through each navigation item -->
@@ -81,11 +79,9 @@ import {
   BookOpen, 
   Users, 
   Calendar, 
-  History, 
   User, 
   Settings, 
-  HelpCircle,
-  ChevronsLeft
+
 } from 'lucide-vue-next';
 
 // Array containing all navigation items with their labels, icons and routes
@@ -94,10 +90,9 @@ const navItems = [
   { label: 'Courses', icon: BookOpen, route: '/courses' },
   { label: 'Groups', icon: Users, route: '/groups' },
   { label: 'Timetable', icon: Calendar, route: '/timetable' },
-  { label: 'History', icon: History, route: '/history' },
   { label: 'User Account', icon: User, route: '/account' },
   { label: 'Settings', icon: Settings, route: '/settings' },
-  { label: 'Help', icon: HelpCircle, route: '/help' }
+
 ];
 
 // State management
@@ -107,7 +102,7 @@ const selectedCourse = ref(null);
 
 // Course data
 const courses = ref(['CS 101', 'AI 210', 'OOP 101', 'CSP 210']);
-const coursePages = ref(['Home', 'Announcements', 'Modules', 'Assignments', 'Attendance', 'Grades']);
+const coursePages = ref(['Home', 'Announcements', 'Modules', 'Assignments', 'Grades']);
 
 const handleNavClick = (item) => {
   if (item.label === 'Courses') {
@@ -139,12 +134,12 @@ const selectCourse = (course) => {
 
 /* Logo container styling */
 .logo-section {
-  padding: 0 24px;
+  min-height: 80px; /* Give enough space for the logo */
+  padding: 0 1rem; /* Adjust padding as needed */
 }
-
 /* Navigation item styling */
 .nav-item {
-margin: -6px;
+margin: -20px;
   position: relative;
   left: -12px;
   width: calc(100% - 16px);
