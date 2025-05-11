@@ -22,6 +22,13 @@ const router = createRouter({
       name: 'layout-sandbox',
       component: () => import('../views/LayoutSandbox.vue'),
     }
+    {
+      path: '/sandbox',
+      name: 'sandbox',
+      component: () => import('../views/Sandbox.vue'),
+    },
+
+
   ],
 })
 
