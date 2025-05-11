@@ -5,5 +5,5 @@
   </template>
   
   <script setup>
-  import SubmissionUpload from '@/components/SubmissionUpload.vue';
+  import SubmissionUpload from '@/components/submiss.vue';
   </script>
