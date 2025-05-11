@@ -9,6 +9,7 @@ import LoginSignUpForm from '@/components/LoginSignUpForm.vue';
     <LoginSignUpForm variant="signup"/>
     <CreateModuleAssignmentForm variant="assignment" />
     <CreateModuleAssignmentForm variant="module" />
+    <CreateModuleAssignmentForm variant="announcement" />
 </template>
 
 <style scoped>

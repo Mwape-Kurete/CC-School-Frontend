@@ -10,7 +10,7 @@ import FileUpload from 'primevue/fileupload'
 const props = defineProps({
   variant: {
     type: String,
-    default: 'assignment', // or 'module'
+    default: 'assignment', // or 'module' or ''
   },
 })
 
@@ -50,6 +50,12 @@ const moduleForm = ref({
   slides: null,
   resources: '',
   embedCode: '',
+})
+
+/* announcement Form State */
+const announceForm = ref({
+  title: '',
+  body:'',
 })
 </script>
 
@@ -141,6 +147,23 @@ const moduleForm = ref({
         <Button label="Save Module" class="flex-1 rounded-input button-clr" />
         <Button label="Add Another Page to This Module" icon="pi pi-plus" class="flex-1 rounded-input button-clr" />
       </div>
+    </template>
+
+    <!-- Announcement FORM -->
+    <template v-else-if="variant === 'announcement'">
+      <h2 class="text-lg font-semibold mb-4 title-underline">Create an Announcement</h2>
+
+      <div class="mb-4">
+        <label class="block mb-2">Announcement Title</label>
+        <InputText v-model="announceForm.title" class="w-full rounded-input" placeholder="Type Module title here" />
+      </div>
+
+      <div class="mb-4">
+        <label class="block mb-2">Announcement Body</label>
+        <Textarea v-model="announceForm.body" class="w-full rounded-input" rows="5" placeholder="Type Announcement Body here" />
+      </div>
+
+        <Button label="Send Announcement" class="w-full rounded-input save-btn button-clr" />
     </template>
   </div>
 </template>
