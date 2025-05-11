@@ -50,6 +50,19 @@
           <br />
           <CButton :icon="Maximize2" type="tertiary">Expand</CButton>
         </div>
+        <div class="dropdown-grid">
+          <DynamicDropdown :options="['Primary']" type="primary" />
+          <DynamicDropdown :options="['Secondary']" type="secondary" />
+          <DynamicDropdown :options="['Tertiary']" type="tertiary" />
+          <DynamicDropdown :options="['Danger']" type="danger" />
+          <DynamicDropdown :options="['Ghost']" type="ghost" />
+          <DynamicDropdown
+            v-model="selectedIndex"
+            :options="['Apple', 'Banana', 'Orange']"
+            simple-options
+            use-index-as-value
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -57,9 +70,19 @@
 
 <script>
 import CButton from '@/components/ui/CButton.vue'
+import DynamicDropdown from '@/components/ui/CDrops.vue'
 import { Eye, Pencil, Maximize2 } from 'lucide-vue-next'
 
 export default {
   components: { CButton },
 }
+const selectedIndex = ref(0)
 </script>
+
+<style>
+.dropdown-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+</style>

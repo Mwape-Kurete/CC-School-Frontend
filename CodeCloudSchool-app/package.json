@@ -10,6 +10,15 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "electron": "^35.1.4"
+    "electron": "^35.1.4",
+    "sass-embedded": "^1.88.0"
+  },
+  "dependencies": {
+    "@primeuix/themes": "^1.1.1",
+    "@tailwindcss/postcss": "^4.1.6",
+    "lucide-vue-next": "^0.509.0",
+    "postcss": "^8.5.3",
+    "primevue": "^4.3.4",
+    "tailwindcss": "^4.1.6"
   }
 }
