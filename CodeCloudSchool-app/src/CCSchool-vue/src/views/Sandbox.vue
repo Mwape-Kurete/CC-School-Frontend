@@ -41,27 +41,27 @@
           <CButton type="primary" size="lg">Large</CButton>
           <br />
         </div>
+        <!-- Dropdown Examples -->
         <div class="space-y-2">
-          <CButton :loading="isSubmitting" type="primary">Submit</CButton>
-          <br />
-          <CButton :icon="Eye" type="primary">View</CButton>
-          <br />
-          <CButton :icon="Pencil" type="secondary">Edit</CButton>
-          <br />
-          <CButton :icon="Maximize2" type="tertiary">Expand</CButton>
-        </div>
-        <div class="dropdown-grid">
-          <DynamicDropdown :options="['Primary']" type="primary" />
-          <DynamicDropdown :options="['Secondary']" type="secondary" />
-          <DynamicDropdown :options="['Tertiary']" type="tertiary" />
-          <DynamicDropdown :options="['Danger']" type="danger" />
-          <DynamicDropdown :options="['Ghost']" type="ghost" />
+          <p class="font-medium">Dropdown Examples</p>
           <DynamicDropdown
-            v-model="selectedIndex"
+            v-model="selectedFruit"
             :options="['Apple', 'Banana', 'Orange']"
             simple-options
-            use-index-as-value
+            placeholder="Choose a fruit"
+            type="primary"
           />
+          <p>Selected: {{ selectedFruit }}</p>
+
+          <DynamicDropdown
+            v-model="selectedItem"
+            :options="complexOptions"
+            :optionLabel="'name'"
+            :optionValue="'id'"
+            placeholder="Choose an item"
+            type="secondary"
+          />
+          <p>Selected ID: {{ selectedItem }}</p>
         </div>
       </div>
     </div>
@@ -76,7 +76,7 @@ import { Eye, Pencil, Maximize2 } from 'lucide-vue-next'
 export default {
   components: { CButton },
 }
-const selectedIndex = ref(0)
+// const selectedIndex = ref(0)
 </script>
 
 <style>
