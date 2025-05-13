@@ -44,7 +44,7 @@
         <!-- Dropdown Examples -->
         <div class="space-y-2">
           <p class="font-medium">Dropdown Examples</p>
-          <DynamicDropdown
+          <CDropdown
             v-model="selectedFruit"
             :options="['Apple', 'Banana', 'Orange']"
             simple-options
@@ -53,7 +53,7 @@
           />
           <p>Selected: {{ selectedFruit }}</p>
 
-          <DynamicDropdown
+          <CDropdown
             v-model="selectedItem"
             :options="complexOptions"
             :optionLabel="'name'"
@@ -63,20 +63,40 @@
           />
           <p>Selected ID: {{ selectedItem }}</p>
         </div>
+        <!--Icon Btn Examples-->
+        <div class="space-y-2">
+          <IconButton type="primary" size="md" @click="onButtonClick">
+            Click Me
+            <template #icon-slot>
+              <Pencil />
+            </template>
+          </IconButton>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue'
 import CButton from '@/components/ui/CButton.vue'
-import DynamicDropdown from '@/components/ui/CDrops.vue'
-import { Eye, Pencil, Maximize2 } from 'lucide-vue-next'
+import CDropdown from '@/components/ui/CDropdown.vue'
+import IconButton from '@/components/ui/CButton-icon.vue'
+import { Pencil } from 'lucide-vue-next'
 
-export default {
-  components: { CButton },
+// Reactive state
+const selectedFruit = ref(null)
+const selectedItem = ref(null)
+
+const complexOptions = ref([
+  { id: 1, name: 'Item One' },
+  { id: 2, name: 'Item Two' },
+  { id: 3, name: 'Item Three' },
+])
+
+const onButtonClick = () => {
+  console.log('Button clicked')
 }
-// const selectedIndex = ref(0)
 </script>
 
 <style>
