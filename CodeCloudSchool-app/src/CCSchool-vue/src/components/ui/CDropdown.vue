@@ -29,7 +29,7 @@ interface SelectOption {
   [key: string]: any
 }
 
-// ✅ Strongly typed props using defineProps generic
+//Strongly typed props using defineProps generic
 const props = defineProps<{
   modelValue: string | number | object | null
   options: SelectOption[]
@@ -44,13 +44,13 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:modelValue'])
 
-// ✅ Sync the v-model via computed setter/getter
+// Sync the v-model via computed setter/getter
 const internalValue = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value),
 })
 
-// ✅ Process options into label/value pairs (when simpleOptions is enabled)
+// Process options into label/value pairs (when simpleOptions is enabled)
 const processedOptions = computed(() => {
   if (props.simpleOptions) {
     return props.options.map((opt) => ({
@@ -61,7 +61,7 @@ const processedOptions = computed(() => {
   return props.options
 })
 
-// ✅ Set default values if not provided
+// Set default values if not provided
 const optionLabel = props.optionLabel || 'label'
 const optionValue = props.optionValue || 'value'
 const placeholder = props.placeholder || 'Select an option'
@@ -70,6 +70,6 @@ const size = props.size || 'md'
 const disabled = props.disabled || false
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 @use '../../assets/styles/components/dropdowns' as *;
 </style>
