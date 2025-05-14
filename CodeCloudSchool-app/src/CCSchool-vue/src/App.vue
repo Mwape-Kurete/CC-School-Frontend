@@ -27,7 +27,11 @@
               <i class="icon">☁️</i> Upload
             </button>
             <button @click="clearFiles" class="button danger" :disabled="!files.length">
+<<<<<<< Updated upstream
               <i class="icon">❌</i> Clear
+=======
+              <i class="icon">X </i> 
+>>>>>>> Stashed changes
             </button>
           </div>
           
@@ -57,7 +61,11 @@
 
           <!-- Empty State -->
           <div v-if="!files.length" class="empty-state">
+<<<<<<< Updated upstream
             <div class="empty-icon">☁️</div>
+=======
+            <div class="empty-icon"><img src="./assets/CC Blk logo.png" alt=""></div>
+>>>>>>> Stashed changes
             <p>Drag and drop files here or click to browse</p>
           </div>
         </div>
@@ -70,18 +78,31 @@
 export default {
   data() {
     return {
+<<<<<<< Updated upstream
       files: [],
       uploadProgress: 0,
       toast: {
         visible: false,
         message: '',
         severity: 'info'
+=======
+      files: [], // Stores all selected files
+      uploadProgress: 0, // Tracks upload percentage (0-100)
+      toast: {
+        visible: false,
+        message: '',
+        severity: 'info' // Can be 'info', 'success', 'error'
+>>>>>>> Stashed changes
       }
     }
   },
   computed: {
     totalSize() {
+<<<<<<< Updated upstream
       return this.files.reduce((sum, file) => sum + file.size, 0)
+=======
+      return this.files.reduce((sum, file) => sum + file.size, 0) // calculates total size of files in bytes 
+>>>>>>> Stashed changes
     }
   },
   methods: {
@@ -113,7 +134,11 @@ export default {
           if (this.uploadProgress >= 100) {
             clearInterval(interval)
             this.showToast('Files uploaded successfully!', 'success')
+<<<<<<< Updated upstream
             // In a real app, you would process the files here
+=======
+            // In a real app, we need to process the files here
+>>>>>>> Stashed changes
             console.log('Files to upload:', this.files)
           }
         }, 300)
@@ -141,6 +166,7 @@ export default {
 </script>
 
 <style scoped>
+<<<<<<< Updated upstream
 /* Base Styles */
 .upload-container {
   max-width: 800px;
@@ -148,6 +174,21 @@ export default {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+=======
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+
+/* Base Styles */ 
+.upload-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  font-family: "Quicksand", sans-serif;
+  font-optical-sizing: auto;
+  font-weight:300;
+  
+}
+
+
+>>>>>>> Stashed changes
 .card {
   background: white;
   border-radius: 6px;
@@ -168,11 +209,19 @@ export default {
 }
 
 .toast.info {
+<<<<<<< Updated upstream
   background: #3B82F6; /* blue */
 }
 
 .toast.success {
   background: #10B981; /* green */
+=======
+  background: #212121; /* blue */
+}
+
+.toast.success {
+  background: #D0DFCC; /* green */
+>>>>>>> Stashed changes
 }
 
 .toast.error {
@@ -197,6 +246,10 @@ export default {
 .button-group {
   display: flex;
   gap: 0.5rem;
+<<<<<<< Updated upstream
+=======
+  
+>>>>>>> Stashed changes
 }
 
 .button {
@@ -204,11 +257,21 @@ export default {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
+<<<<<<< Updated upstream
   border-radius: 20px;
   border: 1px solid #ddd;
   background: white;
   cursor: pointer;
   font-weight: 500;
+=======
+  border-radius: 50px;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+ font-family: "Quicksand", sans-serif;
+  font-optical-sizing: auto;
+  font-weight:300;
+>>>>>>> Stashed changes
   transition: all 0.2s;
 }
 
@@ -226,6 +289,7 @@ export default {
   color: #4B5563;
 }
 
+<<<<<<< Updated upstream
 .button.success {
   background: #10B981;
   color: white;
@@ -236,6 +300,33 @@ export default {
   background: #EF4444;
   color: white;
   border-color: #EF4444;
+=======
+.button.secondary:hover {
+  background-color: #212121;
+  color: white;
+}
+
+.button.success {
+  background: white;
+  color: #212121;
+  border-color: #D0DFCC;
+}
+
+.button.success:hover {
+  background-color: #D0DFCC;
+  color: #212121;
+}
+
+.button.danger {
+  background: white;
+  color: #212121;
+  border-color: #F0F1A5;
+}
+
+.button.danger:hover {
+  background-color: #F0F1A5;
+  color: #212121;
+>>>>>>> Stashed changes
 }
 
 .button.small {
@@ -260,7 +351,11 @@ export default {
 
 .progress-bar {
   height: 100%;
+<<<<<<< Updated upstream
   background: #3B82F6;
+=======
+  background: #D0DFCC;
+>>>>>>> Stashed changes
   border-radius: 4px;
   transition: width 0.3s;
 }
@@ -332,6 +427,7 @@ export default {
 }
 
 .badge.warning {
+<<<<<<< Updated upstream
   background: #FEF3C7;
   color: #92400E;
 }
@@ -364,4 +460,63 @@ export default {
     max-width: 100%;
   }
 }
+=======
+  border-color: #212121;
+  background: white;
+  color: #212121;
+}
+
+.badge.warning:hover{
+  background-color: #FEF3C7;
+  color: #212121;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  color: #6B7280;
+}
+
+.empty-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.empty-icon img {
+  width: 80px;        /* Default size */
+  height: auto;
+  max-width: 100%;
+}
+
+/* Adjust for different screen sizes */
+@media (min-width: 768px) {
+  .empty-icon img {
+    width: 100px;     /* Slightly larger on bigger screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .empty-icon img {
+    width: 60px;      /* Smaller on mobile */
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .upload-header {
+    flex-direction: column;
+  }
+  
+  .progress-container {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+>>>>>>> Stashed changes
 </style>
