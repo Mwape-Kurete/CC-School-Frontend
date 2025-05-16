@@ -2,37 +2,36 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* Font import */
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&family=Quicksand:wght@300..700&display=swap');
 
+
+/* Base layout setup */
+html,
+body,
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #f7f6fb;
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Josefin Sans', sans-serif;
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
+p {
+  font-family: 'Quicksand', sans-serif;
 }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+/* Optional utility to ensure any full-layout containers stretch */
+.full-height {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
