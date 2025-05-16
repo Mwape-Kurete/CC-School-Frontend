@@ -1,15 +1,37 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import Navbar from './components/Navbar.vue'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { computed, watchEffect, ref, defineAsyncComponent } from 'vue'
+
+//defining layout components async
+const layouts = {
+  TwoCol: defineAsyncComponent(() => import('@/layout/TheMainLayout.vue')),
+  ThreeCol: defineAsyncComponent(() => import('@/layout/ThreeColLayout.vue')),
+  LoginReg: defineAsyncComponent(() => import('@/layout/LoginRegLayout.vue')),
+}
+
+//fetching the current route
+const route = useRoute()
+
+//reactive layout component ref
+const layoutComponent = ref(layouts.TwoCol)
+
+//watching for route.meta.layout changes and updating layouyComponent
+
+watchEffect(() => {
+  const layoutName = (route.meta.layout as keyof typeof layouts) || 'TwoCol'
+  layoutComponent.value = layouts[layoutName] || layouts.TwoCol
+})
 </script>
 
 <template>
-  <div class="app-container">
-    <!-- Main content area (right side) -->
-    <main class="main-content">
-      <RouterView />
-    </main>
-  </div>
+  <component :is="layoutComponent">
+    <div class="app-container">
+      <!-- Main content area (right side) -->
+      <main class="main-content">
+        <RouterView />
+      </main>
+    </div>
+  </component>
 </template>
 
 <style>
