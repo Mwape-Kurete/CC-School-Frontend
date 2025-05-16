@@ -4,23 +4,21 @@ import ThreeColumnLayout from '@/layout/ThreeColLayout.vue'
 import AuthLayout from '@/layout/LoginRegLayout.vue'
 </script>
 
-<!-- <template>
+<template>
   <TheMainLayout>
     <div class="content">
       <h1>the page content would go here</h1>
     </div>
   </TheMainLayout>
-</template> -->
+</template>
 
-<template>
+<!-- <template>
   <ThreeColumnLayout>
-    <!-- This goes into (slot) -->
     <div>
       <h2>This is the main dashboard content</h2>
       <p>Welcome back, lecturer!</p>
     </div>
 
-    <!-- This goes into (slot with the name #aside) -->
     <template #aside>
       <div>
         <h3>Notifications</h3>
@@ -31,7 +29,7 @@ import AuthLayout from '@/layout/LoginRegLayout.vue'
       </div>
     </template>
   </ThreeColumnLayout>
-</template>
+</template> -->
 
 <!-- <template>
   <AuthLayout pageType="">

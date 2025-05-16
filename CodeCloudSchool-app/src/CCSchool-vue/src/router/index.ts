@@ -47,6 +47,11 @@ const router = createRouter({
       path: '/login',
       name: 'Login',
       component: () => import('@/views/LoginView.vue')
+    },
+    {
+      path: '/layout-sandbox',
+      name: 'layout-sandbox',
+      component: () => import('@/views/LayoutSandbox.vue')
     }
   ]
 })

@@ -1,30 +1,28 @@
 <script setup>
 import ThePageHeader from '@/components/ThePageHeader.vue'
+import Navbar from '@/components/Navbar.vue'
 </script>
 
 <template>
   <div class="three-column-layout">
     <!-- Sidebar -->
     <aside class="temp-sidenav">
-      <nav class="temp-sidebar">
-        <ul>
-          <li><a href="#">🏠 Dashboard</a></li>
-          <li><a href="#">📄 Reports</a></li>
-          <li><a href="#">👤 Profile</a></li>
-          <li><a href="#">⚙️ Settings</a></li>
-        </ul>
-      </nav>
+      <Navbar />
     </aside>
 
     <!-- Main Content -->
     <main class="main-content">
       <ThePageHeader />
-      <slot />
+      <div class="content-wrapper">
+        <slot />
+      </div>
     </main>
 
     <!-- Right Aside Slot -->
     <aside class="right-aside">
-      <slot name="aside" />
+      <div class="aside-wrapper">
+        <slot name="aside" />
+      </div>
     </aside>
   </div>
 </template>
@@ -32,7 +30,7 @@ import ThePageHeader from '@/components/ThePageHeader.vue'
 <style scoped lang="scss">
 .three-column-layout {
   display: grid;
-  grid-template-columns: 250px 1fr 300px;
+  grid-template-columns: 320px 1fr 300px;
   grid-template-areas: 'sidenav main aside';
   height: 100vh;
   background-color: #f7f6fb;
@@ -54,37 +52,11 @@ import ThePageHeader from '@/components/ThePageHeader.vue'
 /* Sidebar */
 .temp-sidenav {
   grid-area: sidenav;
-  background-color: #212121;
-  color: white;
   padding: 1.5rem 1rem;
-  border-radius: 0 30px 30px 0;
   height: 95%;
-  margin-top: 1.6rem;
+  width: 350px;
+  margin-right: 1.5rem;
   overflow-y: auto;
-}
-
-/* Sidebar styling */
-.temp-sidebar ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.temp-sidebar li {
-  margin-bottom: 1rem;
-}
-
-.temp-sidebar a {
-  color: white;
-  text-decoration: none;
-  display: block;
-  padding: 0.5rem 0;
-  transition: background-color 0.2s ease;
-}
-
-.temp-sidebar a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 0.25rem;
 }
 
 /* Main content */
@@ -92,10 +64,26 @@ import ThePageHeader from '@/components/ThePageHeader.vue'
   grid-area: main;
   margin: 1.5rem;
   background-color: white;
+  box-shadow:
+    rgba(14, 63, 126, 0.04) 0px 0px 0px 1px,
+    rgba(42, 51, 69, 0.04) 0px 1px 1px -0.5px,
+    rgba(42, 51, 70, 0.04) 0px 3px 3px -1.5px,
+    rgba(42, 51, 70, 0.04) 0px 6px 6px -3px,
+    rgba(14, 63, 126, 0.04) 0px 12px 12px -6px,
+    rgba(14, 63, 126, 0.04) 0px 24px 24px -12px;
   border-radius: 30px;
   padding: 1.5rem;
-  box-shadow: rgba(17, 17, 26, 0.1) 0px 0px 16px;
   overflow-y: auto;
+
+  .content-wrapper {
+    > * {
+      margin-bottom: 1rem;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
 }
 
 /* Right aside */
@@ -104,12 +92,28 @@ import ThePageHeader from '@/components/ThePageHeader.vue'
   margin: 1.5rem 1.5rem 1.5rem 0;
   padding: 1rem;
   background-color: #fff;
+  box-shadow:
+    rgba(14, 63, 126, 0.04) 0px 0px 0px 1px,
+    rgba(42, 51, 69, 0.04) 0px 1px 1px -0.5px,
+    rgba(42, 51, 70, 0.04) 0px 3px 3px -1.5px,
+    rgba(42, 51, 70, 0.04) 0px 6px 6px -3px,
+    rgba(14, 63, 126, 0.04) 0px 12px 12px -6px,
+    rgba(14, 63, 126, 0.04) 0px 24px 24px -12px;
   border-radius: 30px;
-  box-shadow: rgba(17, 17, 26, 0.1) 0px 0px 16px;
   overflow-y: auto;
 
+  .aside-wrapper {
+    > * {
+      margin-bottom: 1rem;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
   @media (max-width: 1024px) {
-    display: none; /* Hide on smaller screens */
+    display: none;
   }
 }
 </style>
