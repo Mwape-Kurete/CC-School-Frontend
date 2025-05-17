@@ -14,13 +14,11 @@ import AuthLayout from '@/layout/LoginRegLayout.vue'
 
 <!-- <template>
   <ThreeColumnLayout>
-    This goes into (slot)
     <div>
       <h2>This is the main dashboard content</h2>
       <p>Welcome back, lecturer!</p>
     </div>
 
-    This goes into (slot with the name #aside)
     <template #aside>
       <div>
         <h3>Notifications</h3>

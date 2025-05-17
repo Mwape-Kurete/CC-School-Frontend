@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory  } from 'vue-router'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -6,47 +6,67 @@ const router = createRouter({
     {
       path: '/',
       name: 'dashboard',
-      component: () => import('@/views/DashboardView.vue')
+      component: () => import('@/views/DashboardView.vue'),
+      meta: { layout: 'TwoCol' }
     },
     {
       path: '/courses',
       name: 'courses',
-      component: () => import('@/views/CoursesView.vue')
+      component: () => import('@/views/CoursesView.vue'),
+      meta: { layout: 'TwoCol' }
     },
     {
       path: '/groups',
       name: 'groups',
-      component: () => import('@/views/GroupsView.vue')
+      component: () => import('@/views/GroupsView.vue'),
+      meta: { layout: 'TwoCol' }
     },
     {
       path: '/timetable',
       name: 'timetable',
-      component: () => import('@/views/TimetableView.vue')
+      component: () => import('@/views/TimetableView.vue'),
+      meta: { layout: 'TwoCol' }
     },
     {
       path: '/history',
       name: 'history',
-      component: () => import('@/views/HistoryView.vue')
+      component: () => import('@/views/HistoryView.vue'),
+      meta: { layout: 'TwoCol' }
     },
     {
       path: '/account',
       name: 'account',
-      component: () => import('@/views/UserAccountView.vue')
+      component: () => import('@/views/UserAccountView.vue'),
+      meta: { layout: 'TwoCol' }
     },
     {
       path: '/settings',
       name: 'settings',
-      component: () => import('@/views/SettingsView.vue')
+      component: () => import('@/views/SettingsView.vue'),
+      meta: { layout: 'TwoCol' }
     },
     {
       path: '/help',
       name: 'help',
-      component: () => import('@/views/HelpView.vue')
+      component: () => import('@/views/HelpView.vue'),
+      meta: { layout: 'TwoCol' }
     },
     {
       path: '/login',
       name: 'Login',
-      component: () => import('@/views/LoginView.vue')
+      component: () => import('@/views/LoginView.vue'),
+      meta: { layout: 'LoginReg' }
+    },
+    {
+      path: '/lecturer-dash',
+      name: 'lecturer-dash',
+      component: () => import('@/views/LectureDashboardView.vue'),
+      meta: { layout: 'ThreeCol' }
+    },
+    {
+      path: '/layout-sandbox',
+      name: 'layout-sandbox',
+      component: () => import('@/views/LayoutSandbox.vue')
     }
   ]
 })
