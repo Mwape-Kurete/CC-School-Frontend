@@ -146,7 +146,7 @@ const selectCourse = (course) => {
 }
 /* Navigation item styling */
 .nav-item {
-  margin: -20px;
+  margin: 0.5rem;
   position: relative;
   left: -12px;
   width: calc(100% - 16px);
@@ -193,7 +193,7 @@ const selectCourse = (course) => {
 .active-course-item,
 .active-course-item:hover {
   background-color: white;
-  color: #1f2937;
+  color: #1f2937 !important;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   border-radius: 6px;
   font-weight: 500;
