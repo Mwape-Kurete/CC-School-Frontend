@@ -1,56 +1,72 @@
 <template>
-  <select
-    v-model="internalValue"
-    :disabled="disabled"
-    :class="[
-      'cc-dropdown',
-      `cc-dropdown--${type}`,
-      `cc-dropdown--${size}`,
-      { 'is-disabled': disabled },
-    ]"
-    v-bind="$attrs"
-  >
-    <!-- Optional placeholder as a disabled first option -->
-    <option :value="null" disabled>{{ placeholder }}</option>
+  <div class="cc-dropdown-wrapper" :class="{ open: isOpen }">
+    <!-- Native <select> dropdown with styling -->
+    <select
+      v-model="internalValue"
+      :disabled="disabled"
+      @focus="isOpen = true"
+      @blur="isOpen = false"
+      :class="[
+        'cc-dropdown',
+        `cc-dropdown--${type}`,
+        `cc-dropdown--${size}`,
+        { 'is-disabled': disabled },
+      ]"
+      v-bind="$attrs"
+    >
+      <!-- Optional placeholder -->
+      <option :value="null" disabled>{{ placeholder }}</option>
 
-    <!-- Loop through processed options -->
-    <option v-for="(option, index) in processedOptions" :key="index" :value="option?.[optionValue]">
-      <!-- Fallback to the whole option if label is missing -->
-      {{ option?.[optionLabel] ?? option }}
-    </option>
-  </select>
+      <!-- Dynamically generated options -->
+      <option
+        v-for="(option, index) in processedOptions"
+        :key="index"
+        :value="option?.[optionValue]"
+      >
+        {{ option?.[optionLabel] ?? option }}
+      </option>
+    </select>
+
+    <!-- Chevron icon that rotates when dropdown is open -->
+    <ChevronDown class="cc-chevron" />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { ChevronDown } from 'lucide-vue-next'
 
-// ✅ Define shape of each option object
+// Define option shape
 interface SelectOption {
   [key: string]: any
 }
 
-//Strongly typed props using defineProps generic
+// Props definition
 const props = defineProps<{
   modelValue: string | number | object | null
   options: SelectOption[]
-  optionLabel?: string // e.g., "label" for { label: "Apple", value: "apple" }
-  optionValue?: string // e.g., "value"
-  placeholder?: string // e.g., "Select an item"
+  optionLabel?: string
+  optionValue?: string
+  placeholder?: string
   type?: 'primary' | 'secondary' | 'tertiary' | 'danger' | 'ghost'
   size?: 'sm' | 'md' | 'lg'
   disabled?: boolean
-  simpleOptions?: boolean // allows simple array: ['Apple', 'Banana']
+  simpleOptions?: boolean
 }>()
 
+// Emit event to update v-model
 const emit = defineEmits(['update:modelValue'])
 
-// Sync the v-model via computed setter/getter
+// Track dropdown open state for animation
+const isOpen = ref(false)
+
+// v-model computed binding
 const internalValue = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value),
 })
 
-// Process options into label/value pairs (when simpleOptions is enabled)
+// Process options based on `simpleOptions` flag
 const processedOptions = computed(() => {
   if (props.simpleOptions) {
     return props.options.map((opt) => ({
@@ -61,7 +77,7 @@ const processedOptions = computed(() => {
   return props.options
 })
 
-// Set default values if not provided
+// Defaults
 const optionLabel = props.optionLabel || 'label'
 const optionValue = props.optionValue || 'value'
 const placeholder = props.placeholder || 'Select an option'
@@ -70,6 +86,36 @@ const size = props.size || 'md'
 const disabled = props.disabled || false
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @use '../../assets/styles/components/dropdowns' as *;
+
+.cc-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+
+  // Ensure the select looks like a custom dropdown
+  select.cc-dropdown {
+    appearance: none; // Hide native arrow
+    width: 100%;
+    padding-right: 2.5rem; // Make space for the chevron inside
+    box-sizing: border-box;
+  }
+
+  .cc-chevron {
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%) rotate(0deg);
+    pointer-events: none;
+    transition: transform 0.3s ease;
+    width: 1rem;
+    height: 1rem;
+    color: currentColor;
+  }
+
+  // 👇 Rotate when the dropdown is focused
+  &.open .cc-chevron {
+    transform: translateY(-50%) rotate(180deg);
+  }
+}
 </style>

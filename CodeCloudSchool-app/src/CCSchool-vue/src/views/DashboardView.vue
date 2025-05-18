@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // You can add component logic here later
+import CButton from '@/components/ui/CButton.vue'
 </script>
 
 <template>

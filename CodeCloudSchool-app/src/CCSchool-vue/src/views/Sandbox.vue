@@ -50,6 +50,7 @@
             simple-options
             placeholder="Choose a fruit"
             type="primary"
+            size="lg"
           />
           <p>Selected: {{ selectedFruit }}</p>
 
