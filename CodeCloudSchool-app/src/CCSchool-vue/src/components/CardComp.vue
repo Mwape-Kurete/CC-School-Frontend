@@ -21,6 +21,13 @@ defineProps({
     announcementTitle: String,
     announcementBody: String,
     announcementDate: String,
+
+    // Props for assignment card
+    assignmentTitle: String,
+    assignmentBody: String,
+    assignmentDate: String,
+
+
 })
 </script>
 
@@ -34,7 +41,7 @@ defineProps({
         <template v-if="cardType === 'module'">
             <!-- Left Section -->
             <div class="left-section"
-            :style="moduleImg ? { backgroundImage: `url('${moduleImg}')`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
+                :style="moduleImg ? { backgroundImage: `url('${moduleImg}')`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
                 <div class="course-title">
                     <div>{{ moduleTitleLine1 }}</div>
                     <div>{{ moduleTitleLine2 }}</div>
@@ -55,7 +62,7 @@ defineProps({
         <!-- ANNOUNCEMENT CARD -->
         <template v-else-if="cardType === 'announcement'">
             <div class="announcement-avatar"
-            :style="moduleImg ? { backgroundImage: `url('${moduleImg}')`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
+                :style="moduleImg ? { backgroundImage: `url('${moduleImg}')`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
                 <i class="pi pi-image" style="font-size: 1.5rem; color: #999;"></i>
             </div>
             <div class="announcement-content">
@@ -66,6 +73,20 @@ defineProps({
                 <Button :label="`Posted On: ${announcementDate}`" class="time-button p-button-rounded p-button-text" />
             </div>
         </template>
+
+        <template v-else>
+            <div class="announcement-avatar"
+                :style="moduleImg ? { backgroundImage: `url('${moduleImg}')`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
+                <!-- <i class="pi pi-image" style="font-size: 1.5rem; color: #999;"></i> -->
+            </div>
+            <div class="announcement-content">
+                <div class="announcement-title">{{ assignmentTitle }}</div>
+                <div class="announcement-body">{{ assignmentBody }}</div>
+            </div>
+            <div class="announcement-time">
+                <Button :label="`Due: ${assignmentDate}`" class="time-button p-button-rounded p-button-text" />
+            </div>
+        </template>
     </div>
 </template>
 
@@ -74,14 +95,14 @@ defineProps({
 <style scoped>
 .card-container {
     display: flex;
-    max-width: 600px;
+    /* max-width: 600px; */
     border-radius: 12px;
     overflow: hidden;
     background-color: #f5f5f5;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    /* box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); */
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 1rem auto;
-
+    padding: 1rem;
 }
 
 .card-container.announcement-card {

@@ -67,6 +67,12 @@ const router = createRouter({
       path: '/layout-sandbox',
       name: 'layout-sandbox',
       component: () => import('@/views/LayoutSandbox.vue')
+    },
+    {
+      path: '/studentassignment',
+      name: 'studentassignment',
+      component: () => import('@/views/StudentAssignment.vue'),
+      meta: { layout: 'TwoCol' }
     }
   ]
 })
