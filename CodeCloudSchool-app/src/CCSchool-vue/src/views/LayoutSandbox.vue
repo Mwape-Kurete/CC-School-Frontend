@@ -5,11 +5,9 @@ import AuthLayout from '@/layout/LoginRegLayout.vue'
 </script>
 
 <template>
-  <TheMainLayout>
-    <div class="content">
-      <h1>the page content would go here</h1>
-    </div>
-  </TheMainLayout>
+  <div class="content">
+    <h1>the page content would go here</h1>
+  </div>
 </template>
 
 <!-- <template>

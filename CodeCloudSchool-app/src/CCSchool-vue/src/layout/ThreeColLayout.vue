@@ -63,6 +63,7 @@ import Navbar from '@/components/Navbar.vue'
 .main-content {
   grid-area: main;
   margin: 1.5rem;
+  margin-left: 2.7rem;
   background-color: white;
   box-shadow:
     rgba(14, 63, 126, 0.04) 0px 0px 0px 1px,
