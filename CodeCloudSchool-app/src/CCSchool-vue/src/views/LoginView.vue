@@ -3,7 +3,7 @@ import CreateModuleAssignmentForm from '@/components/CreateModuleAssignmentForm.
 import LoginSignUpForm from '@/components/LoginSignUpForm.vue'
 </script>
 
-<template pageType="login">
+<template>
   <LoginSignUpForm variant="login" />
   <LoginSignUpForm variant="signup" />
   <CreateModuleAssignmentForm variant="assignment" />
