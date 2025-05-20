@@ -1,27 +1,36 @@
 <script setup>
+import { useRoute } from 'vue-router'
 import ThePageHeader from '@/components/ThePageHeader.vue'
 import Navbar from '@/components/Navbar.vue'
+
+const route = useRoute()
 </script>
 
 <template>
   <div class="three-column-layout">
-    <!-- Sidebar -->
+    <!-- Left Sidebar (Static) -->
     <aside class="temp-sidenav">
       <Navbar />
     </aside>
 
-    <!-- Main Content -->
+    <!-- Main Content Area -->
     <main class="main-content">
-      <ThePageHeader />
+      <ThePageHeader :page="route.meta.page" />
+
       <div class="content-wrapper">
-        <slot />
+        <!-- This captures default slot content from pages -->
+        <!-- This captures aside slot content from pages -->
+        <slot name="aside" />
       </div>
     </main>
 
-    <!-- Right Aside Slot -->
+    <!-- Right Aside (Dynamic) -->
     <aside class="right-aside">
       <div class="aside-wrapper">
-        <slot name="aside" />
+        <!-- This will render content from the current route component -->
+        <router-view v-slot="{ Component }">
+          <component :is="Component" name="aside" />
+        </router-view>
       </div>
     </aside>
   </div>
