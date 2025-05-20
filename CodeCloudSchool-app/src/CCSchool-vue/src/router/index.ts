@@ -15,6 +15,42 @@ const router = createRouter({
       component: () => import('@/views/CoursesView.vue'),
       meta: { layout: 'TwoCol' }
     },
+    // Nested course routes
+    {
+      path: '/courses/:courseId',
+      component: () => import('@/layouts/CourseLayout.vue'),
+      children: [
+        {
+          path: '',
+          redirect: { name: 'CourseHome' }
+        },
+        {
+          path: 'home',
+          name: 'CourseHome',
+          component: () => import('@/views/courses/CourseHome.vue')
+        },
+        {
+          path: 'announcements',
+          name: 'CourseAnnouncements',
+          component: () => import('@/views/courses/CourseAnnouncements.vue')
+        },
+        {
+          path: 'modules',
+          name: 'CourseModules',
+          component: () => import('@/views/courses/CourseModules.vue')
+        },
+        {
+          path: 'assignments',
+          name: 'CourseAssignments',
+          component: () => import('@/views/courses/CourseAssignments.vue')
+        },
+        {
+          path: 'grades',
+          name: 'CourseGrades',
+          component: () => import('@/views/courses/CourseGrades.vue')
+        }
+      ]
+    },
     {
       path: '/groups',
       name: 'groups',
@@ -25,12 +61,6 @@ const router = createRouter({
       path: '/timetable',
       name: 'timetable',
       component: () => import('@/views/TimetableView.vue'),
-      meta: { layout: 'TwoCol' }
-    },
-    {
-      path: '/history',
-      name: 'history',
-      component: () => import('@/views/HistoryView.vue'),
       meta: { layout: 'TwoCol' }
     },
     {
@@ -45,12 +75,7 @@ const router = createRouter({
       component: () => import('@/views/SettingsView.vue'),
       meta: { layout: 'TwoCol' }
     },
-    {
-      path: '/help',
-      name: 'help',
-      component: () => import('@/views/HelpView.vue'),
-      meta: { layout: 'TwoCol' }
-    },
+
     {
       path: '/login',
       name: 'Login',
@@ -72,6 +97,7 @@ const router = createRouter({
       path: '/sandbox',
       name: 'sandbox',
       component: () => import('@/views/Sandbox.vue')
+      component: () => import('@/views/SettingsView.vue')
     }
   ]
 })
