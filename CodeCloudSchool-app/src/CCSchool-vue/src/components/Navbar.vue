@@ -164,7 +164,6 @@ const selectCourse = (course) => {
 }
 /* Navigation item styling */
 .nav-item {
-margin: -20px;
   position: relative;
   left: -12px;
   width: calc(100% - 16px);
