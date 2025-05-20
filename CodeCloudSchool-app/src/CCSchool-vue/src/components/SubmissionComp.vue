@@ -145,7 +145,7 @@ export default {
 
 /* Base Styles */ 
 .upload-container {
-  max-width: 800px;
+  max-width: 60vw;
   margin: 2rem auto;
   font-family: "Quicksand", sans-serif;
   font-optical-sizing: auto;

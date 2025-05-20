@@ -95,11 +95,11 @@ const filterOptions = [
 .search-bar {
   display: flex;
   align-items: center;
-  background-color: #d9d9d9; /* soft gray */
-  border-radius: 9999px; /* fully rounded */
+  background-color: #d9d9d9; 
+  border-radius: 9999px; 
   padding: 0.5rem 1rem;
   width: 100%;
-  max-width: 300px; /* Match your dropdown width */
+  max-width: 300px; 
 }
 
 .search-bar .icon {

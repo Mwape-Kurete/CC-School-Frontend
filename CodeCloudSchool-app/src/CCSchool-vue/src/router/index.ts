@@ -73,6 +73,12 @@ const router = createRouter({
       name: 'studentassignment',
       component: () => import('@/views/StudentAssignment.vue'),
       meta: { layout: 'TwoCol' }
+    },
+    {
+      path: '/studentassignmentdetails',
+      name: 'studentassignmentdetails',
+      component: () => import('@/views/StudentAssignmentDetails.vue'),
+      meta: { layout: 'TwoCol' }
     }
   ]
 })
