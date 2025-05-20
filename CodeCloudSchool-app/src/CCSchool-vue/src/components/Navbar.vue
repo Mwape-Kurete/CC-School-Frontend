@@ -145,6 +145,13 @@ const selectCourse = (course) => {
 
 <style scoped>
 /* Main sidebar styling */
+
+/* Remove underlines from all links */
+a {
+  color: #212121 !important;
+  text-decoration: none;
+}
+
 .navbar {
   width: 312px;
   height: calc(100vh - 40px);
@@ -157,6 +164,7 @@ const selectCourse = (course) => {
 
 }
 
+
 /* Logo container styling */
 .logo-section {
   min-height: 80px; /* Give enough space for the logo */
@@ -168,12 +176,14 @@ const selectCourse = (course) => {
   left: -12px;
   width: calc(100% - 16px);
   color: #212121;
+  transition: color 0.2s ease;
 }
 
 /* Hover state for navigation items */
 .nav-item:hover {
   border-radius: 10px;
-    background-color: rgba(236, 236, 236, 0.831);
+  background-color: rgba(236, 236, 236, 0.831);
+  color: #212121; 
 }
 
 /* Active state for navigation items */
