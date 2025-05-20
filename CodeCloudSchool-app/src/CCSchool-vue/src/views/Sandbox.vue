@@ -66,7 +66,7 @@
         </div>
         <!--Icon Btn Examples-->
         <div class="space-y-2">
-          <IconButton type="primary" size="md" @click="onButtonClick">
+          <IconButton type="primary" size="md">
             Click Me
             <template #icon-slot>
               <Pencil />
