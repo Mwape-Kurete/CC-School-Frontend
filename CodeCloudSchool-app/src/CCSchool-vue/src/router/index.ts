@@ -97,7 +97,7 @@ const router = createRouter({
       path: '/sandbox',
       name: 'sandbox',
       component: () => import('@/views/Sandbox.vue')
-      component: () => import('@/views/SettingsView.vue')
+
     }
   ]
 })
