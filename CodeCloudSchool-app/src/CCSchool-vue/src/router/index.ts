@@ -68,7 +68,32 @@ const router = createRouter({
     {
       path: '/settings',
       name: 'settings',
-      component: () => import('@/views/SettingsView.vue')
+      component: () => import('@/views/SettingsView.vue'),
+      meta: { layout: 'TwoCol' }
+    },
+
+    {
+      path: '/login',
+      name: 'Login',
+      component: () => import('@/views/LoginView.vue'),
+      meta: { layout: 'LoginReg' }
+    },
+    {
+      path: '/lecturer-dash',
+      name: 'lecturer-dash',
+      component: () => import('@/views/LectureDashboardView.vue'),
+      meta: { layout: 'ThreeCol' }
+    },
+    {
+      path: '/layout-sandbox',
+      name: 'layout-sandbox',
+      component: () => import('@/views/LayoutSandbox.vue')
+    },
+    {
+      path: '/sandbox',
+      name: 'sandbox',
+      component: () => import('@/views/Sandbox.vue')
+
     }
   ]
 })
