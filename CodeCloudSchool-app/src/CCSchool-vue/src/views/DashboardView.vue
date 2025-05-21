@@ -112,7 +112,6 @@ const modules = [
         <h2 class="day-heading">{{ day.date }}</h2>
         
         <!-- Loop through each module for this day -->
-        <!-- Changed Card to CardComp to match import -->
         <div v-for="(module, index) in day.items" :key="index" class="module-card">
           <CardComp v-bind="module" />
         </div>

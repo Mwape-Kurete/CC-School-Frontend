@@ -33,12 +33,16 @@
           v-if="item.label === 'Courses' && $route.path.includes('/courses/') && !isCollapsed"
           class="course-nav ml-8"
         >
+          <!-- Back to All Courses link - appears at the top of the course navigation -->
           <RouterLink
             :to="{ name: 'courses' }"
             class="course-nav-item font-semibold"
           >
+
             ← All Courses
           </RouterLink>
+
+          <!-- Dynamic course section links - generated for each page in coursePages array -->
           <RouterLink
             v-for="page in coursePages"
             :key="page.routeName"
