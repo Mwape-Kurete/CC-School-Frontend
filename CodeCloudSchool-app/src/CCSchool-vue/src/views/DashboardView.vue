@@ -46,6 +46,20 @@ const modules = [
         moduleTime: '10:00 - 12:00'
       },
     ]
+  },
+
+  {
+    date: 'Wednesday, 16 April',
+    items: [
+      {
+        cardType: 'module',
+        moduleTitleLine1: 'Web Development 301',
+        moduleEventLabel: 'WD 301 Class',
+        moduleCode: 'A1',
+        moduleClassId: 'A1',
+        moduleTime: '11:00 - 13:00'
+      },
+    ]
   }
 ];
 </script>
