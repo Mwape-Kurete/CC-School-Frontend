@@ -33,7 +33,7 @@ const attemptOptions = [
     <!-- Toggle Section -->
     <div class="details-con flex justify-between mb-4 cursor-pointer" @click="showDetails = !showDetails">
         <h4 class="font-semibold">Details</h4>
-        <component :is="showDetails ? ChevronUp : ChevronDown" class="w-1 h-1 text-gray-700" />
+        <component :is="showDetails ? ChevronUp : ChevronDown" class="w-1 h-1clear text-gray-700" />
     </div>
 
     <!-- Collapsible Assignment Details -->

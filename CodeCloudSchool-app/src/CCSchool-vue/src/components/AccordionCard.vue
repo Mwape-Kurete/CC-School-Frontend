@@ -46,7 +46,7 @@ const isOpen = ref(props.initiallyOpen)
 <style scoped>
 .accordion-card {
   width: 100%;
-  max-width: 600px;
+  /* max-width: 600px; */
   border-radius: 12px;
   overflow: hidden;
   background-color: #f7f7f7;
@@ -56,10 +56,10 @@ const isOpen = ref(props.initiallyOpen)
 }
 
 .accordion-header {
-  background-color: #d7d7d7;
+  background-color: #D8DFE9;
   padding: 1rem;
   font-weight: 500;
-  color: #666;
+  color: #2e2e2e;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -84,7 +84,7 @@ const isOpen = ref(props.initiallyOpen)
 
 .accordion-content {
   padding: 1rem;
-  background-color: #f3f3f3;
+  background-color: #fafafa;
 }
 
 .accordion-item {
@@ -93,11 +93,15 @@ const isOpen = ref(props.initiallyOpen)
   padding: 0.5rem 0;
 }
 
+.accordion-item:hover{
+  cursor: pointer;
+}
+
 .circle-icon {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background-color: #d1d1d1;
+  background-color: #D0DFCC;
   margin-right: 1rem;
   flex-shrink: 0;
 }
