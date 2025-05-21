@@ -74,12 +74,12 @@ defineProps({
 <style scoped>
 .card-container {
     display: flex;
-    max-width: 600px;
-    border-radius: 12px;
+    max-width: 1013px;
+    border-radius: 15px;
     overflow: hidden;
     background-color: #f5f5f5;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+     font-family: "Quicksand", sans-serif;
     margin: 1rem auto;
 
 }
@@ -104,8 +104,9 @@ defineProps({
 .course-title {
     text-align: center;
     color: #555;
-    font-weight: 300;
-    font-size: 1.2rem;
+    font-family: "Josefin Sans", sans-serif;
+    font-weight: 700;
+    font-size: 1.3rem;
     line-height: 1.4;
 }
 
