@@ -191,7 +191,6 @@ webkitallowfullscreen="true">
         </div>
        </div>
       
-       <div class="divider"></div>
 
       <!-- Lecturer Section -->
       <div class="lecturer-section">
@@ -217,7 +216,14 @@ webkitallowfullscreen="true">
 /* courses MAIN CONTENT */
 /* ---------------------------- */
 
-/* Lecturer Section Styles */
+.divider {
+  height: 1px;
+  background-color: #e0e0e0;
+  width: 100%;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
 /* Lecturer Section Styles */
 .lecturer-section {
   margin-top: 40px;
