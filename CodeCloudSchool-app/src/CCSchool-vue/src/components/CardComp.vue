@@ -63,7 +63,7 @@ defineProps({
         <template v-else-if="cardType === 'announcement'">
             <div class="announcement-avatar"
                 :style="moduleImg ? { backgroundImage: `url('${moduleImg}')`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
-                <i class="pi pi-image" style="font-size: 1.5rem; color: #999;"></i>
+                <!-- <i class="pi pi-image" style="font-size: 1.5rem; color: #999;"></i> -->
             </div>
             <div class="announcement-content">
                 <div class="announcement-title">{{ announcementTitle }}</div>

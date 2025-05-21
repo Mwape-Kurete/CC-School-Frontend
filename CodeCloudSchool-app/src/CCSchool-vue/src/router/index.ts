@@ -91,6 +91,18 @@ const router = createRouter({
       name: 'studentModuleDetails',
       component: () => import('@/views/StudentModuleDetails.vue'),
       meta: { layout: 'TwoCol' }
+    },
+    {
+      path: '/studentannouncement',
+      name: 'studentannouncement',
+      component: () => import('@/views/StudentAnnouncement.vue'),
+      meta: { layout: 'TwoCol' }
+    },
+    {
+      path: '/studentannouncementdetails',
+      name: 'studentannouncementdetails',
+      component: () => import('@/views/StudentAnnouncementDetails.vue'),
+      meta: { layout: 'TwoCol' }
     }
   ]
 })
