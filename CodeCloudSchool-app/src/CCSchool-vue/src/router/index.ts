@@ -99,33 +99,15 @@ const router = createRouter({
       component: () => import('@/views/Sandbox.vue')
     },
     {
-      path: '/studentassignment',
-      name: 'studentassignment',
-      component: () => import('@/views/StudentAssignment.vue'),
-      meta: { layout: 'TwoCol' }
-    },
-    {
       path: '/studentassignmentdetails',
       name: 'studentassignmentdetails',
       component: () => import('@/views/StudentAssignmentDetails.vue'),
       meta: { layout: 'TwoCol' }
     },
     {
-      path: '/studentModule',
-      name: 'studentModule',
-      component: () => import('@/views/StudentModule.vue'),
-      meta: { layout: 'TwoCol' }
-    },
-    {
       path: '/studentModuleDetails',
       name: 'studentModuleDetails',
       component: () => import('@/views/StudentModuleDetails.vue'),
-      meta: { layout: 'TwoCol' }
-    },
-    {
-      path: '/studentannouncement',
-      name: 'studentannouncement',
-      component: () => import('@/views/StudentAnnouncement.vue'),
       meta: { layout: 'TwoCol' }
     },
     {
