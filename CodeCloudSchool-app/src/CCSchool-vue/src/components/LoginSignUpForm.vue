@@ -1,12 +1,16 @@
 <script setup>
 import { ref, defineProps } from 'vue'
+import { useRouter } from 'vue-router'
 import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import Divider from 'primevue/divider'
 import FloatLabel from 'primevue/floatlabel'
-import Dropdown from 'primevue/dropdown'
+import CDropdown from './ui/CDropdown.vue'
+
+// import api service
+import { AuthService } from '@/api/auth'
 
 const props = defineProps({
     variant: {
@@ -25,11 +29,67 @@ const postalCode = ref('')
 const address = ref('')
 const agree = ref(false)
 
+const router = useRouter()
+const loading = ref(false)
+const errorMessage = ref('')
+
 const genderOptions = [
     { label: 'Male', value: 'male' },
     { label: 'Female', value: 'female' },
     { label: 'Other', value: 'other' },
 ]
+
+
+const role = ref('student'); // default value
+
+const roleOptions = [
+    { label: 'Student', value: 'student' },
+    { label: 'Lecturer', value: 'lecturer' },
+    { label: 'Admin', value: 'admin' },
+];
+
+// functions
+// ==========================================================
+const login = async () => {
+
+    console.log('LOGIN FUNCTION CALLED')
+    console.log('email:', email.value)
+    console.log('role:', role.value)
+    console.log('password:', password.value)
+    loading.value = true
+    errorMessage.value = ''
+
+    if (!email.value || !password.value) {
+        errorMessage.value = 'Please fill in both email and password.'
+        loading.value = false
+        return
+    }
+
+    try {
+        console.log('Attempting to login...')
+        const response = await AuthService.login({
+            email: email.value,
+            password: password.value,
+            role: role.value, // must be 'student' | 'admin' | 'lecturer'
+        })
+
+        if (typeof response === 'string') {
+            // Login failed, show message
+            errorMessage.value = response
+        } else {
+            // Login successful, response is a User object
+            console.log('Login successful:', response)
+            // Redirect or store user session here
+            // router.push({ name: 'Dashboard' })
+        }
+    } catch (error) {
+        errorMessage.value = 'Login failed. Please check your credentials.'
+    } finally {
+        loading.value = false
+    }
+}
+
+
 </script>
 
 <template>
@@ -37,8 +97,8 @@ const genderOptions = [
         <div class="flex flex-col items-center p-6 w-full max-w-md mx-auto">
             <!-- LOGIN FORM -->
             <template v-if="variant === 'login'">
-                <h2 class="text-2xl font-semibold mb-1">Welcome back, Gracie</h2>
-                <p class="text-gray-500 mb-6">Welcome back, please enter your details</p>
+                <h1 class=" font-bold mb-1">Welcome back</h1>
+                <p class="text-gray-500 mb-6">Please enter your details</p>
 
                 <Button label="Login with Google" icon="pi pi-google" class="w-full mb-4 google-btn"
                     severity="secondary" />
@@ -46,6 +106,10 @@ const genderOptions = [
                 <Divider align="center" class="my-4">
                     <span class="text-sm no-account"><strong>or</strong></span>
                 </Divider>
+
+                <CDropdown type="ghost" size="sm" v-model="role" :options="roleOptions" optionLabel="label"
+                    class="role-dropdown w-full" />
+
 
                 <div class="w-full mb-4">
                     <FloatLabel>
@@ -71,11 +135,13 @@ const genderOptions = [
                     <Button label="Forgot password?" text class="p-0 text-sm forgot-pword-btn" />
                 </div>
 
-                <Button label="Login" class="w-full mb-4 login-btn" />
+                <div v-if="errorMessage" class="text-red-600 mb-4">{{ errorMessage }}</div>
+                <Button @click="login" :loading="loading" label="Login" class="w-full mb-4 login-btn" />
 
                 <p class="text-sm text-gray-200 no-account">
                     Don’t have an account?
-                    <Button label="Sign up here" text class="text-primary sign-up-link p-0" />
+                    <Button  label="Sign up here" text
+                        class="text-primary sign-up-link p-0" />
                 </p>
             </template>
 
