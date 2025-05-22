@@ -97,6 +97,42 @@ const router = createRouter({
       path: '/sandbox',
       name: 'sandbox',
       component: () => import('@/views/Sandbox.vue')
+    },
+    {
+      path: '/studentassignment',
+      name: 'studentassignment',
+      component: () => import('@/views/StudentAssignment.vue'),
+      meta: { layout: 'TwoCol' }
+    },
+    {
+      path: '/studentassignmentdetails',
+      name: 'studentassignmentdetails',
+      component: () => import('@/views/StudentAssignmentDetails.vue'),
+      meta: { layout: 'TwoCol' }
+    },
+    {
+      path: '/studentModule',
+      name: 'studentModule',
+      component: () => import('@/views/StudentModule.vue'),
+      meta: { layout: 'TwoCol' }
+    },
+    {
+      path: '/studentModuleDetails',
+      name: 'studentModuleDetails',
+      component: () => import('@/views/StudentModuleDetails.vue'),
+      meta: { layout: 'TwoCol' }
+    },
+    {
+      path: '/studentannouncement',
+      name: 'studentannouncement',
+      component: () => import('@/views/StudentAnnouncement.vue'),
+      meta: { layout: 'TwoCol' }
+    },
+    {
+      path: '/studentannouncementdetails',
+      name: 'studentannouncementdetails',
+      component: () => import('@/views/StudentAnnouncementDetails.vue'),
+      meta: { layout: 'TwoCol' }
     }
   ]
 })
