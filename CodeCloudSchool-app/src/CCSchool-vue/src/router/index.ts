@@ -32,40 +32,60 @@ const router = createRouter({
     },
     // Nested course routes
     {
-      path: '/courses/:courseId',
-      component: () => import('@/layouts/CourseLayout.vue'),
-      children: [
-        {
-          path: '',
-          redirect: { name: 'CourseHome' }
-        },
-        {
-          path: 'home',
-          name: 'CourseHome',
-          component: () => import('@/views/courses/CourseHome.vue')
-        },
-        {
-          path: 'announcements',
-          name: 'CourseAnnouncements',
-          component: () => import('@/views/courses/CourseAnnouncements.vue')
-        },
-        {
-          path: 'modules',
-          name: 'CourseModules',
-          component: () => import('@/views/courses/CourseModules.vue')
-        },
-        {
-          path: 'assignments',
-          name: 'CourseAssignments',
-          component: () => import('@/views/courses/CourseAssignments.vue')
-        },
-        {
-          path: 'grades',
-          name: 'CourseGrades',
-          component: () => import('@/views/courses/CourseGrades.vue')
-        }
-      ]
+  path: '/courses/:courseId',
+  component: () => import('@/layouts/CourseLayout.vue'),
+  children: [
+    {
+      path: '',
+      redirect: { name: 'stu-course-layout' }
     },
+    {
+      path: 'home',
+      name: 'CourseHome',
+      component: () => import('@/views/courses/CourseHome.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'stu-course-home'
+      }
+    },
+    {
+      path: 'announcements',
+      name: 'CourseAnnouncements',
+      component: () => import('@/views/courses/CourseAnnouncements.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'stu-course-announcements'
+      }
+    },
+    {
+      path: 'modules',
+      name: 'CourseModules',
+      component: () => import('@/views/courses/CourseModules.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'stu-course-modules'
+      }
+    },
+    {
+      path: 'assignments',
+      name: 'CourseAssignments',
+      component: () => import('@/views/courses/CourseAssignments.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'stu-course-assignments'
+      }
+    },
+    {
+      path: 'grades',
+      name: 'CourseGrades',
+      component: () => import('@/views/courses/CourseGrades.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'stu-course-grades'
+      }
+    }
+  ]
+},
     {
       path: '/groups',
       name: 'groups',
@@ -82,15 +102,6 @@ const router = createRouter({
       meta: {
         layout: 'TwoCol',
         page: 'timetable'
-      },
-    },
-    {
-      path: '/history',
-      name: 'history',
-      component: () => import('@/views/HistoryView.vue'),
-      meta: {
-        layout: 'TwoCol',
-        page: 'history'
       },
     },
     {
@@ -130,15 +141,6 @@ const router = createRouter({
       },
     },
     {
-      path: '/lecturer-dash',
-      name: 'lecturer-dash',
-      component: () => import('@/views/LectureDashboardView.vue'),
-      meta: {
-        layout: 'TwoCol',
-        page: 'lecturer-dashboard'
-      },
-    },
-    {
       path: '/layout-sandbox',
       name: 'layout-sandbox',
       component: () => import('@/views/LayoutSandbox.vue'),
@@ -172,7 +174,54 @@ const router = createRouter({
       component: () => import('@/views/StudentAnnouncementDetails.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'student-assignment'
+        page: 'student-announcement-details'
+      },
+    },
+    //lecturer pages
+
+    {
+      path: '/lecturer-dash',
+      name: 'lecturer-dash',
+      component: () => import('@/views/LectureDashboardView.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'lecturer-dashboard'
+      },
+    },
+    {
+      path: '/lecturer-courses',
+      name: 'lecturer-courses',
+      component: () => import('@/views/LecturerCourses.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'lecturer-courses'
+      },
+    },
+    {
+      path: '/lecturer-course-details',
+      name: 'lecturer-course-details',
+      component: () => import('@/views/LecturerCourseDetails.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'lecturer-course-details'
+      },
+    },
+    {
+      path: '/lecturer-modules',
+      name: 'lecturer-modules',
+      component: () => import('@/views/LecturerModules.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'lecturer-modules'
+      },
+    },
+    {
+      path: '/lecturer-create-modules',
+      name: 'lecturer-create-modules',
+      component: () => import('@/views/LecturerCreateModule.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'lecturer-create-modules'
       },
     }
   ]
