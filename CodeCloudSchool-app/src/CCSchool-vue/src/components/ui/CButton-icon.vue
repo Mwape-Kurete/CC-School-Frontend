@@ -1,68 +1,97 @@
 <template>
-  <div class="button-wrapper">
-    <button class="pill-button">Upload Semester Brief</button>
+  <div
+    class="c-icon-button"
+    :class="[`c-icon-button--${type}`, `c-icon-button--${size}`, { 'is-disabled': disabled }]"
+    :disabled="disabled"
+  >
+    <button class="c-icon-button__label">{{ btnIconLabel }}</button>
 
-    <span class="connector" />
-
-    <div class="icon-wrapper">
-      <Pencil size="16" />
+    <div class="c-icon-button__icon">
+      <slot name="icon"><Pencil size="16" /></slot>
     </div>
   </div>
 </template>
 
 <script setup>
 import { Pencil } from 'lucide-vue-next'
+
+const props = defineProps({
+  type: {
+    type: String,
+    default: 'primary',
+    validator: (value) => ['primary', 'secondary', 'tertiary', 'danger', 'ghost'].includes(value),
+  },
+  size: {
+    type: String,
+    default: 'md',
+    validator: (value) => ['sm', 'md', 'lg'].includes(value),
+  },
+  disabled: Boolean,
+  btnIconLabel: {
+    type: String,
+    default: 'add label',
+  },
+})
 </script>
 
 <style scoped>
-.button-wrapper {
+.c-icon-button {
   display: inline-flex;
   align-items: center;
   position: relative;
-  background-color: inherit; /* Inherit parent background */
-  border-radius: 9999px;
-  padding: 0.25rem 1rem 0.25rem 1.25rem;
-  color: #444;
-  font-weight: 500;
-  height: 3rem;
+  padding: 0.35rem; /* remove double padding */
+  width: 100%;
+  background-color: #f7f6fb;
+  border-radius: 30px;
+  color: #212121;
+  overflow: hidden;
   transition: background-color 0.3s ease;
+
+  box-shadow:
+    rgba(0, 0, 0, 0.1) 0px 4px 6px -1px,
+    rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
 }
 
-.pill-button {
-  background-color: transparent;
+/* Label Button (takes full width, inherits bg from c-button) */
+.c-icon-button__label {
+  flex-grow: 1;
+  font-size: 12px !important;
   border: none;
-  font-size: 1rem;
+  background: transparent;
   color: inherit;
+  font: inherit;
   cursor: pointer;
-  padding: 0;
-  margin: 0;
-  font-weight: 500;
+  padding: 0 1rem;
+  height: 100%;
+  text-align: left;
 }
 
-.connector {
-  width: 1.25rem;
-  height: 0.5rem;
-  background-color: inherit;
-  flex-shrink: 0;
-  margin: 0 0.25rem;
-  border-radius: 0 999px 999px 0;
+.c-icon-button:hover {
+  opacity: 1;
+  transform: scaleX(1);
+
+  background-color: #212121;
+  color: #f7f6fb;
+
+  cursor: pointer;
 }
 
-.icon-wrapper {
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 50%;
-  background-color: inherit;
+/* Icon Container */
+.c-icon-button__icon {
+  width: 1.7rem;
+  height: 1.7rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
+  border-radius: 50%;
+  background-color: inherit; /* match parent button */
   color: inherit;
-  box-shadow: 0 0 0 2px white; /* optional if placed on colored background */
+  margin-left: 0.5rem;
+  transition: transform 0.2s ease;
+  box-shadow: rgba(0, 0, 0, 0.15) 0px 3px 3px 0px;
 }
 
-.button-wrapper:hover .icon-wrapper {
-  transform: scale(1.1);
+.c-icon-button:hover .c-icon-button__icon {
+  transform: scale(1);
 }
 </style>

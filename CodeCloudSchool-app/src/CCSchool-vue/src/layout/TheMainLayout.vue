@@ -1,3 +1,14 @@
+<script setup>
+import { useRoute } from 'vue-router'
+import { computed } from 'vue'
+import ThePageHeader from '@/components/ThePageHeader.vue'
+import Navbar from '@/components/Navbar.vue'
+
+const route = useRoute()
+
+const pageMeta = computed(() => route.meta.page)
+</script>
+
 <template>
   <div class="two-column-layout">
     <!-- Sidebar -->
@@ -7,18 +18,13 @@
 
     <!-- Main content area -->
     <main class="main-page-cont">
-      <ThePageHeader />
+      <ThePageHeader :page="pageMeta" />
       <div class="content-wrapper">
         <slot />
       </div>
     </main>
   </div>
 </template>
-
-<script setup>
-import ThePageHeader from '@/components/ThePageHeader.vue'
-import Navbar from '@/components/Navbar.vue'
-</script>
 
 <style scoped lang="scss">
 .two-column-layout {
@@ -28,7 +34,7 @@ import Navbar from '@/components/Navbar.vue'
   height: 100vh;
   background-color: #f7f6fb;
   gap: 0.5rem;
-  padding: 0 1.5rem; // Horizontal padding to contain the gap
+  padding: 0 1rem; // Horizontal padding to contain the gap
 
   @media (max-width: 1024px) {
     grid-template-columns: 250px 1fr;
@@ -88,7 +94,7 @@ import Navbar from '@/components/Navbar.vue'
 
 .temp-sidenav {
   grid-area: sidenav;
-  padding: 1.5rem 1rem;
+  padding: 1rem 0.5rem;
   height: calc(100vh - 3rem); // Account for margins
   overflow-y: auto;
   border-radius: 30px;
