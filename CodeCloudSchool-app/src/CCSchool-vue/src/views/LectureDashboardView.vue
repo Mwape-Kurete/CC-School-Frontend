@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import LecturerKnob from '@/components/LecturerKnob.vue'
 import ToDoComp from '@/components/ToDoComp.vue'
+import CardComp from '@/components/CardComp.vue'
 import CreateModuleAssignmentForm from '@/components/CreateModuleAssignmentForm.vue'
+import CButtonIcon from '@/components/ui/CButton-icon.vue'
+import { PlusCircleIcon } from 'lucide-vue-next'
 </script>
 
 <template>
@@ -10,8 +13,49 @@ import CreateModuleAssignmentForm from '@/components/CreateModuleAssignmentForm.
     <!-- Your main dashboard content -->
     <div class="content-section">
       <!-- Add more components/content as needed -->
-      <h1 class="ps-header pt-0">Announcements</h1>
-      <CreateModuleAssignmentForm variant="announcement" />
+      <div class="announcement-header">
+        <h1 class="ps-header pt-0">Your Announcements</h1>
+        <CButtonIcon
+          class="btn-icon-custom"
+          type="primary"
+          size="sm"
+          :disabled="true"
+          btnIconLabel="New Announcement"
+        >
+          <template #icon>
+            <PlusCircleIcon />
+          </template>
+        </CButtonIcon>
+      </div>
+      <div class="card-container">
+        <CardComp
+          cardType="announcement"
+          announcementTitle=" Computer science  workshop with Jacob  Anderson"
+          announcementBody="Lorem ipsum dolor sit amet, consectetur adipiscing elit..."
+          announcementDate="2023-10-15"
+          moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
+        />
+
+        <div class="divider-card"></div>
+
+        <CardComp
+          cardType="announcement"
+          announcementTitle=" Computer science  workshop with Jacob  Anderson"
+          announcementBody="Lorem ipsum dolor sit amet, consectetur adipiscing elit..."
+          announcementDate="2023-10-15"
+          moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
+        />
+
+        <div class="divider-card"></div>
+
+        <CardComp
+          cardType="announcement"
+          announcementTitle=" Computer science  workshop with Jacob  Anderson"
+          announcementBody="Lorem ipsum dolor sit amet, consectetur adipiscing elit..."
+          announcementDate="2023-10-15"
+          moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
+        />
+      </div>
 
       <hr />
 
@@ -34,6 +78,36 @@ import CreateModuleAssignmentForm from '@/components/CreateModuleAssignmentForm.
 </template>
 
 <style scoped>
+/* announcements */
+.announcement-header {
+  margin-bottom: 2rem;
+}
+
+.card-container {
+  background-color: #f5f5f5;
+  border-radius: 25px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-view {
+  padding: 2rem;
+}
+
+.divider,
+.divider-card {
+  height: 1px;
+  background-color: #ccc;
+  margin: 1rem 0;
+}
+
+.divider-card {
+  width: 97%;
+  margin-left: 1.5%;
+}
+
+/*layout below */
+
 .dashboard-view {
   padding: 2rem;
 }
