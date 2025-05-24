@@ -1,9 +1,17 @@
 <script setup>
 import CSearch from './ui/CSearch.vue'
+import CButtonIcon from './ui/CButton-icon.vue'
+import CDropdown from './ui/CDropdown.vue'
+import { EllipsisVertical } from 'lucide-vue-next'
+import { GraduationCap } from 'lucide-vue-next'
+import { BellRing } from 'lucide-vue-next'
+import { ref } from 'vue'
 
 const props = defineProps({
   page: String,
 })
+
+const selectedRange = ref(null)
 </script>
 
 <template>
@@ -47,7 +55,52 @@ const props = defineProps({
     <!--Lecturer End-->
     <div class="right">
       <div class="search-actions">
-        <CSearch />
+        <div
+          v-if="
+            page === 'dashboard' ||
+            page === 'lecturer-dashboard' ||
+            page === 'timetable' ||
+            page === 'stu-course-announcements'
+          "
+          class="cont-button-group"
+        >
+          <CDropdown
+            v-model="selectedRange"
+            :options="['Today', 'This Week', 'This Month']"
+            simple-options
+            placeholder="Today"
+            type="secondary"
+            size="md"
+          />
+          <CButtonIcon
+            class="btn-icon-custom"
+            type="primary"
+            size="sm"
+            :disabled="true"
+            btnIconLabel="student name view"
+          >
+            <template #icon>
+              <GraduationCap />
+            </template>
+          </CButtonIcon>
+          <div class="right-icons">
+            <BellRing size="34" />
+            <EllipsisVertical size="34" />
+          </div>
+        </div>
+        <!-- <div v-else><CSearch /></div> -->
+
+        <div v-else class="search-actions-alt">
+          <CButtonIcon type="primary" size="sm" :disabled="true" btnIconLabel="student name view">
+            <template #icon>
+              <GraduationCap />
+            </template>
+          </CButtonIcon>
+          <div class="right-icons">
+            <BellRing size="34" />
+            <EllipsisVertical size="34" />
+          </div>
+        </div>
       </div>
     </div>
   </header>
@@ -73,5 +126,55 @@ const props = defineProps({
 .user-placeholder {
   font-size: 0.95rem;
   opacity: 0.85;
+}
+
+.search-actions > *:not(:last-child) {
+  margin-right: 0.75rem;
+}
+
+.cont-button-group {
+  display: flex;
+  flex-direction: row !important;
+  align-items: center;
+}
+
+.btn-icon-custom {
+  width: 60%;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.search-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.search-actions-alt {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cont-button-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.right-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.right-icons > * {
+  padding: 0.5rem;
+  border-radius: 999999px;
+  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
 }
 </style>
