@@ -1,11 +1,16 @@
 <script setup>
+import { useRoute } from 'vue-router'
+import { ref } from 'vue'
+
 import CSearch from './ui/CSearch.vue'
 import CButtonIcon from './ui/CButton-icon.vue'
 import CDropdown from './ui/CDropdown.vue'
 import { EllipsisVertical } from 'lucide-vue-next'
 import { GraduationCap } from 'lucide-vue-next'
 import { BellRing } from 'lucide-vue-next'
-import { ref } from 'vue'
+
+const route = useRoute()
+const courseId = route.params.courseId
 
 const props = defineProps({
   page: String,
@@ -21,13 +26,15 @@ const selectedRange = ref(null)
 
       <!--Nested courses start-->
       <h1 v-else-if="page === 'stu-course-layout'" class="pageHeader">Courses You're Taking</h1>
-      <h1 v-else-if="page === 'stu-course-home'" class="pageHeader">Course Overview</h1>
+      <h1 v-else-if="page === 'stu-course-home'" class="pageHeader">{{ courseId }} Overview</h1>
       <h1 v-else-if="page === 'stu-course-announcements'" class="pageHeader">
-        Course Announcements
+        {{ courseId }} Announcements
       </h1>
-      <h1 v-else-if="page === 'stu-course-modules'" class="pageHeader">Course Modules</h1>
-      <h1 v-else-if="page === 'stu-course-assignments'" class="pageHeader">Course Assignments</h1>
-      <h1 v-else-if="page === 'stu-course-grades'" class="pageHeader">Course Grades</h1>
+      <h1 v-else-if="page === 'stu-course-modules'" class="pageHeader">{{ courseId }} Modules</h1>
+      <h1 v-else-if="page === 'stu-course-assignments'" class="pageHeader">
+        {{ courseId }} Assignments
+      </h1>
+      <h1 v-else-if="page === 'stu-course-grades'" class="pageHeader">{{ courseId }} Grades</h1>
       <!--Nested courses end-->
 
       <!--Students-->
@@ -49,7 +56,7 @@ const selectedRange = ref(null)
       <h1 v-else-if="page === 'lecturer-dashboard'" class="pageHeader">Lecturer Dashboard</h1>
       <h1 v-else-if="page === 'lecturer-courses'" class="pageHeader">Course Overview</h1>
       <h1 v-else-if="page === 'lecturer-course-details'" class="pageHeader">Course Details</h1>
-      <h1 v-else-if="page === 'lecturer-modules'" class="pageHeader">Course Modules</h1>
+      <h1 v-else-if="page === 'lecturer-modules'" class="pageHeader">Modules Overview</h1>
       <h1 v-else-if="page === 'lecturer-create-modules'" class="pageHeader">Create a Module</h1>
     </div>
     <!--Lecturer End-->
@@ -120,7 +127,7 @@ const selectedRange = ref(null)
 
 .pageHeader {
   font-size: 36px;
-  font-weight: 300;
+  font-weight: 400;
 }
 
 .user-placeholder {
