@@ -1,5 +1,11 @@
-<script></script>
+<script setup>
+import CreateModuleForm from '@/components/CreateModuleAssignmentForm.vue'
+</script>
 
-<template></template>
+<template>
+  <div class="create-module">
+    <CreateModuleForm variant="module" />
+  </div>
+</template>
 
 <style></style>
