@@ -9,7 +9,7 @@
     <main class="main-page-cont">
       <ThePageHeader />
       <div class="content-wrapper">
-        <slot />
+        <slot/>
       </div>
     </main>
   </div>
