@@ -209,11 +209,21 @@ const router = createRouter({
 
     {
       path: '/LecturerAnnounce',
-      name: 'Announcements',
+      name: 'LecturerAnnounce',
       component: () => import('@/views/Lecturer-AnnouncementsView.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'Announcements'
+        page: 'LecturerAnnounce'
+      },
+    },
+
+     {
+      path: '/LecturerAnnounceOver',
+      name: 'LecturerAnnounceOver',
+      component: () => import('@/views/LecturerAnnounceOver.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'LecturerAnnounceOver'
       },
     },
 
