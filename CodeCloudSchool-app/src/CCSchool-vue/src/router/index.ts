@@ -206,6 +206,26 @@ const router = createRouter({
         page: 'lecturer-course-details'
       },
     },
+
+    {
+      path: '/LecturerAnnounce',
+      name: 'Announcements',
+      component: () => import('@/views/Lecturer-AnnouncementsView.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'Announcements'
+      },
+    },
+
+     {
+      path: '/LecturerAssign',
+      name: 'Assignments',
+      component: () => import('@/views/Lecturer-AssignmentsView.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'Assignments'
+      },
+    },
     {
       path: '/lecturer-modules',
       name: 'lecturer-modules',
@@ -223,7 +243,8 @@ const router = createRouter({
         layout: 'TwoCol',
         page: 'lecturer-create-modules'
       },
-    }
+    },
+    
   ]
 })
 
