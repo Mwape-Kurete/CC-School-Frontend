@@ -19,7 +19,7 @@ const updateBody = () => {
 
 const sendAnnouncement = () => {
   if (title.value.trim() && body.value.trim()) {
-    const stored = sessionStorage.getItem('announcements');
+    const stored = localStorage.getItem('Announcements');
     const announcements = stored ? JSON.parse(stored) : [];
 
     announcements.unshift({
@@ -29,11 +29,11 @@ const sendAnnouncement = () => {
       createdAt: new Date().toISOString()
     });
 
-    sessionStorage.setItem('announcements', JSON.stringify(announcements));
+    sessionStorage.setItem('Announcements', JSON.stringify(announcements));
     title.value = '';
     body.value = '';
     document.getElementById('editable')!.innerHTML = '';
-    router.push('/views/LecturerAnnounceOver');
+    router.push('LecturerAnnounceOver');
   }
 };
 </script>
@@ -85,9 +85,11 @@ const sendAnnouncement = () => {
 </template>
 
 <style scoped>
+
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=Quicksand:wght@300..700&display=swap');
 .announcement-container {
   padding: 2rem;
-  background-color: #f8fafc;
+  
 }
 
 .main-title {
@@ -98,9 +100,6 @@ const sendAnnouncement = () => {
 }
 
 .announcement-card {
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 2rem;
   max-width: 800px;
   margin: 0 auto;
@@ -113,6 +112,10 @@ const sendAnnouncement = () => {
   margin-bottom: 1.5rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid #e2e8f0;
+  font-family: "Quicksand", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
 }
 
 .form-container {
@@ -125,17 +128,18 @@ const sendAnnouncement = () => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  
 }
 
 .input-label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #64748b;
+  color: #5f5f5f;
 }
 
 .custom-input {
   border: 1px solid #cbd5e1;
-  border-radius: 0.375rem;
+  border-radius: 50px;
   padding: 0.625rem 0.875rem;
   font-size: 0.875rem;
   width: 100%;
@@ -148,9 +152,9 @@ const sendAnnouncement = () => {
 }
 
 .toolbar button {
-  background-color: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.375rem;
+  background-color: #D0DFCC;
+  border: 1px solid #aab7a7;
+  border-radius: 50px;
   padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
   cursor: pointer;
@@ -163,29 +167,30 @@ const sendAnnouncement = () => {
 
 .rich-textarea {
   min-height: 300px;
+  font-family: "Quicksand", sans-serif;
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
   background-color: white;
-  font-family: 'Georgia', serif;
   padding: 1rem;
   line-height: 1.75;
   overflow-y: auto;
 }
 
 .send-button {
-  background-color: #3b82f6;
-  color: white;
+  width: 70%;
+  background-color: #D0DFCC;
+  color: black;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: 50px;
   padding: 0.625rem 1.25rem;
   font-weight: 500;
   font-size: 0.875rem;
   text-transform: uppercase;
-  align-self: flex-end;
   margin-top: 0.5rem;
+  margin-left: 100px;
 }
 
 .send-button:hover {
-  background-color: #2563eb;
+  background-color: #aab7a7;
 }
 </style>
