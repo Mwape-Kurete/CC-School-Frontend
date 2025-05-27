@@ -229,11 +229,21 @@ const router = createRouter({
 
      {
       path: '/LecturerAssign',
-      name: 'Assignments',
+      name: 'LecturerAssign',
       component: () => import('@/views/Lecturer-AssignmentsView.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'Assignments'
+        page: 'LecturerAssign'
+      },
+    },
+
+    {
+      path: '/LecturerAssignOver',
+      name: 'LecturerAssignOver',
+      component: () => import('@/views/LecturerAssignOver.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'LecturerAssignOver'
       },
     },
     {
