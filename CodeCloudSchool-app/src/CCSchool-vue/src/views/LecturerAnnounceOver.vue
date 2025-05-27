@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
+import CardComp from '@/components/CardComp.vue'
+
 
 const router = useRouter();
 const announcements = ref<Array<{
@@ -40,13 +42,14 @@ const formatDate = (dateString: string) => {
         class="create-button"
       />
     </div>
-
+    
     <div class="announcements-list">
       <div 
         v-for="announcement in announcements" 
         :key="announcement.id"
         class="announcement-card"
       >
+      
         <div class="announcement-content">
           <h3 class="announcement-title">{{ announcement.title }}</h3>
           <p class="announcement-body">{{ announcement.body }}</p>
@@ -87,10 +90,10 @@ const formatDate = (dateString: string) => {
 }
 
 .create-button {
-  background-color: #3b82f6;
-  color: white;
+  background-color: #D0DFCC;
+  color: black;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: 50px;
   padding: 0.625rem 1.25rem;
   font-weight: 500;
 }
