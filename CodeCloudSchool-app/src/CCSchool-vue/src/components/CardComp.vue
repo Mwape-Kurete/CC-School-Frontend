@@ -22,12 +22,10 @@ defineProps({
     announcementBody: String,
     announcementDate: String,
 
-    // Props for assignment card
-    assignmentTitle: String,
-    assignmentBody: String,
-    assignmentDate: String,
-
-
+    // Props for announcement card
+    announcementTitle: String,
+    announcementBody: String,
+    announcementDate: String,
 })
 </script>
 
@@ -95,12 +93,12 @@ defineProps({
 <style scoped>
 .card-container {
     display: flex;
-    /* max-width: 600px; */
-    border-radius: 12px;
+    max-width: 1013px;
+    border-radius: 20px;
     overflow: hidden;
     background-color: #f5f5f5;
-    /* box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); */
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+     font-family: "Quicksand", sans-serif;
     margin: 1rem auto;
     padding: 1rem;
 }
@@ -125,8 +123,9 @@ defineProps({
 .course-title {
     text-align: center;
     color: #555;
-    font-weight: 300;
-    font-size: 1.2rem;
+    font-family: "Josefin Sans", sans-serif;
+    font-weight: 700;
+    font-size: 1.3rem;
     line-height: 1.4;
 }
 
@@ -162,9 +161,9 @@ defineProps({
 /* ANNOUNCEMENT CARD STYLES */
 .announcement-avatar {
     background-color: #d1d1d1;
-    width: 40px;
-    height: 40px;
-    border-radius: 999px;
+    width: 60px;
+    height: 60px;
+    border-radius:999px;
     display: flex;
     align-items: center;
     justify-content: center;

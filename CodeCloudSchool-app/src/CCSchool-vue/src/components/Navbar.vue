@@ -19,7 +19,6 @@
         <RouterLink
           :to="item.route"
           active-class="active-nav-item"
-          @click="handleNavClick(item)"
         >
           <div
             class="nav-item pl-6 pr-3 py-3 flex items-center transition-colors mx-4 hover:bg-white/50 hover:text-gray-700"
@@ -29,50 +28,38 @@
           </div>
         </RouterLink>
 
-        <!-- Nested Course Navigation -->
+        <!-- Course Pages Navigation (only shown when on a course page) -->
         <div 
-          v-if="item.label === 'Courses' && showCourseNav && !isCollapsed"
+          v-if="item.label === 'Courses' && $route.path.includes('/courses/') && !isCollapsed"
           class="course-nav ml-8"
         >
-          <!-- Course Selection Level -->
-          <div v-if="!selectedCourse" class="space-y-1">
-            <div 
-              v-for="course in courses" 
-              :key="course.id"
-              @click.stop="selectCourse(course)"
-              class="course-nav-item"
-            >
-              {{ course.name }}
-            </div>
-          </div>
+          <!-- Back to All Courses link - appears at the top of the course navigation -->
+          <RouterLink
+            :to="{ name: 'courses' }"
+            class="course-nav-item font-semibold"
+          >
 
-          <!-- Course Pages Level -->
-          <div v-else class="space-y-1">
-            <div 
-              class="course-nav-item font-semibold"
-              @click.stop="selectedCourse = null"
-            >
-              ← {{ selectedCourse.name }}
-            </div>
-            <RouterLink
-              v-for="page in coursePages"
-              :key="page.routeName"
-              :to="{
-                name: page.routeName,
-                params: { courseId: selectedCourse.id }
-              }"
-              class="course-nav-item"
-              active-class="active-course-item"
-            >
-              {{ page.name }}
-            </RouterLink>
-          </div>
+            ← All Courses
+          </RouterLink>
+
+          <!-- Dynamic course section links - generated for each page in coursePages array -->
+          <RouterLink
+            v-for="page in coursePages"
+            :key="page.routeName"
+            :to="{
+              name: page.routeName,
+              params: { courseId: $route.params.courseId }
+            }"
+            class="course-nav-item"
+            active-class="active-course-item"
+          >
+            {{ page.name }}
+          </RouterLink>
         </div>
       </div>
     </div>
   </div>
 </template>
-
 
 <script setup>
 // Import Vue Router functionality
@@ -86,7 +73,6 @@ import {
   Calendar, 
   User, 
   Settings, 
-
 } from 'lucide-vue-next';
 
 const router = useRouter();
@@ -99,21 +85,10 @@ const navItems = [
   { label: 'Timetable', icon: Calendar, route: '/timetable' },
   { label: 'User Account', icon: User, route: '/account' },
   { label: 'Settings', icon: Settings, route: '/settings' },
-
 ];
 
 // State management
-const isCollapsed = ref(false)
-const showCourseNav = ref(false)
-const selectedCourse = ref(null)
-
-// Course data
-const courses = ref([
-  { id: 'cs-101', name: 'CS 101' },
-  { id: 'ai-210', name: 'AI 210' },
-  { id: 'oop-101', name: 'OOP 101' },
-  { id: 'csp-210', name: 'CSP 210' }
-]);
+const isCollapsed = ref(false);
 
 // Course pages with route names matching your router
 const coursePages = ref([
@@ -123,24 +98,6 @@ const coursePages = ref([
   { name: 'Assignments', routeName: 'CourseAssignments' },
   { name: 'Grades', routeName: 'CourseGrades' }
 ]);
-
-const handleNavClick = (item) => {
-  if (item.label === 'Courses') {
-    showCourseNav.value = !showCourseNav.value;
-    selectedCourse.value = null;
-  } else {
-    showCourseNav.value = false;
-  }
-};
-
-const selectCourse = (course) => {
-  selectedCourse.value = course;
-  // Navigate to the course's home page
-  router.push({
-    name: 'CourseHome',
-    params: { courseId: course.id }
-  });
-};
 </script>
 
 <style scoped>
@@ -163,12 +120,12 @@ a {
   padding: 16px 0;
 }
 
-
 /* Logo container styling */
 .logo-section {
   min-height: 80px; /* Give enough space for the logo */
   padding: 0 1rem; /* Adjust padding as needed */
 }
+
 /* Navigation item styling */
 .nav-item {
   position: relative;
