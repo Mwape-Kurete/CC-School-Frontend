@@ -50,7 +50,7 @@ const courseData = reactive({
     { header: 'Week 3', description: ' Basic software architecture' },
   ],
   courseSlides:
-    'https://docs.google.com/presentation/d/1HmYsdBBTyLZVuaNdS-5RT5gmxgQarYcfwQgBmUI1zlg',
+    'https://docs.google.com/presentation/d/1ZAwD8jemOHHxzsZoFGk9nIHYy9oJnjzJ7OSP1LckCn4/edit?slide=id.p#slide=id.p',
   courseMarkBreakdown: [
     {
       title: 'Theory Assessments',
