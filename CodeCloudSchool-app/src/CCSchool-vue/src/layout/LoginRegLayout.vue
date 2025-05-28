@@ -7,6 +7,8 @@ const props = defineProps({
 })
 
 const renderLogin = computed(() => props.pageType === 'login')
+
+
 </script>
 
 <template>
@@ -27,7 +29,7 @@ const renderLogin = computed(() => props.pageType === 'login')
 .grid-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  height: 100vh;
+  height: 80vh !important;
 }
 
 .grid-item {
@@ -41,6 +43,7 @@ const renderLogin = computed(() => props.pageType === 'login')
 .carousel-column.order-last {
   order: 2;
 }
+
 .form-column.order-first {
   order: 1;
 }
@@ -64,6 +67,7 @@ const renderLogin = computed(() => props.pageType === 'login')
   .grid-container {
     grid-template-columns: 1fr;
   }
+
   .carousel-column {
     display: none;
   }

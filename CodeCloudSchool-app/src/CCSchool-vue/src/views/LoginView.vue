@@ -3,7 +3,7 @@ import LoginSignUpForm from '@/components/LoginSignUpForm.vue'
 </script>
 
 <template>
-  <LoginSignUpForm variant="login" />
+  <LoginSignUpForm  />
   <!-- <LoginSignUpForm variant="signup" /> -->
 </template>
 

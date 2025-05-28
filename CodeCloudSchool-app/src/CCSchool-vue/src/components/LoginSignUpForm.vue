@@ -8,15 +8,27 @@ import Checkbox from 'primevue/checkbox'
 import Divider from 'primevue/divider'
 import FloatLabel from 'primevue/floatlabel'
 import CDropdown from './ui/CDropdown.vue'
+import Dropdown from 'primevue/dropdown'
+
+
+
 
 // import api service
 import { AuthService } from '@/api/auth'
 
 const props = defineProps({
     variant: {
-        type: String
+        type: String,
+        default: 'login'
     },
 })
+
+const currentFormVariant = ref(props.variant);
+
+// Toggle function
+const toggleVariant = () => {
+  currentFormVariant.value = currentFormVariant.value === 'login' ? 'signup' : 'login'
+}
 
 const email = ref('')
 const password = ref('')
@@ -52,10 +64,6 @@ const roleOptions = [
 // ==========================================================
 const login = async () => {
 
-    console.log('LOGIN FUNCTION CALLED')
-    console.log('email:', email.value)
-    console.log('role:', role.value)
-    console.log('password:', password.value)
     loading.value = true
     errorMessage.value = ''
 
@@ -80,7 +88,16 @@ const login = async () => {
             // Login successful, response is a User object
             console.log('Login successful:', response)
             // Redirect or store user session here
-            // router.push({ name: 'Dashboard' })
+            const user = response; // adjust if wrapped in another object
+            if (user.role === 'Student') {
+                console.log('Redirecting to student dashboard');
+                router.push({ name: 'dashboard' });
+            } else if (user.role === 'Lecturer') {
+                router.push({ name: 'lecturer-dash' });
+            } else {
+                console.warn('Unknown user role:', user.role);
+                // Optional: Redirect to a generic page or show an error
+            }
         }
     } catch (error) {
         errorMessage.value = 'Login failed. Please check your credentials.'
@@ -96,7 +113,7 @@ const login = async () => {
     <form>
         <div class="flex flex-col items-center p-6 w-full max-w-md mx-auto">
             <!-- LOGIN FORM -->
-            <template v-if="variant === 'login'">
+            <template v-if="currentFormVariant === 'login'">
                 <h1 class=" font-bold mb-1">Welcome back</h1>
                 <p class="text-gray-500 mb-6">Please enter your details</p>
 
@@ -140,8 +157,7 @@ const login = async () => {
 
                 <p class="text-sm text-gray-200 no-account">
                     Don’t have an account?
-                    <Button  label="Sign up here" text
-                        class="text-primary sign-up-link p-0" />
+                    <Button @click.prevent="toggleVariant" label="Sign up here" text class="text-primary sign-up-link p-0" />
                 </p>
             </template>
 
@@ -218,7 +234,7 @@ const login = async () => {
 
                 <p class="text-sm text-gray-200 no-account">
                     Already have an account?
-                    <Button label="Login here" text class="text-primary sign-up-link p-0" />
+                    <Button @click.prevent="toggleVariant" label="Login here" text class="text-primary sign-up-link p-0" />
                 </p>
             </template>
         </div>
