@@ -37,7 +37,7 @@ const remember = ref(false)
 const name = ref('')
 const surname = ref('')
 const gender = ref(null)
-const postalCode = ref('')
+const phoneNo = ref('')
 const address = ref('')
 const agree = ref(false)
 
@@ -88,6 +88,9 @@ const login = async () => {
             // Login successful, response is a User object
             console.log('Login successful:', response)
             // Redirect or store user session here
+
+            // TODO: Store user role in session / state management
+
             const user = response; // adjust if wrapped in another object
             if (user.role === 'Student') {
                 console.log('Redirecting to student dashboard');
@@ -106,6 +109,47 @@ const login = async () => {
     }
 }
 
+
+const signUp = async () => {
+    loading.value = true
+    errorMessage.value = ''
+
+    if (!name.value || !surname.value || !password.value || !gender.value || !phoneNo.value || !address.value) {
+        errorMessage.value = 'Please fill in all fields.'
+        loading.value = false
+        return
+    }
+    if (!agree.value) {
+        errorMessage.value = 'You must agree to the terms and conditions.'
+        loading.value = false
+        return
+    }
+    try {
+        console.log('Attempting to sign up...')
+        const response = await AuthService.signUpStudent({
+            name: name.value,
+            surname: surname.value,
+            password: password.value,
+            gender: gender.value,
+            address: address.value,
+            phoneNo: phoneNo.value,
+        })
+
+        if (typeof response === 'string'){
+            // sign up failed, show message
+            errorMessage.value = response;
+        } else {
+            // sign up successful, response is a User object
+            console.log('sign up successful:', response);
+
+            // TODO: login user after sign up
+        }
+    } catch (error) {
+        errorMessage.value = 'Sign Up failed. Please check your credentials.'
+    } finally {
+        loading.value = false
+    }
+}
 
 </script>
 
@@ -202,9 +246,9 @@ const login = async () => {
 
                     <div class="col-6">
                         <FloatLabel>
-                            <InputText id="postal" v-model="postalCode"
+                            <InputText id="phone" v-model="phoneNo"
                                 class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none" />
-                            <label for="postal">Postal Code</label>
+                            <label for="phone">Phone Number</label>
                         </FloatLabel>
                     </div>
                 </div>
@@ -230,7 +274,8 @@ const login = async () => {
                     <label for="agree" class="text-black ml-2">I agree to the Terms & Conditions</label>
                 </div>
 
-                <Button label="Create an account" class="w-full mb-4 login-btn" />
+                <div v-if="errorMessage" class="text-red-600 mb-4">{{ errorMessage }}</div>
+                <Button @click="signUp" :loading="loading" label="Create an account" class="w-full mb-4 login-btn" />
 
                 <p class="text-sm text-gray-200 no-account">
                     Already have an account?

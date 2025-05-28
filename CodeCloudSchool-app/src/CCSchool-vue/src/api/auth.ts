@@ -1,3 +1,4 @@
+import { User } from 'lucide-vue-next';
 import api from './api';
 
 interface LoginData {
@@ -51,6 +52,15 @@ interface User {
   email: string;
 }
 
+interface StudentSignUp {
+  name: string;
+  lastName: string;
+  password: string;
+  gender?: string;
+  address?: string;
+  phoneNumber: string;
+}
+
 export const AuthService = {
   async login({ email, password, role }: LoginData): Promise< User | string> {
     try {
@@ -58,13 +68,27 @@ export const AuthService = {
       console.log('Login response:', response);
       return response.data; // e.g. User data , "Login successful"
     } catch (error: any) {
-        console.error('Full error object:', error); // Add this
+        console.error('Full error object:', error); 
         if (error.response && error.response.data) {
             return error.response.data;
         }
     return 'An unknown error occurred';
     }
 
+  },
+
+  async signUpStudent(StudentSignUp: StudentSignUp): Promise<User | string>{
+    try {
+      const response = await api.post('/student/register', StudentSignUp);
+      console.log('Sign Up response:', response);
+      return response.data; // should be success message
+    } catch (error: any) {
+      console.error('Full error object:', error);
+      if (error.response && error.response.data) {
+        return error.response.data; // e.g. "Email already exists"
+      }
+      return 'An unknown error occurred';
+    }
   }
 
 
