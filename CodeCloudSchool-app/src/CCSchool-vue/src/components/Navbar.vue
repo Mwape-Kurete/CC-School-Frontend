@@ -101,11 +101,6 @@ const props = defineProps({
   }
 });
 
-// If using auth store (uncomment if needed)
-// const { currentUser } = useAuth();
-
-// TEMPORARY: Mock currentUser for testing (remove later)
-const currentUser = ref({ role: props.userRole });
 
 // Shared nav items (students + lecturers)
 const sharedNavItems = [
