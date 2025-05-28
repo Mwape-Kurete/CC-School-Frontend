@@ -6,8 +6,10 @@ import Divider from 'primevue/divider'
 import CMarkBreakdown from '@/components/CMarkBreakdown.vue'
 import LecturerCard from '@/components/LecturerCard.vue'
 import CButtonIcon from '@/components/ui/Cbutton-icon.vue'
-import { PencilLine, Maximize2 } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { PencilLine, Maximize2, Ban, Save, ArrowUpFromLine } from 'lucide-vue-next'
+import { ref, reactive } from 'vue'
+import InputText from 'primevue/inputtext'
+import FloatLabel from 'primevue/floatlabel'
 
 const assessmentGroups = [
   {
@@ -37,9 +39,70 @@ const assessmentGroups = [
       { description: 'Individual Contribution', mark: '15%' },
     ],
   },
-]
+] //template for assesment layout
 
-const isEditing = ref(false)
+const courseData = reactive({
+  courseName: 'Computer Science',
+  courseDescription: 'rendering from course data ',
+  courseWeekBreakdown: [
+    { header: 'Week 1 ', description: ' Course Introduction & Briefing.' },
+    { header: 'Week 2', description: 'Type-sensitive programming aka TS' },
+    { header: 'Week 3', description: ' Basic software architecture' },
+  ],
+  courseSlides:
+    'https://docs.google.com/presentation/d/1HmYsdBBTyLZVuaNdS-5RT5gmxgQarYcfwQgBmUI1zlg',
+  courseMarkBreakdown: [
+    {
+      title: 'Theory Assessments',
+      mark: '10%',
+      items: [
+        { description: 'Theme 1: Project Proposal Document', mark: '50%' },
+        { description: 'Theme 2: Project Report & Demonstration', mark: '50%' },
+      ],
+    },
+    {
+      title: 'Formative Assessments',
+      mark: '30%',
+      items: [
+        { description: 'Theme 1: Progress Feedback', mark: '25%' },
+        { description: 'Theme 1: Code Review', mark: '25%' },
+        { description: 'Theme 2: Progress Feedback', mark: '25%' },
+        { description: 'Theme 2: Code Review', mark: '25%' },
+      ],
+    },
+    {
+      title: 'Summative Assessments',
+      mark: '60%',
+      items: [
+        { description: 'Repository Administration', mark: '15%' },
+        { description: 'Functional Management System', mark: '70%' },
+        { description: 'Individual Contribution', mark: '15%' },
+      ],
+    },
+  ],
+  courseSemDescriptions: [
+    {
+      description: 'Semester One description',
+    },
+    { description: 'Semester Two description' },
+  ],
+})
+
+const editableData = reactive({ ...courseData }) //state management -> essentially storing the unsaved changes before user confirmation
+const isEditing = ref(false) //state management for making the course details editable
+const isEditingSection = ref(false) //state management for making the section editable
+
+//storing uploads
+const googleSlideurl = ref(null)
+
+const sectionEdit = reactive({
+  courseName: false,
+  courseDescription: false,
+  courseWeekBreakdown: false,
+  courseSlides: false,
+  courseMarkBreakdown: false,
+  courseSemDescriptions: false,
+})
 </script>
 
 <template>
@@ -92,18 +155,31 @@ const isEditing = ref(false)
   <div class="course-details-section">
     <div class="course-section-header">
       <div class="left-cs-header">
-        <h1 class="section-header-lg">Computer Science | Semester 1</h1>
+        <h1 class="section-header-lg">{{ courseData.courseName }}</h1>
       </div>
-      <div class="right-cs-header">
+      <div class="right-cs-header" v-if="isEditing == false">
         <CButtonIcon
           id="edit-course"
           type="primary"
           size="md"
-          btnIconLabel="Update Course Details"
+          btnIconLabel="Edit Course Details"
           @click="isEditing = true"
         >
           <template #icon>
             <PencilLine size="20" />
+          </template>
+        </CButtonIcon>
+      </div>
+      <div class="right-cs-header" v-else-if="isEditing == true">
+        <CButtonIcon
+          id="edit-course"
+          type="primary"
+          size="md"
+          btnIconLabel="Cancel"
+          @click="isEditing = false"
+        >
+          <template #icon>
+            <Ban size="20" />
           </template>
         </CButtonIcon>
       </div>
@@ -120,7 +196,7 @@ const isEditing = ref(false)
       <div v-else-if="isEditing == true">
         <div class="cd-header">
           <div class="right-cd">
-            <h1 class="section-header">Announcements</h1>
+            <h1 class="section-header">What You Will Learn</h1>
           </div>
           <div class="left-cd">
             <CButtonIcon type="primary" size="md" btnIconLabel="Edit Section">
@@ -132,22 +208,29 @@ const isEditing = ref(false)
         </div>
       </div>
       <p>
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Rerum, eum porro eius earum
-        explicabo mollitia cupiditate nemo veritatis sint enim unde, totam hic nobis placeat itaque
-        asperiores sed officia pariatur! Lorem ipsum, dolor sit amet consectetur adipisicing elit.
-        Rerum adipisci eum dolorem harum a accusamus quos! Delectus nihil officiis eos nostrum porro
-        corrupti quia tempore, obcaecati officia voluptatum quae ducimus?
+        {{ courseData.courseDescription }}
       </p>
     </div>
 
     <div class="sem-overview-section">
-      <CListGroup
-        :items="[
-          { header: 'Week 1 ', description: ' Course Introduction & Briefing.' },
-          { header: 'Week 2', description: 'Type-sensitive programming' },
-          { header: 'Week 3', description: ' Basic software architecture' },
-        ]"
-      />
+      <div v-if="isEditing == false">
+        <h1 class="section-header"></h1>
+      </div>
+      <div v-else-if="isEditing == true">
+        <div class="cd-header">
+          <div class="right-cd">
+            <h1 class="section-header"></h1>
+          </div>
+          <div class="left-cd">
+            <CButtonIcon type="primary" size="md" btnIconLabel="Edit Section">
+              <template #icon>
+                <PencilLine size="16" />
+              </template>
+            </CButtonIcon>
+          </div>
+        </div>
+      </div>
+      <CListGroup :items="courseData.courseWeekBreakdown" />
     </div>
 
     <div class="semester-break">
@@ -155,42 +238,144 @@ const isEditing = ref(false)
     </div>
 
     <div class="google-slides-section">
-      <h1 class="section-header">SEMESTER BRIEF</h1>
+      <div v-if="isEditing == false">
+        <h1 class="section-header">SEMESTER BRIEF</h1>
+      </div>
+      <div v-else-if="isEditing == true">
+        <div class="cd-header">
+          <div class="right-cd">
+            <h1 class="section-header">SEMESTER BRIEF</h1>
+          </div>
+          <div class="left-cd" v-if="isEditingSection == false">
+            <CButtonIcon
+              type="primary"
+              size="md"
+              btnIconLabel="Edit Section"
+              @click="isEditingSection = true"
+            >
+              <template #icon>
+                <PencilLine size="16" />
+              </template>
+            </CButtonIcon>
+          </div>
+          <div class="left-cd" v-if="isEditingSection == true">
+            <CButtonIcon
+              type="primary"
+              size="md"
+              btnIconLabel="Save Section"
+              @click="isEditingSection = false"
+            >
+              <template #icon>
+                <PencilLine size="16" />
+              </template>
+            </CButtonIcon>
+          </div>
+        </div>
+      </div>
       <div class="slides-container">
-        <iframe
-          src="https://docs.google.com/presentation/d/e/2PACX-1vRGtMnpYEVo6hbUXId7ZBzDVjzEbtUL6hu4qx8YRp8GLh_ITDH_cUTZSJgxnCh-ztxNWQdj4ozAmWem/pubembed?start=false&loop=true&delayms=3000"
-          frameborder="0"
-          width="960"
-          height="569"
-          allowfullscreen="true"
-          mozallowfullscreen="true"
-          webkitallowfullscreen="true"
-          class="slides-iframe"
-        ></iframe>
+        <div class="active-editing" v-if="isEditingSection == true">
+          <div class="input-cont">
+            <div class="w-full mb-4">
+              <FloatLabel>
+                <InputText
+                  id="g-slide-url"
+                  v-model="googleSlideurl"
+                  class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+                />
+                <label for="g-slide-url">Upload Google Slide Link</label>
+              </FloatLabel>
+            </div>
+            <CButtonIcon
+              type="primary"
+              size="md"
+              class="updateSave"
+              btnIconLabel="Upload Google Slides"
+            >
+              <template>
+                <ArrowUpFromLine size="16" />
+              </template>
+            </CButtonIcon>
+          </div>
+          <div class="save-cont">
+            <CButtonIcon
+              type="primary"
+              size="md"
+              class="updateSave"
+              btnIconLabel="Save Changes"
+              @click="isEditingSection = false"
+            >
+              <template>
+                <Save size="16" />
+              </template>
+            </CButtonIcon>
+          </div>
+        </div>
+        <div class="active-editing" v-if="isEditingSection == false">
+          <iframe
+            :src="courseData.courseSlides + '/embed'"
+            frameborder="0"
+            width="960"
+            height="569"
+            allowfullscreen="true"
+            mozallowfullscreen="true"
+            webkitallowfullscreen="true"
+            class="slides-iframe"
+          ></iframe>
+        </div>
       </div>
       <Divider class="mt-5 mb-5" />
     </div>
 
     <div class="mark-breakdown-section">
-      <h1 class="section-header">Mark Breakdown</h1>
+      <div v-if="isEditing == false">
+        <h1 class="section-header">Mark Breakdown</h1>
+      </div>
+      <div v-else-if="isEditing == true">
+        <div class="cd-header">
+          <div class="right-cd">
+            <h1 class="section-header">Mark Breakdown</h1>
+          </div>
+          <div class="left-cd">
+            <CButtonIcon type="primary" size="md" btnIconLabel="Edit Section">
+              <template #icon>
+                <PencilLine size="16" />
+              </template>
+            </CButtonIcon>
+          </div>
+        </div>
+      </div>
       <CButton type="secondary" size="md" :disabled="true" class="mark-breadown-btn mb-2"
         >MARK BREKDOWN</CButton
       >
       <br />
-      <CMarkBreakdown :items="assessmentGroups" />
+      <CMarkBreakdown :items="courseData.courseMarkBreakdown" />
       <Divider class="mb-2" />
     </div>
 
     <div class="year-breakdown-section">
-      <h1 class="section-header">Year Breakdown</h1>
+      <div v-if="isEditing == false">
+        <h1 class="section-header">Year Breakdown</h1>
+      </div>
+      <div v-else-if="isEditing == true">
+        <div class="cd-header">
+          <div class="right-cd">
+            <h1 class="section-header">Year Breakdown</h1>
+          </div>
+          <div class="left-cd">
+            <CButtonIcon type="primary" size="md" btnIconLabel="Edit Section">
+              <template #icon>
+                <PencilLine size="16" />
+              </template>
+            </CButtonIcon>
+          </div>
+        </div>
+      </div>
       <CButton type="secondary" size="md" :disabled="true" class="year-breadown-btn mb-2"
-        >Semester 1</CButton
-      >
+        >Semester
+      </CButton>
 
       <p>
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Recusandae quisquam assumenda
-        soluta repellendus saepe expedita, perspiciatis distinctio? Aut culpa vero placeat mollitia
-        animi, nesciunt, magnam non eos itaque perferendis dicta.
+        {{ courseData.courseSemDescriptions[0]?.description }}
       </p>
 
       <Divider class="year-break-div" />
@@ -200,9 +385,7 @@ const isEditing = ref(false)
       >
 
       <p>
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Recusandae quisquam assumenda
-        soluta repellendus saepe expedita, perspiciatis distinctio? Aut culpa vero placeat mollitia
-        animi, nesciunt, magnam non eos itaque perferendis dicta.
+        {{ courseData.courseSemDescriptions[1]?.description }}
       </p>
     </div>
   </div>
@@ -306,6 +489,15 @@ const isEditing = ref(false)
   border-radius: 10px;
 }
 
+/*SLIDES*/
+.save-cont {
+  width: 100%;
+}
+
+.input-cont {
+  margin-bottom: 5rem;
+}
+
 .mark-breadown-btn {
   margin-top: -2rem;
 }
@@ -340,5 +532,27 @@ const isEditing = ref(false)
   width: 15rem;
   margin-top: 5rem;
   margin-bottom: 1rem;
+}
+
+/*inputs */
+::v-deep(.p-inputtext),
+::v-deep(.p-password-input),
+::v-deep(.p-dropdown) {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding-left: 0 !important;
+}
+
+::v-deep(.p-password-input) {
+  border: none !important;
+}
+
+::v-deep(.p-divider-content) {
+  background-color: #f8f8f8 !important;
+}
+
+::v-deep(.p-float-label > label) {
+  background-color: transparent !important;
 }
 </style>
