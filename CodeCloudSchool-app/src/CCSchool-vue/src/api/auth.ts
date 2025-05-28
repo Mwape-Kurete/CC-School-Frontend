@@ -56,10 +56,13 @@ interface StudentSignUp {
   name: string;
   lastName: string;
   password: string;
-  gender?: string;
-  address?: string;
+  gender: string;
+  address: string;
   phoneNumber: string;
+  enrollmentDate: string;
+  yearLevel: string;
 }
+
 
 export const AuthService = {
   async login({ email, password, role }: LoginData): Promise< User | string> {

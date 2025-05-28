@@ -27,7 +27,7 @@ const currentFormVariant = ref(props.variant);
 
 // Toggle function
 const toggleVariant = () => {
-  currentFormVariant.value = currentFormVariant.value === 'login' ? 'signup' : 'login'
+    currentFormVariant.value = currentFormVariant.value === 'login' ? 'signup' : 'login'
 }
 
 const email = ref('')
@@ -128,20 +128,22 @@ const signUp = async () => {
         console.log('Attempting to sign up...')
         const response = await AuthService.signUpStudent({
             name: name.value,
-            surname: surname.value,
+            lastName: surname.value,
             password: password.value,
-            gender: gender.value,
+            gender: typeof gender.value === 'object' ? gender.value.value : gender.value, // extract actual string
             address: address.value,
-            phoneNo: phoneNo.value,
+            phoneNumber: phoneNo.value,
+            enrollmentDate: new Date().toISOString(), // REQUIRED
+            yearLevel: "1st Year", // or bind this to a form field
         })
 
-        if (typeof response === 'string'){
+        if (typeof response === 'string') {
             // sign up failed, show message
             errorMessage.value = response;
         } else {
             // sign up successful, response is a User object
             console.log('sign up successful:', response);
-
+            alert('Your CC School email adress for signing in is: ' + response.email);
             // TODO: login user after sign up
         }
     } catch (error) {
@@ -201,7 +203,8 @@ const signUp = async () => {
 
                 <p class="text-sm text-gray-200 no-account">
                     Don’t have an account?
-                    <Button @click.prevent="toggleVariant" label="Sign up here" text class="text-primary sign-up-link p-0" />
+                    <Button @click.prevent="toggleVariant" label="Sign up here" text
+                        class="text-primary sign-up-link p-0" />
                 </p>
             </template>
 
@@ -279,7 +282,8 @@ const signUp = async () => {
 
                 <p class="text-sm text-gray-200 no-account">
                     Already have an account?
-                    <Button @click.prevent="toggleVariant" label="Login here" text class="text-primary sign-up-link p-0" />
+                    <Button @click.prevent="toggleVariant" label="Login here" text
+                        class="text-primary sign-up-link p-0" />
                 </p>
             </template>
         </div>
