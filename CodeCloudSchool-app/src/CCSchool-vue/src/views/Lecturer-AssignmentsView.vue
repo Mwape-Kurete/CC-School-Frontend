@@ -219,8 +219,9 @@ function saveAssignment() {
 
 .form-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+  border-radius: 50px;
+  background-color: #D0DFCC;
+  box-shadow: 0 0 0 2px #d0dfccab;
 }
 
 /* Form Layout */
@@ -265,7 +266,8 @@ function saveAssignment() {
 
 .attempt-button.unlimited.active {
   background-color: #dbeafe;
-  color: #2563eb;
+    background-color: #D0DFCC;
+
 }
 
 .attempt-count {
@@ -343,27 +345,33 @@ function saveAssignment() {
 
 .editor-textarea:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 2px #d0dfccab;
+
 }
 
 /* Save Button */
 .save-button {
+  width: 60%;
+  height: 50px;
   padding: 0.75rem 1.5rem;
-  background-color: #2563eb;
+  border-radius: 80px;
+  background-color: #D0DFCC;
   color: white;
   font-weight: 500;
+  margin-left: 190px;
   border: none;
-  border-radius: 0.5rem;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .save-button:hover {
-  background-color: #1d4ed8;
+    background-color: #abb7a8;
+
 }
 
 .save-button:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 2px #d0dfccab;
+  
 }
 </style>
