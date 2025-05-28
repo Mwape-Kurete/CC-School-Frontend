@@ -1,40 +1,43 @@
 <script setup lang="ts">
+import router from '@/router';
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
+// Assignment Title reactive variable
 const assignmentTitle = ref('');
-const dueDate = ref('');
-const submissionFormat = ref('');
-const assignmentDetailsHeader = ref('');
-const assignmentDetailsDescription = ref('');
+
+// Add missing state and methods for attempts
 const attemptCount = ref(1);
 const unlimitedAttempts = ref(false);
 
-const submissionFormats = [
-  { value: 'pdf', label: 'PDF Document' },
-  { value: 'doc', label: 'Word Document' },
-  { value: 'zip', label: 'ZIP Archive' },
-  { value: 'code', label: 'Code Repository' },
-  { value: 'other', label: 'Other Format' }
-];
+function decrementAttempts() {
+  if (attemptCount.value > 1 && !unlimitedAttempts.value) {
+    attemptCount.value--;
+  }
+}
 
-const incrementAttempts = () => {
+function incrementAttempts() {
   if (!unlimitedAttempts.value) {
     attemptCount.value++;
   }
-};
+}
 
-const decrementAttempts = () => {
-  if (!unlimitedAttempts.value && attemptCount.value > 1) {
-    attemptCount.value--;
-  }
-};
-
-const toggleUnlimitedAttempts = () => {
+function toggleUnlimitedAttempts() {
   unlimitedAttempts.value = !unlimitedAttempts.value;
-};
+}
 
-const saveAssignment = () => {
-  // Here you would typically send data to an API
+const dueDate = ref('');
+const submissionFormat = ref('');
+const submissionFormats = [
+  { value: 'pdf', label: 'PDF' },
+  { value: 'docx', label: 'DOCX' },
+  { value: 'txt', label: 'TXT' }
+];
+const assignmentDetailsHeader = ref('');
+const assignmentDetailsDescription = ref('');
+
+function saveAssignment() {
+    // Here you would typically send data to an API
   console.log('Assignment saved:', {
     title: assignmentTitle.value,
     dueDate: dueDate.value,
@@ -52,60 +55,64 @@ const saveAssignment = () => {
   assignmentDetailsDescription.value = '';
   attemptCount.value = 1;
   unlimitedAttempts.value = false;
+
+  // Redirect to assignments overview page
+  router.push('/LecturerAssign'); // Or your actual route path
 };
+  
 </script>
 
 <template>
   <div class="assignment-view">
-    <h1 class="text-3xl font-bold mb-6">Create a New Assignment</h1>
+    <h1 class="page-title">Create a New Assignment</h1>
     
-    <div class="assignment-form space-y-6 max-w-3xl">
+    <div class="assignment-form">
       <!-- Assignment Title -->
       <div class="form-group">
-        <label class="block text-lg font-medium mb-2">Assignment Title</label>
+        <label class="form-label">Assignment Title</label>
         <input 
           v-model="assignmentTitle"
           type="text" 
           placeholder="Type assignment title here" 
-          class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          class="form-input"
         >
       </div>
       
       <!-- Due Date and Attempt Count -->
-      <div class="flex flex-wrap gap-6">
-        <div class="form-group flex-1 min-w-[200px]">
-          <label class="block text-lg font-medium mb-2">Assignment Due Date</label>
+      <div class="form-row">
+        <div class="form-group date-input">
+          <label class="form-label">Assignment Due Date</label>
           <input 
             v-model="dueDate"
             type="date" 
-            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="form-input"
           >
         </div>
         
-        <div class="form-group flex-1 min-w-[200px]">
-          <label class="block text-lg font-medium mb-2">Set Attempt Count</label>
-          <div class="flex items-center gap-2">
+        <div class="form-group attempts-input">
+          <label class="form-label">Set Attempt Count</label>
+          <div class="attempts-controls">
             <button 
               @click="decrementAttempts"
               :disabled="unlimitedAttempts"
-              class="p-2 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+              class="attempt-button"
             >
               -
             </button>
-            <span class="px-4 py-2 bg-gray-100 rounded-lg">
+            <span class="attempt-count">
               {{ unlimitedAttempts ? '∞' : attemptCount }}
             </span>
             <button 
               @click="incrementAttempts"
               :disabled="unlimitedAttempts"
-              class="p-2 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+              class="attempt-button"
             >
               +
             </button>
             <button 
               @click="toggleUnlimitedAttempts"
-              class="p-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-              :class="{ 'bg-blue-100 text-blue-600': unlimitedAttempts }"
+              class="attempt-button unlimited"
+              :class="{ active: unlimitedAttempts }"
             >
               ∞
             </button>
@@ -115,10 +122,10 @@ const saveAssignment = () => {
       
       <!-- Submission Format -->
       <div class="form-group">
-        <label class="block text-lg font-medium mb-2">Expected Submission Format</label>
+        <label class="form-label">Expected Submission Format</label>
         <select 
           v-model="submissionFormat"
-          class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          class="form-input"
         >
           <option value="" disabled>Select a Format</option>
           <option v-for="format in submissionFormats" :key="format.value" :value="format.value">
@@ -128,46 +135,34 @@ const saveAssignment = () => {
       </div>
       
       <!-- Assignment Details -->
-      <div class="form-group">
-        <h2 class="text-xl font-bold mb-4">Assignment Details</h2>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-lg font-medium mb-2">Assignment Details Header</label>
+      <div class="assignment-details">
+        <h2 class="section-title">Assignment Details</h2>
+        <div class="details-content">
+          <div class="details-header">
+            <label class="form-label">Assignment Details Header</label>
             <input 
               v-model="assignmentDetailsHeader"
               type="text" 
               placeholder="Type assignment header here" 
-              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="form-input"
             >
           </div>
           
-          <div>
-            <label class="block text-lg font-medium mb-2">Assignment Details Description</label>
-            <div class="border border-gray-300 rounded-lg overflow-hidden">
-              <!-- Rich Text Editor Toolbar -->
-              <div class="bg-gray-100 p-2 border-b border-gray-300 flex flex-wrap gap-2">
-                <button class="p-2 hover:bg-gray-200 rounded" title="Bold">
-                  <strong>B</strong>
-                </button>
-                <button class="p-2 hover:bg-gray-200 rounded" title="Italic">
-                  <em>I</em>
-                </button>
-                <button class="p-2 hover:bg-gray-200 rounded" title="Link">
-                  <span class="underline">Link</span>
-                </button>
-                <button class="p-2 hover:bg-gray-200 rounded" title="Bullet List">
-                  <span>• List</span>
-                </button>
-                <button class="p-2 hover:bg-gray-200 rounded" title="Numbered List">
-                  <span>1. List</span>
-                </button>
+          <div class="details-description">
+            <label class="form-label">Assignment Details Description</label>
+            <div class="description-editor">
+              <div class="editor-toolbar">
+                <button class="toolbar-button" title="Bold"><strong>B</strong></button>
+                <button class="toolbar-button" title="Italic"><em>I</em></button>
+                <button class="toolbar-button" title="Link"><span class="underline">Link</span></button>
+                <button class="toolbar-button" title="Bullet List"><span>• List</span></button>
+                <button class="toolbar-button" title="Numbered List"><span>1. List</span></button>
               </div>
-              <!-- Text Area -->
               <textarea 
                 v-model="assignmentDetailsDescription"
                 placeholder="Type assignment description here" 
                 rows="8"
-                class="w-full p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="editor-textarea"
               ></textarea>
             </div>
           </div>
@@ -177,7 +172,7 @@ const saveAssignment = () => {
       <!-- Save Button -->
       <button 
         @click="saveAssignment"
-        class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        class="save-button"
       >
         SAVE ASSIGNMENT
       </button>
@@ -186,11 +181,189 @@ const saveAssignment = () => {
 </template>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=Quicksand:wght@300..700&display=swap');
+
+/* Base Styles */
 .assignment-view {
-  padding: 2rem;
+  padding: 60px;
+  font-family: "Quicksand", sans-serif;
+  color: grey;
+}
+
+.page-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
 }
 
 .form-group {
   margin-bottom: 1.5rem;
+  padding: 15px;
+}
+
+.form-label {
+  display: block;
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 50px;
+  color: grey;
+  font-family: inherit;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Form Layout */
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.date-input, .attempts-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* Attempt Controls */
+.attempts-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.attempt-button {
+  padding: 0.5rem;
+  background-color: #e5e7eb;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.attempt-button:hover {
+  background-color: #d1d5db;
+}
+
+.attempt-button:disabled {
+  opacity: 0.5;
+}
+
+.attempt-button.unlimited {
+  font-weight: bold;
+}
+
+.attempt-button.unlimited.active {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.attempt-count {
+  padding: 0.5rem 1rem;
+  background-color: #f3f4f6;
+  border-radius: 0.5rem;
+}
+
+/* Assignment Details */
+.assignment-details {
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.details-content {
+  padding: 1rem;
+}
+
+.details-header {
+  margin-bottom: 1.5rem;
+}
+
+.details-description {
+  margin-top: 1.5rem;
+}
+
+/* Description Editor */
+.description-editor {
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.editor-toolbar {
+  background-color: #f3f4f6;
+  padding: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+}
+
+.toolbar-button {
+  padding: 0.5rem;
+  background: none;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.toolbar-button:hover {
+  background-color: #e5e7eb;
+}
+
+.editor-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  resize: vertical;
+  min-height: 150px;
+  font-family: inherit;
+  background-color: white;
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
+
+.editor-textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Save Button */
+.save-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #2563eb;
+  color: white;
+  font-weight: 500;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.save-button:hover {
+  background-color: #1d4ed8;
+}
+
+.save-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
 }
 </style>
