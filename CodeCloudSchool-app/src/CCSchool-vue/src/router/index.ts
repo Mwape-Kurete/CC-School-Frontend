@@ -1,17 +1,28 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+// Add type declarations for route meta fields
+declare module 'vue-router' {
+  interface RouteMeta {
+    public?: boolean
+    allowedRoles?: ('student' | 'lecturer' | 'admin')[]
+    layout?: string
+  }
+}
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
       name: 'dashboard',
-      component: () => import('@/views/DashboardView.vue')
+      component: () => import('@/views/DashboardView.vue'),
+      meta: { allowedRoles: ['student'] }
     },
     {
       path: '/courses',
       name: 'courses',
-      component: () => import('@/views/CoursesView.vue')
+      component: () => import('@/views/CoursesView.vue'),
+      meta: { allowedRoles: ['student', 'lecturer'] }
     },
     // Nested course routes
     {
@@ -63,8 +74,10 @@ const router = createRouter({
     {
       path: '/account',
       name: 'account',
-      component: () => import('@/views/UserAccountView.vue')
+      component: () => import('@/views/UserAccountView.vue'),
+      meta: { allowedRoles: ['student', 'lecturer', 'admin'] }
     },
+
     {
       path: '/settings',
       name: 'settings',
@@ -76,14 +89,53 @@ const router = createRouter({
       path: '/login',
       name: 'Login',
       component: () => import('@/views/LoginView.vue'),
-      meta: { layout: 'LoginReg' }
+      meta: { 
+        layout: 'LoginReg', 
+        public: true 
+      }
+    },
+
+    {
+      path: '/lecturer-dash', 
+      name: 'lecturer-dashboard',
+      component: () => import('@/views/LectureDashboardView.vue'),
+      meta: { 
+        layout: 'ThreeCol',
+        allowedRoles: ['lecturer'] 
+      }
+    },
+
+        {
+      path: '/lecturer/grading',
+      name: 'lecturer-grading',
+      component: () => import('@/views/lecturer/GradingView.vue'),
+      meta: { allowedRoles: ['lecturer'] }
+    },
+
+    // ========================
+    // Admin Routes
+    // ========================
+    {
+      path: '/admin',
+      name: 'admin-dashboard',
+      component: () => import('@/views/admin/AdminDashboard.vue'),
+      meta: { 
+        layout: 'TwoCol',
+        allowedRoles: ['admin'] }
     },
     {
-      path: '/lecturer-dash',
-      name: 'lecturer-dash',
-      component: () => import('@/views/LectureDashboardView.vue'),
-      meta: { layout: 'ThreeCol' }
+      path: '/admin/users',
+      name: 'admin-users',
+      component: () => import('@/views/admin/UserManagement.vue'),
+      meta: { allowedRoles: ['admin'] }
     },
+    {
+      path: '/admin/settings',
+      name: 'admin-settings',
+      component: () => import('@/views/admin/SystemSettings.vue'),
+      meta: { allowedRoles: ['admin'] }
+    },
+
     {
       path: '/layout-sandbox',
       name: 'layout-sandbox',
@@ -92,10 +144,11 @@ const router = createRouter({
     {
       path: '/sandbox',
       name: 'sandbox',
-      component: () => import('@/views/Sandbox.vue')
-
+      component: () => import('@/views/Sandbox.vue'),
+      meta: { public: true }
     }
   ]
 })
+
 
 export default router

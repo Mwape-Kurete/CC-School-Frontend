@@ -5,10 +5,7 @@ import Navbar from './components/Navbar.vue';
 
 <template>
   <div class="app-container">
-    <!-- Navbar (fixed left sidebar) -->
     <Navbar />
-
-    <!-- Main content area (right side) -->
     <main class="main-content">
       <RouterView />
     </main>
