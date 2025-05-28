@@ -72,20 +72,62 @@ import {
   Users, 
   Calendar, 
   User, 
-  Settings, 
+  Settings,
+  Shield, 
+
 } from 'lucide-vue-next';
+import { computed } from 'vue' 
 
 const router = useRouter();
 
-// Array containing all navigation items with their labels, icons and routes
-const navItems = [
-  { label: 'Dashboard', icon: Gauge, route: '/' },
+// Define component props to accept user role
+const props = defineProps({
+  userRole: {
+    type: String,
+    default: 'student' // Fallback to student view
+  }
+});
+
+// If using auth store (uncomment if needed)
+// const { currentUser } = useAuth();
+
+// TEMPORARY: Mock currentUser for testing (remove later)
+const currentUser = ref({ role: props.userRole });
+
+// Shared nav items (students + lecturers)
+const sharedNavItems = [
+  { 
+    label: 'Dashboard', 
+    icon: Gauge, 
+    route: { 
+      student: '/', 
+      lecturer: '/lecturer-dashboard' // Changed to match your file
+    } 
+  },
   { label: 'Courses', icon: BookOpen, route: '/courses' },
   { label: 'Groups', icon: Users, route: '/groups' },
   { label: 'Timetable', icon: Calendar, route: '/timetable' },
   { label: 'User Account', icon: User, route: '/account' },
   { label: 'Settings', icon: Settings, route: '/settings' },
 ];
+
+// Admin-specific items
+const adminNavItems = [
+  { label: 'Admin Console', icon: Shield, route: '/admin' },
+  { label: 'Manage Users', icon: Users, route: '/admin/users' },
+  { label: 'System Settings', icon: Settings, route: '/admin/settings' },
+];
+
+// Resolve nav items
+const navItems = computed(() => {
+  const role = currentUser.value?.role || props.userRole;
+  return role === 'admin' 
+    ? adminNavItems 
+    : sharedNavItems.map(item => ({
+        ...item,
+        route: typeof item.route === 'object' ? item.route[role] : item.route
+      }));
+});
 
 // State management
 const isCollapsed = ref(false);

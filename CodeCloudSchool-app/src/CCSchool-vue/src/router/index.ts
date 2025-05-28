@@ -1,5 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+// Add type declarations for route meta fields
+declare module 'vue-router' {
+  interface RouteMeta {
+    public?: boolean
+    allowedRoles?: ('student' | 'lecturer' | 'admin')[]
+    layout?: string
+  }
+}
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -10,7 +19,9 @@ const router = createRouter({
       meta: {
         layout: 'TwoCol',
         page: 'dashboard',
+        allowedRoles: ['student'] 
       },
+
     },
     {
       path: '/courses',
@@ -28,7 +39,9 @@ const router = createRouter({
       meta: {
         layout: 'TwoCol',
         page: 'modules',
+        allowedRoles: ['student', 'lecturer']
       },
+       
     },
     // Nested course routes
     {
@@ -110,9 +123,12 @@ const router = createRouter({
       component: () => import('@/views/UserAccountView.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'account'
+        page: 'account',
+        allowedRoles: ['student', 'lecturer', 'admin']
       },
+       
     },
+
     {
       path: '/settings',
       name: 'settings',
@@ -140,6 +156,13 @@ const router = createRouter({
         page: 'login'
       },
     },
+    {
+      path: '/admin/settings',
+      name: 'admin-settings',
+      component: () => import('@/views/admin/SystemSettings.vue'),
+      meta: { allowedRoles: ['admin'] }
+    },
+
     {
       path: '/layout-sandbox',
       name: 'layout-sandbox',
@@ -221,8 +244,11 @@ const router = createRouter({
       component: () => import('@/views/LecturerCreateModule.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'lecturer-create-modules'
+        page: 'lecturer-create-modules',
+        public: true
       },
+     
+      
     }
   ]
 })
