@@ -4,7 +4,7 @@ import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
-import type { Course } from '@/api/courses'; // Make sure this import exists and points to the correct type definition
+import type { Course } from '@/api/courses'; 
 const course = ref<Course | null>(null);
 
 onMounted(async () => {

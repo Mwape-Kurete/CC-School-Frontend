@@ -1,12 +1,16 @@
-<script setup>
+<script setup lang="ts">
 import { useRoute } from 'vue-router';
 const route = useRoute();
-const courseId = route.params.courseId;
+
+
+import { CourseService } from '@/api/courses'
+import { AssignmentService } from '@/api/assignments'
+import { onMounted, ref, computed } from 'vue';
 
 // For visuals 
 import CardComp from '@/components/CardComp.vue'
 import Dropdown from '@/components/ui/CDropdown.vue' // Adjust the path as needed
-import { ref } from 'vue'
+
 
 // Sample state and options for the dropdown
 const selectedFilter = ref(null)
@@ -17,12 +21,86 @@ const filterOptions = [
   { label: 'Past', value: 'past' }
 ]
 
+
+import type { Course } from '@/api/courses';
+const course = ref<Course | null>(null); 
+
+onMounted(async () => {
+  // fetch the assignments for the course
+  await fetchAssignmentsByCourseId();
+
+  const courseIdParam = route.params.courseId;
+  const courseId = Array.isArray(courseIdParam) ? Number(courseIdParam[0]) : Number(courseIdParam);
+  try {
+    const result = await CourseService.getCoursebyId(courseId);
+    if (typeof result === 'string') {
+      console.error('Failed to fetch course:', result);
+      course.value = null;
+    } else {
+      console.log('Course fetched:', result);
+      course.value = result;
+      console.log('Course fetched successfully:', course.value);
+    }
+  } catch (error) {
+    console.error('Failed to fetch course:', error);
+  }
+})
+
+// =====================================================================================
+// assignments state and interface
+const assignments = ref<Assignment[]>([]); //store the assignments fetched from the API
+
+interface Assignment {
+  assignment_ID: number;
+  title: string;
+  description?: string;
+  dueDate: string; // ISO date string from API
+  lecturerId: number;
+  courseId?: number;
+}
+// =====================================================================================
+
+// functions
+// =====================================================================================
+
+const fetchAssignmentsByCourseId = async (): Promise<void> => {
+  // get the courseId from the route params
+  const courseIdParam = route.params.courseId;
+  const courseId = Array.isArray(courseIdParam) ? Number(courseIdParam[0]) : Number(courseIdParam);
+
+  try {
+    const response = await AssignmentService.getAssignmentsByCourseId(courseId);
+
+    if (typeof response === 'string') {
+      console.error('Failed to fetch assignments:', response);
+    } else {
+
+      console.log('Assignments fetched:', response);
+      // assign the fetched assignments to the state
+      assignments.value = response as Assignment[];
+    }
+
+  } catch (error) {
+    console.error('Failed to fetch assignments:', error);
+  }
+}
+
+// split assignments into upcoming and past
+const upcomingAssignments = computed(() =>
+  assignments.value.filter(a => new Date(a.dueDate) >= new Date())
+);
+
+const pastAssignments = computed(() =>
+  assignments.value.filter(a => new Date(a.dueDate) < new Date())
+);
+
+
 </script>
 
 
 <template>
   <div class="course-assignments">
-    <h1>{{ courseId }} - Assignments</h1>
+    <h1>{{ course?.courseDescription }} - Assignments</h1>
   </div>
 
   <!-- page content -->
@@ -46,13 +124,16 @@ const filterOptions = [
     <div class="divider"></div>
 
     <div class="card-container">
-      <CardComp cardType="assignment" assignmentTitle="API INTEGRATION: WEATHER DASHBOARD"
-        assignmentBody="This is the body of the assignment." assignmentDate="2023-10-15"
-        moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..." />
-      <div class="divider-card"></div>
-      <CardComp cardType="assignment" assignmentTitle="Refactor Legacy Code: E-Commerce Checkout System"
-        assignmentBody="This is the body of the assignment." assignmentDate="2023-10-15"
-        moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..." />
+      <CardComp
+        v-for="assignment in upcomingAssignments"
+        :key="assignment.assignment_ID"
+        cardType="assignment"
+        :assignmentTitle="assignment.title"
+        :assignmentBody="assignment.description || 'No description provided.'"
+        :assignmentDate="assignment.dueDate"
+        moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
+      />
+      <div v-if="!upcomingAssignments.length" class="text-gray-500">No upcoming assignments</div>
     </div>
 
     <!-- past assignments -->
@@ -60,14 +141,18 @@ const filterOptions = [
     <div class="divider"></div>
 
     <div class="card-container">
-      <CardComp cardType="assignment" assignmentTitle="Debugging Challenge: Banking System Vulnerability"
-        assignmentBody="This is the body of the assignment." assignmentDate="2023-10-15"
-        moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..." />
-      <div class="divider-card"></div>
-      <CardComp cardType="assignment" assignmentTitle="Algorithm Challenge: Route Optimiser for Delivery Drones"
-        assignmentBody="This is the body of the assignment." assignmentDate="2023-10-15"
-        moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..." />
+      <CardComp
+        v-for="assignment in pastAssignments"
+        :key="assignment.assignment_ID"
+        cardType="assignment"
+        :assignmentTitle="assignment.title"
+        :assignmentBody="assignment.description || 'No description provided.'"
+        :assignmentDate="assignment.dueDate"
+        moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
+      />
+      <div v-if="!pastAssignments.length" class="text-gray-500">No past assignments</div>
     </div>
+
   </div>
 </template>
 
