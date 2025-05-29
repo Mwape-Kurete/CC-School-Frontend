@@ -1,6 +1,6 @@
 import api from './api';
 
-interface Course{
+export interface Course{
     courseName: string,
     courseCode: number,
     courseDescription: string,
@@ -15,6 +15,19 @@ export const CourseService = {
             console.error('Full error object:', error);
             if (error.response && error.response.data) {
                 return error.response.data; // e.g. "No courses found"
+            }
+            return 'An unknown error occurred';
+        }
+    }, 
+    
+    async getCoursebyId(courseId: number): Promise<Course | string> {
+        try {
+            const response = await api.get(`/courses/${courseId}`);
+            return response.data; // should return a course object
+        } catch (error: any) {
+            console.error('Full error object:', error);
+            if (error.response && error.response.data) {
+                return error.response.data; // e.g. "Course not found"
             }
             return 'An unknown error occurred';
         }
