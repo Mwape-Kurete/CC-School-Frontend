@@ -115,6 +115,8 @@ onMounted(async ()=> {
           courses.value = response.map((course) => ({
             id: course.id,
             name: course.courseName,
+            courseName: course.courseName,
+            courseCode: course.courseCode,
             courseDescription: course.courseDescription
           }));
         }
@@ -180,8 +182,8 @@ const handleNavClick = (item: { label: string; icon: any; route: string }) => {
   }
 };
 
-const selectCourse = (course: { id: string, name: string }) => {
-  selectedCourse.value = course;
+const selectCourse = (course: { id: number, name: string }) => {
+  selectedCourse.value = { id: String(course.id), name: course.name };
   // Navigate to the course's home page
   router.push({
     name: 'CourseHome',
