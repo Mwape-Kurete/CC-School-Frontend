@@ -1,3 +1,7 @@
+<script setup lang="ts">
+
+</script>
+
 <template>
   <div class="course-home">
     <h1>{{ courseId }} - Home</h1>

@@ -89,11 +89,18 @@ const login = async () => {
             console.log('Login successful:', response)
             // Redirect or store user session here
 
-            // TODO: Store user role in session / state management
 
-            const user = response; // adjust if wrapped in another object
+            const user = response; 
+            
+            
+            // store user role in local storage
+            localStorage.setItem('userRole', user.role);
             if (user.role === 'Student') {
-                console.log('Redirecting to student dashboard');
+                // user obj only has email, not studentNumber => get the student number out the email
+                user.studentNumber = user.email.split('@')[0]; 
+                console.log('Student number:', user.studentNumber);
+
+                localStorage.setItem('studentNumber', user.studentNumber );
                 router.push({ name: 'dashboard' });
             } else if (user.role === 'Lecturer') {
                 router.push({ name: 'lecturer-dash' });

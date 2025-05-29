@@ -7,44 +7,6 @@ interface LoginData {
   role: 'admin' | 'lecturer' | 'student';
 }
 
-// admin register required data
-// {
-//   "fName": "string",
-//   "lName": "string",
-//   "password": "string",
-//   "phoneNumber": "string",
-//   "adminRole": "string",
-//   "department": "string"
-// }
-
-// student register required data
-  // "name": "string",
-  // "lastName": "string",
-  // "phoneNumber": "string",
-  // "password": "string",
-  // "studentNumber": "string",
-  // "email": "string",
-  // "gender": "string",
-  // "address": "string",
-  // "enrollmentDate": "2025-05-28T11:05:32.681Z",
-  // "yearLevel": "string",
-  // "status": "string",
-
-// lecturer register required data
-// the route is POST api/LecturerReg
-// "name": "string",
-//   "lastName": "string",
-//   "phoneNumber": "string",
-//   "password": "string",
-//   "role": "string",
-//   "lecturerId": 0,
-//   "lectName": "string",
-//   "lecLastName": "string",
-//   "lecEmail": "user@example.com",
-//   "department": "string",
-//   "dateOfJoining": "2025-05-28T11:06:38.222Z",
-//   "isActive": true,
-
 
 interface User {
   id: string;
@@ -84,7 +46,7 @@ export const AuthService = {
     try {
       const response = await api.post('/student/register', StudentSignUp);
       console.log('Sign Up response:', response);
-      return response.data; // should be success message
+      return response.data; // should return a Student
     } catch (error: any) {
       console.error('Full error object:', error);
       if (error.response && error.response.data) {

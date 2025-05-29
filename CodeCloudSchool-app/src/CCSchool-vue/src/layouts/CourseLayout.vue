@@ -2,7 +2,7 @@
   <div class="course-layout">
     <!-- Optional course header/navigation -->
     <div v-if="$route.params.courseId" class="course-header">
-      <h2 class="text-2xl font-bold">{{ $route.params.courseId }}</h2>
+      <!-- <h2 class="text-2xl font-bold">{{ $route.params.courseId }}</h2> -->
       <!-- You could add breadcrumbs or secondary nav here -->
     </div>
     
