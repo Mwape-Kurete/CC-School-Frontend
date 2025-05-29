@@ -95,6 +95,17 @@ const pastAssignments = computed(() =>
 );
 
 
+const formatAssignmentDate = (isoDate: string): string => {
+  const date = new Date(isoDate);
+  
+  const day = date.getUTCDate();
+  const month = date.toLocaleString('default', { month: 'long', timeZone: 'UTC' }); // "July"
+  const hours = date.getUTCHours().toString().padStart(2, '0'); // "23"
+  const minutes = date.getUTCMinutes().toString().padStart(2, '0'); // "59"
+
+  return `${day} ${month} - ${hours}:${minutes}`;
+}
+
 </script>
 
 
@@ -130,7 +141,7 @@ const pastAssignments = computed(() =>
         cardType="assignment"
         :assignmentTitle="assignment.title"
         :assignmentBody="assignment.description || 'No description provided.'"
-        :assignmentDate="assignment.dueDate"
+        :assignmentDate="formatAssignmentDate(assignment.dueDate)"
         moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
       />
       <div v-if="!upcomingAssignments.length" class="text-gray-500">No upcoming assignments</div>
@@ -147,7 +158,7 @@ const pastAssignments = computed(() =>
         cardType="assignment"
         :assignmentTitle="assignment.title"
         :assignmentBody="assignment.description || 'No description provided.'"
-        :assignmentDate="assignment.dueDate"
+        :assignmentDate="formatAssignmentDate(assignment.dueDate)"
         moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
       />
       <div v-if="!pastAssignments.length" class="text-gray-500">No past assignments</div>
