@@ -1,39 +1,64 @@
 <script setup lang="ts">
-import { ref, onMounted,markRaw} from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
+import { AnnouncementService } from '@/api/announcement';
+import type { Announcement } from '@/api/announcement';
+import DOMPurify from 'dompurify';
 
 const router = useRouter();
 const title = ref('');
 const body = ref('');
+const isLoading = ref(false);
+const errorMessage = ref('');
+const editableDiv = ref<HTMLElement | null>(null);
+const courseId = ref<number>(0); // Initialize with actual course ID
 
 const format = (cmd: string, value?: string) => {
   document.execCommand(cmd, false, value);
-  body.value = document.getElementById('editable')?.innerHTML || '';
+  body.value = editableDiv.value?.innerHTML || '';
 };
 
 const updateBody = () => {
-  body.value = document.getElementById('editable')?.innerHTML || '';
-};
+  body.value = editableDiv.value?.innerHTML || '';
+}; 
 
-const sendAnnouncement = () => {
-  if (title.value.trim() && body.value.trim()) {
-    const stored = localStorage.getItem('Announcements');
-    const announcements = stored ? JSON.parse(stored) : [];
+const sendAnnouncement = async () => {
+  if (!title.value.trim() || !body.value.trim()) {
+    errorMessage.value = 'Please fill in both title and body.';
+    return;
+  }
 
-    announcements.unshift({
-      id: Date.now().toString(),
+  isLoading.value = true;
+  errorMessage.value = '';
+
+  try {
+    const announcementData: Announcement = {
       title: title.value,
-      body: body.value,
-      createdAt: new Date().toISOString()
-    });
+      description: DOMPurify.sanitize(body.value),
+      date: new Date().toISOString()
+    };
 
-    sessionStorage.setItem('Announcements', JSON.stringify(announcements));
-    title.value = '';
-    body.value = '';
-    document.getElementById('editable')!.innerHTML = '';
-    router.push('LecturerAnnounceOver');
+    const result = await AnnouncementService.postAnnouncement(
+      courseId.value, 
+      announcementData
+    );
+
+    if (typeof result === 'string') {
+      errorMessage.value = result;
+    } else {
+      // Reset form
+      title.value = '';
+      body.value = '';
+      if (editableDiv.value) editableDiv.value.innerHTML = '';
+      router.push('/LecturerAnnounceOver');
+    }
+  } catch (error: unknown) {
+    errorMessage.value = 'Failed to create announcement. Please try again.';
+    console.error('Error:', error);
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>

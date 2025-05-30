@@ -8,7 +8,7 @@ const announcements = ref<Array<{
   id: string;
   title: string;
   body: string;
-  createdAt: string;
+  createdAt: string; 
   moduleImg?: string;
 }>>([]);
 

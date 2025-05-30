@@ -25,6 +25,24 @@ interface StudentSignUp {
   yearLevel: string;
 }
 
+interface LectAnnouncement {
+  id: string;
+  title: string;
+  description: string;
+  date:string;
+  lectureId: string;
+}
+
+interface LecturerSignUp{
+  id: string;
+  name: string;
+  email:string;
+  password: string;
+  department:string;
+  phoneNumber: string;
+  address:string;
+}
+
 
 export const AuthService = {
   async login({ email, password, role }: LoginData): Promise< User | string> {
@@ -54,7 +72,39 @@ export const AuthService = {
       }
       return 'An unknown error occurred';
     }
+  },
+
+  async signUpLecturer(lectureData: LecturerSignUp)  : Promise<User | string >{
+    try{
+      const response = await api.post('/lecturer/register', lectureData);
+      console.log('Sign up Successful', response);
+      return response.data;
+    }catch(error:any){
+      console.log('Full error object:', error);
+      if(error.response && error.response.data){
+        return error.response.data;
+      }
+      return 'An unknown error occurred';
+    }
+  },
+
+  async getLecturerAnnouncements (AnnounceData: LectAnnouncement) : Promise<LectAnnouncement [] | string >{
+    try {
+      const response = await api.get('/lecturer/announcements', {params:AnnounceData});
+      console.log('Announcements fetched successfully:', response);
+      return response.data;
+    }catch(error:any){
+      console.error('error fetching announcements:',error);
+      if (error.response && error.response.data){
+        return error.response.data
+      }
+      return "An unkown error occured"
+    }
   }
+
+  
+
+
 
 
 };
