@@ -22,10 +22,10 @@ defineProps({
     announcementBody: String,
     announcementDate: String,
 
-    // Props for announcement card
-    announcementTitle: String,
-    announcementBody: String,
-    announcementDate: String,
+    // Props for assignment card
+    assignmentTitle: String,
+    assignmentBody: String,
+    assignmentDate: String,
 })
 </script>
 
@@ -93,7 +93,6 @@ defineProps({
 <style scoped>
 .card-container {
     display: flex;
-    max-width: 1013px;
     border-radius: 20px;
     overflow: hidden;
     background-color: #f5f5f5;
@@ -101,6 +100,12 @@ defineProps({
      font-family: "Quicksand", sans-serif;
     margin: 1rem auto;
     padding: 1rem;
+}
+
+.card-container:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.3s ease;
+    cursor: pointer;
 }
 
 .card-container.announcement-card {
