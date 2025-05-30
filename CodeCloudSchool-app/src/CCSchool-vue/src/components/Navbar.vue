@@ -64,61 +64,11 @@
 
 <script setup lang="ts">
 // Import Vue Router functionality
-import { RouterLink, useRouter } from 'vue-router';
-import { onMounted, ref } from 'vue';
+import { RouterLink } from 'vue-router';
+import { ref } from 'vue';
 
-// import the api services for the courses
-import { StudentCourseService } from '@/api/courses'
-
-type Course = {
-  id: number;
-  name: string; 
-  courseName: string;
-  courseCode: number;
-  courseDescription: string;
-};
-
-
-const courses = ref<Course[]>([]);
-const loading = ref(true);
-const error = ref('');
-
+// get user role from localstorage
 const userRole = ref(localStorage.getItem('userRole')).value;
-
-onMounted(async ()=> {
-  try{
-    // check the user role from Local Storage
-    // if the user is a student
-    if(userRole === 'Student'){
-      // Get the student number from Local Storage
-      const studentNumber = localStorage.getItem('studentNumber');
-      // If the student number exists, fetch the courses
-      if (typeof studentNumber === 'string') {
-
-        const response = await StudentCourseService.getStudentCourses(studentNumber);
-        // check if the response is an error message
-        if (typeof response === 'string') {
-        error.value = response;
-      } else {
-          courses.value = response.map((course) => ({
-            id: course.id,
-            name: course.courseName,
-            courseName: course.courseName,
-            courseCode: course.courseCode,
-            courseDescription: course.courseDescription
-          }));
-        }
-      } else {
-        error.value = 'Student number not found.';
-      }
-    }
-  } catch (err) {
-    error.value = 'Failed to load courses.';
-    console.error(err);
-  } finally {
-    loading.value = false;
-  }
-});
 
 
 // Import Lucide icons for the navigation
@@ -134,7 +84,6 @@ import {
 } from 'lucide-vue-next';
 import { computed } from 'vue' 
 
-const router = useRouter();
 
 // Define component props to accept user role
 const props = defineProps({
@@ -190,8 +139,6 @@ const navItems = computed(() => {
 
 // State management
 const isCollapsed = ref(false)
-const showCourseNav = ref(false)
-const selectedCourse = ref<{ id: string, name: string } | null>(null)
 
 
 
@@ -204,23 +151,6 @@ const coursePages = ref([
   { name: 'Grades', routeName: 'CourseGrades' }
 ]);
 
-const handleNavClick = (item: { label: string; icon: any; route: string }) => {
-  if (item.label === 'Courses') {
-    showCourseNav.value = !showCourseNav.value;
-    selectedCourse.value = null;
-  } else {
-    showCourseNav.value = false;
-  }
-};
-
-const selectCourse = (course: { id: number, name: string }) => {
-  selectedCourse.value = { id: String(course.id), name: course.name };
-  // Navigate to the course's home page
-  router.push({
-    name: 'CourseHome',
-    params: { courseId: course.id }
-  });
-};
 </script>
 
 <style scoped>
