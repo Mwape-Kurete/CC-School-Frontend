@@ -230,6 +230,46 @@ const router = createRouter({
         page: 'lecturer-course-details'
       },
     },
+
+    {
+      path: '/LecturerAnnounce',
+      name: 'LecturerAnnounce',
+      component: () => import('@/views/Lecturer-AnnouncementsView.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'LecturerAnnounce'
+      },
+    },
+
+     {
+      path: '/LecturerAnnounceOver',
+      name: 'LecturerAnnounceOver',
+      component: () => import('@/views/LecturerAnnounceOver.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'LecturerAnnounceOver'
+      },
+    },
+
+     {
+      path: '/LecturerAssign',
+      name: 'LecturerAssign',
+      component: () => import('@/views/Lecturer-AssignmentsView.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'LecturerAssign'
+      },
+    },
+
+    {
+      path: '/LecturerAssignOver',
+      name: 'LecturerAssignOver',
+      component: () => import('@/views/LecturerAssignOver.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'LecturerAssignOver'
+      },
+    },
     {
       path: '/lecturer-modules',
       name: 'lecturer-modules',
@@ -248,9 +288,7 @@ const router = createRouter({
         page: 'lecturer-create-modules',
         public: true
       },
-     
-      
-    }
+    },
   ]
 })
 
