@@ -172,7 +172,7 @@ function saveAssignment() {
       <!-- Save Button -->
       <button 
         @click="saveAssignment"
-        class="save-button"
+        class="save-button" 
       >
         SAVE ASSIGNMENT
       </button>

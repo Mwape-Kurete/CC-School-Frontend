@@ -157,7 +157,7 @@ const sendAnnouncement = () => {
   border-radius: 50px;
   padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
-  cursor: pointer;
+  cursor: pointer; 
   transition: background-color 0.2s ease;
 }
 

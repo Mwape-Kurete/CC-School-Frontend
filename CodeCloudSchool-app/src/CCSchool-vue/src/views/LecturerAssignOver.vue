@@ -8,7 +8,7 @@ interface Assignment {
   dueDate: string;
   status: 'upcoming' | 'past' | 'unpublished';
 }
-
+ 
 const assignments = ref<Assignment[]>([
   {
     id: 1,
