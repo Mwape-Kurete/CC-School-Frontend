@@ -1,43 +1,27 @@
-<script setup>
-import { useRoute } from 'vue-router';
-import { ref } from 'vue';
+<script setup lang="ts">
 import { GraduationCap, BellRing, EllipsisVertical } from 'lucide-vue-next';
 import CardComp from '@/components/CardComp.vue';
-import { CourseService } from '@/api/courses'
+import { CourseService } from '@/api/courses';
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
+interface Course {
+  id: number;
+  // Add other course properties here
+}
 
 const route = useRoute();
-import type { Course } from '@/api/courses'; 
 const course = ref<Course | null>(null);
-
-onMounted(async () => {
-  const courseIdParam = route.params.courseId;
-  const courseId = Array.isArray(courseIdParam) ? Number(courseIdParam[0]) : Number(courseIdParam);
-  try {
-    const result = await CourseService.getCoursebyId(courseId);
-    if (typeof result === 'string') {
-      console.error('Failed to fetch course:', result);
-      course.value = null;
-    } else {
-      console.log('Course fetched:', result);
-      course.value = result;
-      console.log('Course fetched successfully:', course.value);
-    }
-  } catch (error) {
-    console.error('Failed to fetch course:', error);
-  }
-})
-
-
-
-const courseId = route.params.courseId;
 const showDropdown = ref(false);
+const courseId = route.params.courseId;
 
-const toggleDropdown = () => {
-  showDropdown.value = !showDropdown.value;
-};
+const googleSlidesEmbed = `<iframe src="https://docs.google.com/presentation/d/e/2PACX-1vTE8fgAcfSDp0L7UmSpXZlyHcFNFIXRGRaDj5UgdRDCXSWSmsISk69qHNT-SZ6NMyEwXtluxhZXeYtH/pubembed?start=false&loop=false&delayms=3000" 
+frameborder="0" 
+width="960" 
+height="569" 
+allowfullscreen="true" 
+mozallowfullscreen="true" 
+webkitallowfullscreen="true"></iframe>`;
 
 // Sample announcements data
 const announcements = ref([
@@ -67,16 +51,28 @@ const weeks = ref([
   { week: 8, title: 'Cross-Platform Development Introduction' }
 ]);
 
-const googleSlidesEmbed = `  <iframe src="https://docs.google.com/presentation/d/e/2PACX-1vTE8fgAcfSDp0L7UmSpXZlyHcFNFIXRGRaDj5UgdRDCXSWSmsISk69qHNT-SZ6NMyEwXtluxhZXeYtH/pubembed?start=false&loop=false&delayms=3000" 
-frameborder="0" 
-width="960" 
-height="569" 
-allowfullscreen="true" 
-mozallowfullscreen="true" 
-webkitallowfullscreen="true">
-  </iframe>
-`;
+onMounted(async () => {
+  const courseIdParam = route.params.courseId;
+  const courseId = Array.isArray(courseIdParam) ? Number(courseIdParam[0]) : Number(courseIdParam);
+  try {
+    const result = await CourseService.getCoursebyId(courseId);
+    if (typeof result === 'string') {
+      console.error('Failed to fetch course:', result);
+      course.value = null;
+    } else {
+      console.log('Course fetched:', result);
+      course.value = result;
+      console.log('Course fetched successfully:', course.value);
+    }
+  } catch (error) {
+    console.error('Failed to fetch course:', error);
+  }
+});
 
+const toggleDropdown = () => {
+  showDropdown.value = !showDropdown.value;
+};
+</script>
 <template>
   <div class="course-home">
     <div class="Course-header"> <!-- Header -->
