@@ -118,7 +118,6 @@ const events = [
   display: flex;
   height: 800px;
   overflow-y: scroll;
-  border-left: 4px solid black;
 }
 
 .time-column {
