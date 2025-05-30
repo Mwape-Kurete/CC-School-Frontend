@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 const route = useRoute();
+const router = useRouter();
 
 
 import { CourseService } from '@/api/courses'
@@ -95,16 +96,14 @@ const pastAssignments = computed(() =>
 );
 
 
-const formatAssignmentDate = (isoDate: string): string => {
-  const date = new Date(isoDate);
-  
-  const day = date.getUTCDate();
-  const month = date.toLocaleString('default', { month: 'long', timeZone: 'UTC' }); // "July"
-  const hours = date.getUTCHours().toString().padStart(2, '0'); // "23"
-  const minutes = date.getUTCMinutes().toString().padStart(2, '0'); // "59"
 
-  return `${day} ${month} - ${hours}:${minutes}`;
+const onAssignmentClick = (assignmentId: number): void => {
+  const courseIdParam = route.params.courseId;
+  const courseId = Array.isArray(courseIdParam) ? Number(courseIdParam[0]) : Number(courseIdParam);
+
+  router.push({ name: 'AssignmentDetails', params: { courseId, assignmentId } });
 }
+// =====================================================================================
 
 </script>
 
@@ -137,11 +136,12 @@ const formatAssignmentDate = (isoDate: string): string => {
     <div class="card-container">
       <CardComp
         v-for="assignment in upcomingAssignments"
+        @click="onAssignmentClick(assignment.assignment_ID)"
         :key="assignment.assignment_ID"
         cardType="assignment"
         :assignmentTitle="assignment.title"
         :assignmentBody="assignment.description || 'No description provided.'"
-        :assignmentDate="formatAssignmentDate(assignment.dueDate)"
+        :assignmentDate="AssignmentService.formatAssignmentDate(assignment.dueDate)"
         moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
       />
       <div v-if="!upcomingAssignments.length" class="text-gray-500">No upcoming assignments</div>
@@ -158,7 +158,7 @@ const formatAssignmentDate = (isoDate: string): string => {
         cardType="assignment"
         :assignmentTitle="assignment.title"
         :assignmentBody="assignment.description || 'No description provided.'"
-        :assignmentDate="formatAssignmentDate(assignment.dueDate)"
+        :assignmentDate="AssignmentService.formatAssignmentDate(assignment.dueDate)"
         moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
       />
       <div v-if="!pastAssignments.length" class="text-gray-500">No past assignments</div>
