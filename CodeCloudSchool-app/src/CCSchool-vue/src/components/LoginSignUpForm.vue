@@ -1,18 +1,34 @@
 <script setup>
 import { ref, defineProps } from 'vue'
+import { useRouter } from 'vue-router'
 import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import Divider from 'primevue/divider'
 import FloatLabel from 'primevue/floatlabel'
+import CDropdown from './ui/CDropdown.vue'
 import Dropdown from 'primevue/dropdown'
+
+
+
+
+// import api service
+import { AuthService } from '@/api/auth'
 
 const props = defineProps({
     variant: {
-        type: String
+        type: String,
+        default: 'login'
     },
 })
+
+const currentFormVariant = ref(props.variant);
+
+// Toggle function
+const toggleVariant = () => {
+    currentFormVariant.value = currentFormVariant.value === 'login' ? 'signup' : 'login'
+}
 
 const email = ref('')
 const password = ref('')
@@ -21,24 +37,138 @@ const remember = ref(false)
 const name = ref('')
 const surname = ref('')
 const gender = ref(null)
-const postalCode = ref('')
+const phoneNo = ref('')
 const address = ref('')
 const agree = ref(false)
+
+const router = useRouter()
+const loading = ref(false)
+const errorMessage = ref('')
 
 const genderOptions = [
     { label: 'Male', value: 'male' },
     { label: 'Female', value: 'female' },
     { label: 'Other', value: 'other' },
 ]
+
+
+const role = ref('student'); // default value
+
+const roleOptions = [
+    { label: 'Student', value: 'student' },
+    { label: 'Lecturer', value: 'lecturer' },
+    { label: 'Admin', value: 'admin' },
+];
+
+// functions
+// ==========================================================
+const login = async () => {
+
+    loading.value = true
+    errorMessage.value = ''
+
+    if (!email.value || !password.value) {
+        errorMessage.value = 'Please fill in both email and password.'
+        loading.value = false
+        return
+    }
+
+    try {
+        console.log('Attempting to login...')
+        const response = await AuthService.login({
+            email: email.value,
+            password: password.value,
+            role: role.value, // must be 'student' | 'admin' | 'lecturer'
+        })
+
+        if (typeof response === 'string') {
+            // Login failed, show message
+            errorMessage.value = response
+        } else {
+            // Login successful, response is a User object
+            console.log('Login successful:', response)
+            // Redirect or store user session here
+
+
+            const user = response; 
+            
+            
+            // store user role in local storage
+            localStorage.setItem('userRole', user.role);
+            if (user.role === 'Student') {
+                // user obj only has email, not studentNumber => get the student number out the email
+                user.studentNumber = user.email.split('@')[0]; 
+                console.log('Student number:', user.studentNumber);
+
+                localStorage.setItem('studentNumber', user.studentNumber );
+                router.push({ name: 'dashboard' });
+            } else if (user.role === 'Lecturer') {
+                router.push({ name: 'lecturer-dash' });
+            } else {
+                console.warn('Unknown user role:', user.role);
+                // Optional: Redirect to a generic page or show an error
+            }
+        }
+    } catch (error) {
+        errorMessage.value = 'Login failed. Please check your credentials.'
+    } finally {
+        loading.value = false
+    }
+}
+
+
+const signUp = async () => {
+    loading.value = true
+    errorMessage.value = ''
+
+    if (!name.value || !surname.value || !password.value || !gender.value || !phoneNo.value || !address.value) {
+        errorMessage.value = 'Please fill in all fields.'
+        loading.value = false
+        return
+    }
+    if (!agree.value) {
+        errorMessage.value = 'You must agree to the terms and conditions.'
+        loading.value = false
+        return
+    }
+    try {
+        console.log('Attempting to sign up...')
+        const response = await AuthService.signUpStudent({
+            name: name.value,
+            lastName: surname.value,
+            password: password.value,
+            gender: typeof gender.value === 'object' ? gender.value.value : gender.value, // extract actual string
+            address: address.value,
+            phoneNumber: phoneNo.value,
+            enrollmentDate: new Date().toISOString(), // REQUIRED
+            yearLevel: "1st Year", // or bind this to a form field
+        })
+
+        if (typeof response === 'string') {
+            // sign up failed, show message
+            errorMessage.value = response;
+        } else {
+            // sign up successful, response is a User object
+            console.log('sign up successful:', response);
+            alert('Your CC School email adress for signing in is: ' + response.email);
+            // TODO: login user after sign up
+        }
+    } catch (error) {
+        errorMessage.value = 'Sign Up failed. Please check your credentials.'
+    } finally {
+        loading.value = false
+    }
+}
+
 </script>
 
 <template>
     <form>
         <div class="flex flex-col items-center p-6 w-full max-w-md mx-auto">
             <!-- LOGIN FORM -->
-            <template v-if="variant === 'login'">
-                <h2 class="text-2xl font-semibold mb-1">Welcome back, Gracie</h2>
-                <p class="text-gray-500 mb-6">Welcome back, please enter your details</p>
+            <template v-if="currentFormVariant === 'login'">
+                <h1 class=" font-bold mb-1">Welcome back</h1>
+                <p class="text-gray-500 mb-6">Please enter your details</p>
 
                 <Button label="Login with Google" icon="pi pi-google" class="w-full mb-4 google-btn"
                     severity="secondary" />
@@ -46,6 +176,10 @@ const genderOptions = [
                 <Divider align="center" class="my-4">
                     <span class="text-sm no-account"><strong>or</strong></span>
                 </Divider>
+
+                <CDropdown type="ghost" size="sm" v-model="role" :options="roleOptions" optionLabel="label"
+                    class="role-dropdown w-full" />
+
 
                 <div class="w-full mb-4">
                     <FloatLabel>
@@ -71,11 +205,13 @@ const genderOptions = [
                     <Button label="Forgot password?" text class="p-0 text-sm forgot-pword-btn" />
                 </div>
 
-                <Button label="Login" class="w-full mb-4 login-btn" />
+                <div v-if="errorMessage" class="text-red-600 mb-4">{{ errorMessage }}</div>
+                <Button @click="login" :loading="loading" label="Login" class="w-full mb-4 login-btn" />
 
                 <p class="text-sm text-gray-200 no-account">
                     Don’t have an account?
-                    <Button label="Sign up here" text class="text-primary sign-up-link p-0" />
+                    <Button @click.prevent="toggleVariant" label="Sign up here" text
+                        class="text-primary sign-up-link p-0" />
                 </p>
             </template>
 
@@ -120,9 +256,9 @@ const genderOptions = [
 
                     <div class="col-6">
                         <FloatLabel>
-                            <InputText id="postal" v-model="postalCode"
+                            <InputText id="phone" v-model="phoneNo"
                                 class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none" />
-                            <label for="postal">Postal Code</label>
+                            <label for="phone">Phone Number</label>
                         </FloatLabel>
                     </div>
                 </div>
@@ -148,11 +284,13 @@ const genderOptions = [
                     <label for="agree" class="text-black ml-2">I agree to the Terms & Conditions</label>
                 </div>
 
-                <Button label="Create an account" class="w-full mb-4 login-btn" />
+                <div v-if="errorMessage" class="text-red-600 mb-4">{{ errorMessage }}</div>
+                <Button @click="signUp" :loading="loading" label="Create an account" class="w-full mb-4 login-btn" />
 
                 <p class="text-sm text-gray-200 no-account">
                     Already have an account?
-                    <Button label="Login here" text class="text-primary sign-up-link p-0" />
+                    <Button @click.prevent="toggleVariant" label="Login here" text
+                        class="text-primary sign-up-link p-0" />
                 </p>
             </template>
         </div>

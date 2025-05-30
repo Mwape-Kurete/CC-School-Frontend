@@ -1,9 +1,34 @@
-<script setup>
+<script setup lang="ts">
+import { useRoute } from 'vue-router';
+const route = useRoute();
+import { ref,onMounted } from 'vue';
+import { AssignmentService } from '@/api/assignments';
+
+// Extracting assignmentID from the route parameters
+const assignmentIdNumber = route.params.assignmentId;
+const assignmentId = Array.isArray(assignmentIdNumber) ? Number(assignmentIdNumber[0]) : Number(assignmentIdNumber);
+console.log('Viewing assignment ID:', assignmentId)
+
+// reactive references for data from api
+interface Assignment {
+    assignment_ID: number;
+    title: string;
+    description?: string;
+    dueDate: string; // ISO date string from API
+    lecturerId: number;
+    courseId?: number;
+    // future additions
+    // submissionType: string; // e.g., 'pdf', 'link'
+}
+
+// create ref of type assignment
+const assignmentDetails = ref<Assignment | null>(null); 
+
+
 
 import SubmissionComp from '@/components/SubmissionComp.vue';
 import CButton from '@/components/ui/CButton.vue';
 import Dropdown from '@/components/ui/CDropdown.vue';
-import { ref } from 'vue';
 
 import { ChevronUp, ChevronDown } from 'lucide-vue-next';
 
@@ -15,6 +40,29 @@ const attemptOptions = [
     { label: '3', value: '3' }
 ]
 
+onMounted(async () => {
+    // Fetch assignment details when the component is mounted
+    await fetchAssignmentDetails(assignmentId);
+})
+
+// Functions
+// ==============================================================================
+// function to fetch assignment details by id
+const fetchAssignmentDetails = async (assignmentId: number) => {
+    try {
+        const response = await AssignmentService.getAssignmentById(assignmentId);
+
+        if (typeof response === 'string'){
+            console.error('Failed to fetch assignment:', response);
+        } else {
+            console.log('Assignment fetched successfully:', response);
+            // store assignment details
+            assignmentDetails.value = response as Assignment;
+        }
+    } catch (error) {
+        console.error('Failed to fetch assignments:', error);
+    }
+}
 
 </script>
 
@@ -27,8 +75,13 @@ const attemptOptions = [
             option-value="value" size="sm" type="secondary" />
     </div>
 
-    <h2 class="text-2xl font-semibold subtitle">Theory -  API Integration: Weather Dashboard</h2>
-    <h4 class="mb-4">Due: Mon, 3 Mar 2025 23:59</h4>
+    <h2 class="text-2xl font-semibold subtitle">
+        {{ assignmentDetails ? assignmentDetails.title : 'Loading title...' }}
+    </h2>
+    <h4 class="mb-4">
+        Due: 
+        {{assignmentDetails ? AssignmentService.formatAssignmentDate(assignmentDetails.dueDate) : 'Loading date...'}}
+    </h4>
 
     <!-- Toggle Section -->
     <div class="details-con flex justify-between mb-4 cursor-pointer" @click="showDetails = !showDetails">
@@ -38,16 +91,11 @@ const attemptOptions = [
 
     <!-- Collapsible Assignment Details -->
     <div v-if="showDetails" class="assignment-details mb-4">
-        <h1 class="text-2xl font-bold mb-4">API Integration: Weather Dashboard</h1>
-        <p>Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem
-            placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar
-            vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere.
-            Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
-
-            Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem
-            placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar
-            vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere.
-            Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
+        <h1 class="text-2xl font-bold mb-4">
+            {{ assignmentDetails ? assignmentDetails.title : 'Loading title...' }}
+        </h1>
+        <p>
+            {{ assignmentDetails ? assignmentDetails.description : 'Loading description...'}}
         </p>
     </div>
 
@@ -64,7 +112,7 @@ const attemptOptions = [
     </div>
 
     <h4 class="text-2xl font-semibold mb-4">SUBMISSION DEADLINE
-        <br> 03 March 2025 at 23:59
+        <br> {{assignmentDetails ? AssignmentService.formatAssignmentDate(assignmentDetails.dueDate) : 'Loading date...'}}
     </h4>
 
     <h4 class="font-semibold mb-1">LATE SUBMISSION</h4>

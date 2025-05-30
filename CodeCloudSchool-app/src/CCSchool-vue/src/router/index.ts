@@ -89,6 +89,15 @@ const router = createRouter({
       }
     },
     {
+      path: 'assignments/:assignmentId',
+      name: 'AssignmentDetails',
+      component: () => import('@/views/StudentAssignmentDetails.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'stu-assignment-details'
+      }
+    },
+    {
       path: 'grades',
       name: 'CourseGrades',
       component: () => import('@/views/courses/CourseGrades.vue'),
@@ -173,15 +182,7 @@ const router = createRouter({
       name: 'sandbox',
       component: () => import('@/views/Sandbox.vue')
     },
-    {
-      path: '/studentassignmentdetails',
-      name: 'studentassignmentdetails',
-      component: () => import('@/views/StudentAssignmentDetails.vue'),
-      meta: {
-        layout: 'TwoCol',
-        page: 'student-assignment'
-      },
-    },
+
     {
       path: '/studentModuleDetails',
       name: 'studentModuleDetails',

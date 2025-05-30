@@ -3,8 +3,35 @@ import { useRoute } from 'vue-router';
 import { ref } from 'vue';
 import { GraduationCap, BellRing, EllipsisVertical } from 'lucide-vue-next';
 import CardComp from '@/components/CardComp.vue';
+import { CourseService } from '@/api/courses'
+import { onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
+
 
 const route = useRoute();
+import type { Course } from '@/api/courses'; 
+const course = ref<Course | null>(null);
+
+onMounted(async () => {
+  const courseIdParam = route.params.courseId;
+  const courseId = Array.isArray(courseIdParam) ? Number(courseIdParam[0]) : Number(courseIdParam);
+  try {
+    const result = await CourseService.getCoursebyId(courseId);
+    if (typeof result === 'string') {
+      console.error('Failed to fetch course:', result);
+      course.value = null;
+    } else {
+      console.log('Course fetched:', result);
+      course.value = result;
+      console.log('Course fetched successfully:', course.value);
+    }
+  } catch (error) {
+    console.error('Failed to fetch course:', error);
+  }
+})
+
+
+
 const courseId = route.params.courseId;
 const showDropdown = ref(false);
 
@@ -49,7 +76,6 @@ mozallowfullscreen="true"
 webkitallowfullscreen="true">
   </iframe>
 `;
-</script>
 
 <template>
   <div class="course-home">
