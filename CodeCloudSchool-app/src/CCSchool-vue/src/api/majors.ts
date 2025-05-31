@@ -21,5 +21,31 @@ export const MajorServices = {
             }
             return 'An unknown error occurred';
         }
+    }, 
+    async fetchMajorsById (majorId: number): Promise<major | string> {
+        try {
+            const response = await api.get(`/majors/${majorId}`);
+            console.log('Major fetched:', response);
+            return response.data; // e.g. a single major object
+        } catch (error: any) {
+            console.error('Full error object:', error);
+            if (error.response && error.response.data) {
+                return error.response.data;
+            }
+            return 'An unknown error occurred';
+        }
+    },
+    async addStudentToMajor (majorId: number, studentId: string): Promise<string> {
+        try{
+            const response = await api.post(`majors/addStudentToMajor/${majorId}/${studentId}`);
+            console.log('Student added to major:', response);
+            return 'Student added to major successfully';
+        } catch (error: any) {
+            console.error('Full error object:', error);
+            if (error.response && error.response.data){
+                return error.response.data; // e.g. "Student already enrolled in this major"
+            }
+            return 'An unknown error occurred';
+        }
     }
 }

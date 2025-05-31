@@ -152,7 +152,10 @@ const signUp = async () => {
                 // sign up successful, response is a User object
                 console.log('sign up successful:', response);
                 alert('Your CC School email adress for signing in is: ' + response.email);
+
+                // store student number and role in local storage
                 localStorage.setItem('studentNumber', response.studentNumber);
+                localStorage.setItem('userRole', user.role);
                 // redirect user to course select page
                 router.push({ name: 'RegisterMajors'});
             }

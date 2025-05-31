@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 
+import {  useRouter } from 'vue-router';
+
+const router = useRouter();
 
 import { MajorServices } from '@/api/majors';
 import type { major } from '@/api/majors';
@@ -55,11 +58,55 @@ const onMajorCardClick = (majorId: number) => {
 }
 
 const enrollInMajors = async () => {
+    // convert student number into userID
+    // input eg 2350002 or 2350013 -> needs to work for both / higher numbers
+    const userId = studentNumber?.substring(3);
+    console.log('User ID:', userId);
+
     if(selectedMajorIds.value.length !== 2) {
         alert('Please select exactly 2 majors to enroll in.');
         return;
     } else {
         console.log('Enrolling in majors:', selectedMajorIds.value[0], selectedMajorIds.value[1]);
+        if(typeof userId === 'string'){
+            // enroll in the first major
+            try {
+                const response = await MajorServices.addStudentToMajor(selectedMajorIds.value[0], userId);
+                if (response && response.includes('success')) {
+                    console.log('Successfully enrolled in first major:', response);
+                } else {
+                    console.error('Failed to enroll in first major:', response);
+                    alert('Failed to enroll in first major. Please try again later.');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error enrolling in majors:', error);
+                alert('Failed to enroll in majors. Please try again later.');
+            }
+
+            // enroll in the second major
+            try {
+                const response = await MajorServices.addStudentToMajor(selectedMajorIds.value[1], userId);
+                if (response && response.includes('success')) {
+                    console.log('Successfully enrolled in second major:', response);
+
+                    // redirect to the student home page after successful enrollment
+                    router.push({ name: 'dashboard' });
+
+                } else {
+                    console.error('Failed to enroll in second major:', response);
+                    alert('Failed to enroll in second major. Please try again later.');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error enrolling in majors:', error);
+                alert('Failed to enroll in majors. Please try again later.');
+            }
+
+        } else {
+            alert('Invalid student number. Please check and try again.');
+            return;
+        }
     }
 }
 
