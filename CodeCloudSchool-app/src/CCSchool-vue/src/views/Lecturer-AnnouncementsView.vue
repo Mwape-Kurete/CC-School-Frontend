@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -8,12 +8,25 @@ import type { Announcement } from '@/api/announcement';
 import DOMPurify from 'dompurify';
 
 const router = useRouter();
+const courseId = ref<number>(1); // Replace with dynamic lecturer courseId if available
+
 const title = ref('');
 const body = ref('');
 const isLoading = ref(false);
 const errorMessage = ref('');
 const editableDiv = ref<HTMLElement | null>(null);
-const courseId = ref<number>(0); // Initialize with actual course ID
+
+const announcements = ref<Array<{
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  moduleImg?: string;
+}>>([]);
+
+const searchQuery = ref('');
+const announcementType = ref<'all' | 'recent' | 'old'>('all');
+const sortBy = ref<'date' | 'lecture' | 'subject'>('date');
 
 const format = (cmd: string, value?: string) => {
   document.execCommand(cmd, false, value);
@@ -22,7 +35,7 @@ const format = (cmd: string, value?: string) => {
 
 const updateBody = () => {
   body.value = editableDiv.value?.innerHTML || '';
-}; 
+};
 
 const sendAnnouncement = async () => {
   if (!title.value.trim() || !body.value.trim()) {
@@ -40,19 +53,13 @@ const sendAnnouncement = async () => {
       date: new Date().toISOString()
     };
 
-    const result = await AnnouncementService.postAnnouncement(
-      courseId.value, 
-      announcementData
-    );
+    const result = await AnnouncementService.postAnnouncement(courseId.value, announcementData);
 
     if (typeof result === 'string') {
       errorMessage.value = result;
     } else {
-      // Reset form
-      title.value = '';
-      body.value = '';
-      if (editableDiv.value) editableDiv.value.innerHTML = '';
-      router.push('/LecturerAnnounceOver');
+      await fetchAnnouncements();
+      router.push('/LecturerAnnounceOver'); // Assuming this shows announcements
     }
   } catch (error: unknown) {
     errorMessage.value = 'Failed to create announcement. Please try again.';
@@ -61,53 +68,114 @@ const sendAnnouncement = async () => {
     isLoading.value = false;
   }
 };
+
+const fetchAnnouncements = async () => {
+  const result = await AnnouncementService.getAnnouncementByCourseId(courseId.value);
+  if (typeof result !== 'string') {
+    announcements.value = result.map((a: any) => ({
+      id: a.id,
+      title: a.title,
+      description: a.description,
+      date: a.date,
+      moduleImg: a.moduleImg || null
+    }));
+  }
+};
+
+onMounted(fetchAnnouncements);
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date);
+};
+
+const filteredAnnouncements = computed(() => {
+  let filtered = [...announcements.value];
+
+  if (announcementType.value === 'recent') {
+    filtered = filtered.filter(a => {
+      const createdDate = new Date(a.date);
+      const now = new Date();
+      const diffInDays = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+      return diffInDays <= 7;
+    });
+  } else if (announcementType.value === 'old') {
+    filtered = filtered.filter(a => {
+      const createdDate = new Date(a.date);
+      const now = new Date();
+      const diffInDays = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+      return diffInDays > 7;
+    });
+  }
+
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase();
+    filtered = filtered.filter(a =>
+      a.title.toLowerCase().includes(q) ||
+      a.description.toLowerCase().includes(q)
+    );
+  }
+
+  if (sortBy.value === 'date') {
+    filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  } else if (sortBy.value === 'lecture') {
+    filtered.sort((a, b) => a.title.localeCompare(b.title));
+  } else if (sortBy.value === 'subject') {
+    filtered.sort((a, b) => a.description.localeCompare(b.description));
+  }
+
+  return filtered;
+});
 </script>
 
 <template>
   <div class="announcement-container">
     <h1 class="main-title">Create An Announcement</h1>
-
     <div class="announcement-card">
       <h2 class="card-title">Create an Announcement</h2>
-
       <div class="form-container">
         <div class="input-group">
-          <label class="input-label">Announcement Title</label>
+          <label class="input-label" for="announcement-title">Title</label>
           <InputText
+            id="announcement-title"
             v-model="title"
-            placeholder="Type announcement title here"
+            placeholder="Title"
             class="custom-input"
           />
         </div>
-
         <div class="input-group">
-          <label class="input-label">Announcement Body</label>
-
+          <label class="input-label">Body</label>
           <div class="toolbar">
-            <button @click.prevent="format('bold')"><strong>B</strong></button>
-            <button @click.prevent="format('italic')"><em>I</em></button>
-            <button @click.prevent="format('underline')"><u>U</u></button>
-            <button @click.prevent="format('insertUnorderedList')">• List</button>
-            <button @click.prevent="format('formatBlock', '<h2>')">H2</button>
+            <button @click.prevent="format('bold')">B</button>
+            <button @click.prevent="format('italic')">I</button>
+            <button @click.prevent="format('underline')">U</button>
           </div>
-
           <div
-            id="editable"
+            ref="editableDiv"
             contenteditable="true"
-            class="rich-textarea"
             @input="updateBody"
+            class="rich-textarea"
           ></div>
         </div>
-
         <Button
           label="SEND ANNOUNCEMENT"
           class="send-button"
           @click="sendAnnouncement"
+          :loading="isLoading"
         />
+        <p v-if="errorMessage">{{ errorMessage }}</p>
       </div>
     </div>
   </div>
 </template>
+
+
 
 <style scoped>
 
