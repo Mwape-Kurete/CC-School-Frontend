@@ -90,17 +90,17 @@ const login = async () => {
             // Redirect or store user session here
 
 
-            const user = response; 
-            
-            
+            const user = response;
+
+
             // store user role in local storage
             localStorage.setItem('userRole', user.role);
             if (user.role === 'Student') {
                 // user obj only has email, not studentNumber => get the student number out the email
-                user.studentNumber = user.email.split('@')[0]; 
+                user.studentNumber = user.email.split('@')[0];
                 console.log('Student number:', user.studentNumber);
 
-                localStorage.setItem('studentNumber', user.studentNumber );
+                localStorage.setItem('studentNumber', user.studentNumber);
                 router.push({ name: 'dashboard' });
             } else if (user.role === 'Lecturer') {
                 router.push({ name: 'lecturer-dash' });
@@ -131,32 +131,36 @@ const signUp = async () => {
         loading.value = false
         return
     }
-    try {
-        console.log('Attempting to sign up...')
-        const response = await AuthService.signUpStudent({
-            name: name.value,
-            lastName: surname.value,
-            password: password.value,
-            gender: typeof gender.value === 'object' ? gender.value.value : gender.value, // extract actual string
-            address: address.value,
-            phoneNumber: phoneNo.value,
-            enrollmentDate: new Date().toISOString(), // REQUIRED
-            yearLevel: "1st Year", // or bind this to a form field
-        })
+    if (role.value === 'student') {
+        try {
+            console.log('Attempting to sign up...')
+            const response = await AuthService.signUpStudent({
+                name: name.value,
+                lastName: surname.value,
+                password: password.value,
+                gender: typeof gender.value === 'object' ? gender.value.value : gender.value, // extract actual string
+                address: address.value,
+                phoneNumber: phoneNo.value,
+                enrollmentDate: new Date().toISOString(), // REQUIRED
+                yearLevel: "1st Year", // or bind this to a form field
+            })
 
-        if (typeof response === 'string') {
-            // sign up failed, show message
-            errorMessage.value = response;
-        } else {
-            // sign up successful, response is a User object
-            console.log('sign up successful:', response);
-            alert('Your CC School email adress for signing in is: ' + response.email);
-            // TODO: login user after sign up
+            if (typeof response === 'string') {
+                // sign up failed, show message
+                errorMessage.value = response;
+            } else {
+                // sign up successful, response is a User object
+                console.log('sign up successful:', response);
+                alert('Your CC School email adress for signing in is: ' + response.email);
+                localStorage.setItem('studentNumber', response.studentNumber);
+                // redirect user to course select page
+                router.push({ name: 'RegisterMajors'});
+            }
+        } catch (error) {
+            errorMessage.value = 'Sign Up failed. Please check your credentials.'
+        } finally {
+            loading.value = false
         }
-    } catch (error) {
-        errorMessage.value = 'Sign Up failed. Please check your credentials.'
-    } finally {
-        loading.value = false
     }
 }
 
