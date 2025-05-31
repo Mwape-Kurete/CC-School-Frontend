@@ -1,6 +1,7 @@
 import api from './api';
 
 export interface Course{
+    id: number,
     courseName: string,
     courseCode: number,
     courseDescription: string,

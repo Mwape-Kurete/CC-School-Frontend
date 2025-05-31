@@ -68,7 +68,7 @@ const fetchAssignmentsByCourseId = async (): Promise<void> => {
   // get the courseId from the route params
   const courseIdParam = route.params.courseId;
   const courseId = Array.isArray(courseIdParam) ? Number(courseIdParam[0]) : Number(courseIdParam);
-
+  
   try {
     const response = await AssignmentService.getAssignmentsByCourseId(courseId);
 
