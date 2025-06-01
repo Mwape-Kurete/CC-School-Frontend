@@ -25,7 +25,7 @@ onMounted(async () => {
         userName.value = 'Unknown Student'
       } else {
         // We got user data, use the `name` field from API response
-        userName.value = result.name || 'No Name'
+        userName.value = result.name + " " + result.lastName || 'No Name'
       }
     } catch (e) {
       error.value = 'Failed to fetch student data.'
@@ -47,10 +47,10 @@ onMounted(async () => {
     <div v-else>
       <div v-if="error" class="text-red-600 mb-4">{{ error }}</div>
 
-      <div class="flex items-center space-x-4">
-        <DiceBearAvatar :name="userName" />
+      <div class="profile-con flex items-center space-x-4">
+        <DiceBearAvatar class="pfp" :name="userName" />
         <div>
-          <p class="text-lg font-medium">{{ userName }}</p>
+          <p class="username text-lg font-medium">{{ userName }}</p>
           <!-- Add more user info here -->
         </div>
       </div>
@@ -59,6 +59,26 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.profile-con{
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-direction: column;
+}
+
+.username {
+  font-family: 'QuickSand', sans-serif;
+  font-size: 48px !important;
+  font-weight: 800;
+  color: #333;
+}
+
+.pfp{
+  width: 100px;
+  height: 100px;
+  border: none;
+}
+
 .useracc-view {
   padding: 2rem;
 }
