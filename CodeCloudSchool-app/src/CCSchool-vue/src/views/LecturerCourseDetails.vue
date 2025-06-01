@@ -7,48 +7,32 @@ import CMarkBreakdown from '@/components/CMarkBreakdown.vue'
 import LecturerCard from '@/components/LecturerCard.vue'
 import CButtonIcon from '@/components/ui/Cbutton-icon.vue'
 import { PencilLine, Maximize2, Ban, Save, ArrowUpFromLine } from 'lucide-vue-next'
+import { Plus } from 'lucide-vue-next'
 import { ref, reactive } from 'vue'
 import InputText from 'primevue/inputtext'
 import FloatLabel from 'primevue/floatlabel'
+import Textarea from 'primevue/textarea'
 
-const assessmentGroups = [
-  {
-    title: 'Theory Assessments',
-    mark: '10%',
-    items: [
-      { description: 'Theme 1: Project Proposal Document', mark: '50%' },
-      { description: 'Theme 2: Project Report & Demonstration', mark: '50%' },
-    ],
-  },
-  {
-    title: 'Formative Assessments',
-    mark: '30%',
-    items: [
-      { description: 'Theme 1: Progress Feedback', mark: '25%' },
-      { description: 'Theme 1: Code Review', mark: '25%' },
-      { description: 'Theme 2: Progress Feedback', mark: '25%' },
-      { description: 'Theme 2: Code Review', mark: '25%' },
-    ],
-  },
-  {
-    title: 'Summative Assessments',
-    mark: '60%',
-    items: [
-      { description: 'Repository Administration', mark: '15%' },
-      { description: 'Functional Management System', mark: '70%' },
-      { description: 'Individual Contribution', mark: '15%' },
-    ],
-  },
-] //template for assesment layout
+const courseWeeklyBreakdown = ref([])
+
+const newDescription = ref('')
+
+const addWeek = () => {
+  if (!newDescription.value.trim()) return
+
+  const weekNumber = courseWeeklyBreakdown.value.length + 1
+  courseWeeklyBreakdown.value.push({
+    header: `Week ${weekNumber}`,
+    description: newDescription.value.trim(),
+  })
+
+  newDescription.value = ''
+}
 
 const courseData = reactive({
   courseName: 'Computer Science',
   courseDescription: 'rendering from course data ',
-  courseWeekBreakdown: [
-    { header: 'Week 1 ', description: ' Course Introduction & Briefing.' },
-    { header: 'Week 2', description: 'Type-sensitive programming aka TS' },
-    { header: 'Week 3', description: ' Basic software architecture' },
-  ],
+  courseWeekBreakdown: courseWeeklyBreakdown,
   courseSlides:
     'https://docs.google.com/presentation/d/1ZAwD8jemOHHxzsZoFGk9nIHYy9oJnjzJ7OSP1LckCn4',
   courseMarkBreakdown: [
@@ -94,6 +78,7 @@ const isEditingSection = ref(false) //state management for making the section ed
 
 //storing uploads
 const googleSlideurl = ref(null)
+const courseBio = ref(null)
 
 const sectionEdit = reactive({
   courseName: false,
@@ -175,7 +160,7 @@ const sectionEdit = reactive({
           id="edit-course"
           type="primary"
           size="md"
-          btnIconLabel="Cancel"
+          btnIconLabel="Exit Edit Mode"
           @click="isEditing = false"
         >
           <template #icon>
@@ -198,8 +183,25 @@ const sectionEdit = reactive({
           <div class="right-cd">
             <h1 class="section-header">What You Will Learn</h1>
           </div>
-          <div class="left-cd">
-            <CButtonIcon type="primary" size="md" btnIconLabel="Edit Section">
+          <div class="left-cd" v-if="isEditingSection == false">
+            <CButtonIcon
+              type="primary"
+              size="md"
+              btnIconLabel="Edit Section"
+              @click="isEditingSection = true"
+            >
+              <template #icon>
+                <PencilLine size="16" />
+              </template>
+            </CButtonIcon>
+          </div>
+          <div class="left-cd" v-if="isEditingSection == true">
+            <CButtonIcon
+              type="primary"
+              size="md"
+              btnIconLabel="Save Section"
+              @click="isEditingSection = false"
+            >
               <template #icon>
                 <PencilLine size="16" />
               </template>
@@ -207,22 +209,53 @@ const sectionEdit = reactive({
           </div>
         </div>
       </div>
-      <p>
-        {{ courseData.courseDescription }}
-      </p>
+      <div class="active-editing" v-if="isEditingSection == true">
+        <p>
+          <FloatLabel>
+            <Textarea
+              id="course-bio"
+              v-model="courseBio"
+              class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+            />
+            <label for="course-bio">Insert Course Description</label>
+          </FloatLabel>
+        </p>
+      </div>
+      <div class="active-editing" v-if="isEditingSection == false">
+        <p>
+          {{ courseData.courseDescription }}
+        </p>
+      </div>
     </div>
 
     <div class="sem-overview-section">
       <div v-if="isEditing == false">
-        <h1 class="section-header"></h1>
+        <h2 class="section-header">weekly breakdown</h2>
       </div>
       <div v-else-if="isEditing == true">
         <div class="cd-header">
           <div class="right-cd">
-            <h1 class="section-header"></h1>
+            <h2 class="section-header">weekly breakdown</h2>
           </div>
-          <div class="left-cd">
-            <CButtonIcon type="primary" size="md" btnIconLabel="Edit Section">
+          <div class="left-cd" v-if="isEditingSection == false">
+            <CButtonIcon
+              type="primary"
+              size="md"
+              btnIconLabel="Edit Section"
+              @click="isEditingSection = true"
+            >
+              <template #icon>
+                <PencilLine size="16" />
+              </template>
+            </CButtonIcon>
+          </div>
+          <div class="left-cd" v-if="isEditingSection == true">
+            <CButtonIcon
+              type="primary"
+              size="md"
+              btnIconLabel="Save Section"
+              @click="isEditingSection = false"
+            >
               <template #icon>
                 <PencilLine size="16" />
               </template>
@@ -230,7 +263,34 @@ const sectionEdit = reactive({
           </div>
         </div>
       </div>
-      <CListGroup :items="courseData.courseWeekBreakdown" />
+      <div class="active-editing" v-if="isEditingSection == true">
+        <div class="input-cont">
+          <div class="w-full mb-4 flex gap-2 items-end">
+            <FloatLabel class="w-full">
+              <InputText
+                id="week-break"
+                v-model="newDescription"
+                class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+              />
+              <label for="week-break">Add a weekly breakdown</label>
+            </FloatLabel>
+            <CButtonIcon
+              class="add-icon-btn"
+              type="primary"
+              size="md"
+              btnIconLabel="Add Breakdown"
+              @click="addWeek"
+            >
+              <template #icon>
+                <Plus size="16" />
+              </template>
+            </CButtonIcon>
+          </div>
+        </div>
+      </div>
+      <div class="active-editing" v-if="isEditingSection == false">
+        <CListGroup :items="courseData.courseWeekBreakdown" />
+      </div>
     </div>
 
     <div class="semester-break">
@@ -453,6 +513,12 @@ const sectionEdit = reactive({
 }
 
 /*COURSE MASTER SECTION */
+
+/*weekly breakdown*/
+.add-icon-btn {
+  width: 50%;
+}
+
 .course-cover-img > img {
   width: 100%;
   height: 300px;
