@@ -1,15 +1,26 @@
 <script setup lang="ts">
-import router from '@/router';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { AssignmentService } from '@/api/assignments';
 
-// Assignment Title reactive variable
+const router = useRouter();
+
+// Form state
 const assignmentTitle = ref('');
-
-// Add missing state and methods for attempts
 const attemptCount = ref(1);
 const unlimitedAttempts = ref(false);
+const dueDate = ref('');
+const submissionFormat = ref('');
+const assignmentDetailsHeader = ref('');
+const assignmentDetailsDescription = ref('');
 
+const submissionFormats = [ 
+  { value: 'pdf', label: 'PDF' },
+  { value: 'docx', label: 'DOCX' },
+  { value: 'txt', label: 'TXT' }
+];
+
+// Attempt controls
 function decrementAttempts() {
   if (attemptCount.value > 1 && !unlimitedAttempts.value) {
     attemptCount.value--;
@@ -26,28 +37,50 @@ function toggleUnlimitedAttempts() {
   unlimitedAttempts.value = !unlimitedAttempts.value;
 }
 
-const dueDate = ref('');
-const submissionFormat = ref('');
-const submissionFormats = [
-  { value: 'pdf', label: 'PDF' },
-  { value: 'docx', label: 'DOCX' },
-  { value: 'txt', label: 'TXT' }
-];
-const assignmentDetailsHeader = ref('');
-const assignmentDetailsDescription = ref('');
-
-function saveAssignment() {
-    // Here you would typically send data to an API
-  console.log('Assignment saved:', {
+async function saveAssignment() {
+  const assignmentData = {
     title: assignmentTitle.value,
     dueDate: dueDate.value,
     format: submissionFormat.value,
     header: assignmentDetailsHeader.value,
     description: assignmentDetailsDescription.value,
-    attempts: unlimitedAttempts.value ? 'unlimited' : attemptCount.value
-  });
-  
-  // Reset form after saving
+    attempts: unlimitedAttempts.value ? 'unlimited' : attemptCount.value,
+    status: 'unpublished'
+  };
+
+  try {
+    saveToLocalStorage(assignmentData);
+    
+    const response = await AssignmentService.createAssignment({
+      title: assignmentTitle.value,
+      description: `${assignmentDetailsHeader.value}\n\n${assignmentDetailsDescription.value}`,
+      dueDate: dueDate.value,
+      courseId: 1,
+      submissionFormat: submissionFormat.value,
+      maxAttempts: unlimitedAttempts.value ? null : attemptCount.value
+    });
+
+    console.log('Assignment saved:', response);
+    resetForm();
+    router.push('/LecturerAssignOver');
+  } catch (error) {
+    console.error('Failed to save assignment:', error);
+  }
+}
+
+function saveToLocalStorage(assignmentData: any) {
+  const assignments = JSON.parse(localStorage.getItem('assignments') || '[]');
+  const newAssignment = {
+    ...assignmentData,
+    id: Date.now(),
+    dueDate: assignmentData.dueDate,
+    status: 'unpublished'
+  };
+  assignments.push(newAssignment);
+  localStorage.setItem('assignments', JSON.stringify(assignments));
+}
+
+function resetForm() {
   assignmentTitle.value = '';
   dueDate.value = '';
   submissionFormat.value = '';
@@ -55,11 +88,7 @@ function saveAssignment() {
   assignmentDetailsDescription.value = '';
   attemptCount.value = 1;
   unlimitedAttempts.value = false;
-
-  // Redirect to assignments overview page
-  router.push('/LecturerAssign'); // Or your actual route path
-};
-  
+}
 </script>
 
 <template>
@@ -179,6 +208,7 @@ function saveAssignment() {
     </div>
   </div>
 </template>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=Quicksand:wght@300..700&display=swap');

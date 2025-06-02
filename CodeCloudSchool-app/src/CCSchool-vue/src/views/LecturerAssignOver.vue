@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { AssignmentService } from '@/api/assignments';
+
+const router = useRouter();
 
 interface Assignment {
   id: number;
@@ -7,57 +11,61 @@ interface Assignment {
   description: string;
   dueDate: string;
   status: 'upcoming' | 'past' | 'unpublished';
+  header?: string;
+  format?: string;
+  attempts?: number | string;
 }
- 
-const assignments = ref<Assignment[]>([
-  {
-    id: 1,
-    title: 'API INTEGRATION: WEATHER DASHBOARD',
-    description: 'Lorem ipsum dolor Sit Amet, Consectetur Adipiscing Elit..',
-    dueDate: '2023-12-15',
-    status: 'upcoming'
-  },
-  {
-    id: 2,
-    title: 'REFACTOR LEGACY CODE: E-COMMERCE CHECKOUT SYSTEM',
-    description: 'Lorem ipsum dolor Sit Amet, Consectetur Adipiscing Elit..',
-    dueDate: '2023-12-20',
-    status: 'upcoming'
-  },
-  {
-    id: 3,
-    title: 'DEBUGGING CHALLENGE: BANKING SYSTEM VULNERABILITY',
-    description: 'Lorem ipsum dolor Sit Amet, Consectetur Adipiscing Elit..',
-    dueDate: '2023-11-10',
-    status: 'past'
-  },
-  {
-    id: 4,
-    title: 'ALGORITHM CHALLENGE: ROUTE OPTIMISER FOR DELIVERY DRONES',
-    description: 'Lorem ipsum dolor Sit Amet, Consectetur Adipiscing Elit..',
-    dueDate: '2023-11-05',
-    status: 'past'
-  },
-  {
-    id: 5,
-    title: 'DEBUGGING CHALLENGE: BANKING SYSTEM VULNERABILITY',
-    description: 'Lorem ipsum dolor Sit Amet, Consectetur Adipiscing Elit..',
-    dueDate: '2024-01-10',
-    status: 'unpublished'
-  },
-  {
-    id: 6,
-    title: 'ALGORITHM CHALLENGE: ROUTE OPTIMISER FOR DELIVERY DRONES',
-    description: 'Lorem ipsum dolor Sit Amet, Consectetur Adipiscing Elit..',
-    dueDate: '2024-01-15',
-    status: 'unpublished'
-  }
-]);
 
+const assignments = ref<Assignment[]>([]);
 const searchQuery = ref('');
 const sortOption = ref<'recent' | 'oldest'>('recent');
+const isLoading = ref(true);
 
-const getAssignmentsByStatus = (status: Assignment['status']) => {
+// Fetch assignments from both localStorage and backend
+async function fetchAssignments() {
+  try {
+    // Get from localStorage first for quick display
+    const localAssignments = JSON.parse(localStorage.getItem('assignments') || '[]');
+    
+    // Then fetch from backend
+    const backendAssignments = await AssignmentService.getAssignmentsByCourseId(1); // Replace with actual course ID
+    
+    // Merge and deduplicate assignments
+    const allAssignments = [...localAssignments];
+    
+    if (typeof backendAssignments !== 'string') {
+      backendAssignments.forEach((backendAssignment: any) => {
+        if (!allAssignments.some(a => a.id === backendAssignment.id)) {
+          allAssignments.push({
+            id: backendAssignment.id,
+            title: backendAssignment.title,
+            description: backendAssignment.description,
+            dueDate: backendAssignment.dueDate,
+            status: getAssignmentStatus(backendAssignment.dueDate)
+          });
+        }
+      });
+    }
+    
+    assignments.value = allAssignments;
+  } catch (error) {
+    console.error('Error fetching assignments:', error);
+    // Fallback to localStorage if backend fails
+    assignments.value = JSON.parse(localStorage.getItem('assignments') || '[]');
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+function getAssignmentStatus(dueDate: string): Assignment['status'] {
+  const today = new Date();
+  const due = new Date(dueDate);
+  
+  if (due > today) return 'upcoming';
+  return 'past';
+}
+
+function getAssignmentsByStatus(status: Assignment['status']) {
   return assignments.value
     .filter(assignment =>
       assignment.status === status &&
@@ -68,90 +76,117 @@ const getAssignmentsByStatus = (status: Assignment['status']) => {
       const dateB = new Date(b.dueDate).getTime();
       return sortOption.value === 'recent' ? dateB - dateA : dateA - dateB;
     });
-};
+}
+
+async function publishAssignment(assignmentId: number) {
+  try {
+    // Update in localStorage
+    const updatedAssignments = assignments.value.map(a => 
+      a.id === assignmentId ? { ...a, status: 'upcoming' as Assignment['status'] } : a
+    );
+    localStorage.setItem('assignments', JSON.stringify(updatedAssignments));
+    assignments.value = updatedAssignments;
+    
+    // Update in backend
+    await AssignmentService.publishAssignment(assignmentId);
+  } catch (error) {
+    console.error('Failed to publish assignment:', error);
+  }
+}
+
+onMounted(() => {
+  fetchAssignments();
+});
 </script>
 
 <template>
   <div class="assignments-overview">
     <h1 class="page-title">Assignments Overview</h1>
     
-    <!-- Upcoming Assignments -->
-    <section class="assignment-section">
-      <div class="assignment-controls">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search assignments..."
-          class="search-input"
-        />
-        <select v-model="sortOption" class="sort-select">
-          <option value="recent">Most Recent</option>
-          <option value="oldest">Oldest</option>
-        </select>
-      </div>
-      <h2 class="section-title">Upcoming Assignments</h2>
-      <div class="assignment-list">
-        <div 
-          v-for="assignment in getAssignmentsByStatus('upcoming')" 
-          :key="assignment.id"
-          class="assignment-card upcoming"
-        >
-          <div class="assignment-image-holder"></div>
-          <div class="assignment-details">
-            <h3 class="assignment-title">{{ assignment.title }}</h3>
-            <p class="assignment-description">{{ assignment.description }}</p>
-            <p class="due-date">Due: {{ new Date(assignment.dueDate).toLocaleDateString() }}</p>
+    <div v-if="isLoading">Loading assignments...</div>
+    
+    <template v-else>
+      <!-- Upcoming Assignments -->
+      <section class="assignment-section">
+        <div class="assignment-controls">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search assignments..."
+            class="search-input"
+          />
+          <select v-model="sortOption" class="sort-select">
+            <option value="recent">Most Recent</option>
+            <option value="oldest">Oldest</option>
+          </select>
+        </div>
+        <h2 class="section-title">Upcoming Assignments</h2>
+        <div class="assignment-list">
+          <div 
+            v-for="assignment in getAssignmentsByStatus('upcoming')" 
+            :key="assignment.id"
+            class="assignment-card upcoming"
+          >
+            <div class="assignment-image-holder"></div>
+            <div class="assignment-details">
+              <h3 class="assignment-title">{{ assignment.title }}</h3>
+              <p class="assignment-description">{{ assignment.description }}</p>
+              <p class="due-date">Due: {{ new Date(assignment.dueDate).toLocaleDateString() }}</p>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
-    
-    <!-- Past Assignments -->
-    <section class="assignment-section">
-      <h2 class="section-title">Past Assignments</h2>
-      <div class="assignment-list">
-        <div 
-          v-for="assignment in getAssignmentsByStatus('past')" 
-          :key="assignment.id"
-          class="assignment-card past"
-        >
-          <div class="assignment-image-holder"></div>
-          <div class="assignment-details">
-            <h3 class="assignment-title">{{ assignment.title }}</h3>
-            <p class="assignment-description">{{ assignment.description }}</p>
-            <p class="due-date">Was due: {{ new Date(assignment.dueDate).toLocaleDateString() }}</p>
+      </section>
+      
+      <!-- Past Assignments -->
+      <section class="assignment-section">
+        <h2 class="section-title">Past Assignments</h2>
+        <div class="assignment-list">
+          <div 
+            v-for="assignment in getAssignmentsByStatus('past')" 
+            :key="assignment.id"
+            class="assignment-card past"
+          >
+            <div class="assignment-image-holder"></div>
+            <div class="assignment-details">
+              <h3 class="assignment-title">{{ assignment.title }}</h3>
+              <p class="assignment-description">{{ assignment.description }}</p>
+              <p class="due-date">Was due: {{ new Date(assignment.dueDate).toLocaleDateString() }}</p>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
-    
-    <!-- Unpublished Assignments -->
-    <section class="assignment-section">
-      <div class="section-header">
-        <h2 class="section-title">Unpublished Assignments</h2>
-        <button class="create-assignment-btn">Create New Assignment</button>
-      </div>
-      <div class="assignment-list">
-        <div 
-          v-for="assignment in getAssignmentsByStatus('unpublished')" 
-          :key="assignment.id"
-          class="assignment-card unpublished"
-        >
-          <div class="assignment-image-holder"></div>
-          <div class="assignment-details">
-            <h3 class="assignment-title">{{ assignment.title }}</h3>
-            <p class="assignment-description">{{ assignment.description }}</p>
-            <p class="due-date">Planned for: {{ new Date(assignment.dueDate).toLocaleDateString() }}</p>
-          </div>
-          <button class="publish-btn">
-            <span class="upload-icon"><i data-lucide="upload"></i></span> Publish Assignment
+      </section>
+      
+      <!-- Unpublished Assignments -->
+      <section class="assignment-section">
+        <div class="section-header">
+          <h2 class="section-title">Unpublished Assignments</h2>
+          <button id="NewButton" class="create-assignment-btn" @click="router.push('/LecturerAssign')">
+            Create New Assignment
           </button>
         </div>
-      </div>
-    </section>
+        <div class="assignment-list">
+          <div 
+            v-for="assignment in getAssignmentsByStatus('unpublished')" 
+            :key="assignment.id" 
+            class="assignment-card unpublished"
+          >
+            <div class="assignment-image-holder"></div>
+            <div class="assignment-details">
+              <h3 class="assignment-title">{{ assignment.title }}</h3>
+              <p class="assignment-description">{{ assignment.description }}</p>
+              <p class="due-date">Planned for: {{ new Date(assignment.dueDate).toLocaleDateString() }}</p>
+            </div>
+            <button class="publish-btn" @click="publishAssignment(assignment.id)">
+              <span class="upload-icon"><i data-lucide="upload"></i></span> Publish Assignment
+            </button>
+          </div>
+        </div>
+      </section>
+    </template>
   </div>
 </template>
 
+<!-- Keep your existing style section -->
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=Quicksand:wght@300..700&display=swap');
 .assignments-overview {
