@@ -108,14 +108,21 @@ const isEditingSection = reactive({
 })
 
 //API INTEGRATION
+
+//below is a get where courseId is our test course
+//TODO: update so that courseId is getting pulled from signed in lectures assigned course
 const courseId = 1
 const courseDetails = await CourseService.getCourseDetails(courseId)
 
 if (typeof courseDetails === 'string') {
   console.error('Error:', courseDetails)
 } else {
-  console.log('Course Details:', courseDetails.courseMarkBreakdown)
-  // Use courseDetails.courseWeekBreakdown, etc.
+  console.log('Course Details:', courseDetails.courseSlides)
+
+  courseDetails.courseWeekBreakdown = courseData.courseWeekBreakdown
+  courseDetails.courseSlides = courseData.courseSlides
+  courseDetails.courseMarkBreakdown = courseData.courseMarkBreakdown
+  courseDetails.courseSemDescriptions = courseData.courseSemDescriptions
 }
 </script>
 
