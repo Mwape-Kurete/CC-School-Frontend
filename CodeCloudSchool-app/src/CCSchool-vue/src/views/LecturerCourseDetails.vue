@@ -1,4 +1,19 @@
 <script setup>
+//import api
+import { CourseService } from '@/api/courses'
+
+//importing nb vue tings
+import { ref, reactive } from 'vue'
+
+//importing icons and primevue components
+import { PencilLine, Maximize2, Ban, Save } from 'lucide-vue-next'
+import { Plus } from 'lucide-vue-next'
+
+import InputText from 'primevue/inputtext'
+import FloatLabel from 'primevue/floatlabel'
+import Textarea from 'primevue/textarea'
+
+//importing cmponents
 import CardComp from '@/components/CardComp.vue'
 import CListGroup from '@/components/CListGroup.vue'
 import CButton from '@/components/ui/CButton.vue'
@@ -6,12 +21,6 @@ import Divider from 'primevue/divider'
 import CMarkBreakdown from '@/components/CMarkBreakdown.vue'
 import LecturerCard from '@/components/LecturerCard.vue'
 import CButtonIcon from '@/components/ui/Cbutton-icon.vue'
-import { PencilLine, Maximize2, Ban, Save, ArrowUpFromLine } from 'lucide-vue-next'
-import { Plus } from 'lucide-vue-next'
-import { ref, reactive } from 'vue'
-import InputText from 'primevue/inputtext'
-import FloatLabel from 'primevue/floatlabel'
-import Textarea from 'primevue/textarea'
 
 //storing uploads
 const googleSlideurl = ref(null)
@@ -86,8 +95,9 @@ const courseData = reactive({
   courseSemDescriptions: semesterBreakdown,
 })
 
-const editableData = reactive({ ...courseData }) //state management -> essentially storing the unsaved changes before user confirmation
 const isEditing = ref(false) //state management for making the course details editable
+
+const editableData = reactive({ ...courseData }) //state management -> essentially storing the unsaved changes before user confirmation
 
 const isEditingSection = reactive({
   courseDescription: false,
@@ -96,6 +106,17 @@ const isEditingSection = reactive({
   courseMarkBreakdown: false,
   courseSemDescriptions: false,
 })
+
+//API INTEGRATION
+const courseId = 1
+const courseDetails = await CourseService.getCourseDetails(courseId)
+
+if (typeof courseDetails === 'string') {
+  console.error('Error:', courseDetails)
+} else {
+  console.log('Course Details:', courseDetails.courseMarkBreakdown)
+  // Use courseDetails.courseWeekBreakdown, etc.
+}
 </script>
 
 <template>
