@@ -60,6 +60,26 @@ import { PlusCircleIcon } from 'lucide-vue-next'
       <hr />
 
       <h1 class="ps-header pt-5">This Weeks Schedule</h1>
+      <CardComp
+        cardType="module"
+        moduleTitleLine1=" Computer science"
+        moduleTitleLine2="Fundamentals Module"
+        moduleEventLabel="Practical"
+        moduleCode="CS101"
+        moduleClassId="1E"
+        moduleTime="9:00 - 12:00"
+        moduleImg="https://picsum.photos/id/870/200/300?grayscale&blur=2"
+      />
+      <CardComp
+        cardType="module"
+        moduleTitleLine1=" Computer science"
+        moduleTitleLine2="Fundamentals Module"
+        moduleEventLabel="Practical"
+        moduleCode="CS101"
+        moduleClassId="2E"
+        moduleTime="14:00 - 18:00"
+        moduleImg="https://picsum.photos/id/870/200/300?grayscale&blur=2"
+      />
     </div>
 
     <!-- Right Side Panel -->
@@ -105,6 +125,8 @@ import { PlusCircleIcon } from 'lucide-vue-next'
   width: 97%;
   margin-left: 1.5%;
 }
+
+/*module section*/
 
 /*layout below */
 
