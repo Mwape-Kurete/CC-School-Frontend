@@ -7,6 +7,29 @@ export interface Course{
     courseDescription: string,
 }
 
+export interface CourseDetails {
+  courseFullCode: string,
+  courseWeekBreakdown: WeeklyBreakdown[], // pluralised to reflect array
+  courseSlides: string,
+  courseMarkBreakdown: MarkBreakdown,
+  courseSemDescriptions: string[],
+}
+
+interface WeeklyBreakdown {
+  header: string,
+  description: string,
+}
+
+interface MarkBreakdown {
+  title: string,
+  mark: number,
+  items: {
+    description: string,
+    mark: number,
+  }[],
+}
+
+
 export const CourseService = {
     async getCourses() : Promise<Course[] | string> {
         try {
@@ -19,8 +42,8 @@ export const CourseService = {
             }
             return 'An unknown error occurred';
         }
-    }, 
-    
+    },
+
     async getCoursebyId(courseId: number): Promise<Course | string> {
         try {
             const response = await api.get(`/courses/${courseId}`);
@@ -32,7 +55,24 @@ export const CourseService = {
             }
             return 'An unknown error occurred';
         }
+    },
+
+    async getCourseDetails(courseId: string): Promise<CourseDetails | string> {
+    try {
+      const response = await api.get(`/Courses/courses/${courseId}/details-descript`);
+
+      console.log("Course Details Response:", response.data);
+
+      return response.data as CourseDetails;
+
+    } catch (error: any) {
+      console.error("Course Details Error:", error);
+      if (error.response?.data) {
+        return error.response.data;
+      }
+      return "An unknown error occurred";
     }
+  }
 }
 
 export const StudentCourseService = {
@@ -40,7 +80,7 @@ export const StudentCourseService = {
         try {
             const response = await api.get(`/student/${studentId}`);
             console.log('Student Courses response:', response.data.courses.$values);
-            return response.data.courses.$values; // should return an array of courses for the student; 
+            return response.data.courses.$values; // should return an array of courses for the student;
         } catch (error: any) {
             console.error('Full error object:', error);
             if (error.response && error.response.data) {
@@ -49,4 +89,10 @@ export const StudentCourseService = {
             return 'An unknown error occurred';
         }
     }
+}
+
+export const LecturerCourseService = {
+
+
+
 }
