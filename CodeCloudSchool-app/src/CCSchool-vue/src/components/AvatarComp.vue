@@ -10,7 +10,7 @@ const props = defineProps({
 })
 
 // DiceBear style
-const style = 'bottts-neutral'
+const style = 'bottts'
 
 // Generate avatar URL
 const avatarUrl = computed(() => {
