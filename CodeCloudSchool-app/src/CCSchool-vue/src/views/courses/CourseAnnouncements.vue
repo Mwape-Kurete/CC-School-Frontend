@@ -36,18 +36,21 @@ onMounted(async () => {
 });
 
 // Fetch announcements for current course
+const error = ref<string | null>(null);
 const fetchAnnouncements = async (): Promise<void> => {
-  const courseId = Number(route.params.courseId);
+  error.value = null;
   try {
-    const response = await AnnouncementService.getAnnouncementsByCourseId(courseId);
+    const response = await AnnouncementService.getAnnouncementsByCourseId(Number(courseId));
     
     if (typeof response === 'string') {
-      console.error('Error:', response);
+      error.value = response;
+      announcements.value = [];
     } else {
       announcements.value = response;
     }
-  } catch (error) {
-    console.error('Failed to fetch announcements:', error);
+  } catch (err) {
+    error.value = 'Failed to load announcements';
+    announcements.value = [];
   }
 };
 
@@ -73,6 +76,8 @@ const onAnnouncementClick = (announcementId: number): void => {
     }
   });
 };
+
+
 </script>
 
 
@@ -80,6 +85,10 @@ const onAnnouncementClick = (announcementId: number): void => {
   <div class="course-announcements">
     <h1>Announcements</h1>
   </div>
+
+    <div v-if="error" class="text-red-500 p-4 bg-red-50 rounded-lg mx-4 mb-4">
+      Error: {{ error }}
+    </div>
 
   <div class="dashboard-view">
     <!-- Search and filter -->
