@@ -28,6 +28,7 @@ interface Announcement {
   description: string;
   date: string;
   lecturerId: number;
+  courseId: number; 
 }
 
 // Fetch announcements when component mounts
