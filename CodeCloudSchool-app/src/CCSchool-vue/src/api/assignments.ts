@@ -67,18 +67,20 @@ export const AssignmentService = {
         return `${day} ${month} - ${hours}:${minutes}`;
     }, 
 
-
-
-        async getAssignmentById(assignmentId: number): Promise<Assignment | string> {
-        try {
-            const response = await api.get(`/assignments/${assignmentId}`);
-            return response.data; // should return an assignment object
-        } catch (error: any) {
-            console.error('Full error object:', error);
-            if(error.response && error.response.data) {
-                return error.response.data; // e.g. "Assignment not found"
-            }
-            return 'An unknown error occurred';
+    async getAssignmentById(assignmentId: number): Promise<Assignment | string> {
+    try {
+        const response = await api.get(`/assignments/${assignmentId}`);
+        return response.data; // should return an assignment object
+    } catch (error: any) {
+        console.error('Full error object:', error);
+        if(error.response && error.response.data) {
+            return error.response.data; // e.g. "Assignment not found"
         }
+        return 'An unknown error occurred';
     }
+}
 };
+
+export const AssignmentSubmissionService = {
+    
+}

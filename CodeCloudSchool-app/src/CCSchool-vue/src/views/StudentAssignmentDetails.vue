@@ -127,7 +127,7 @@ const fetchAssignmentDetails = async (assignmentId: number) => {
         Window Plagiarism Declaration. Please see openwindow.co.za/plagiarism for more information.
     </p>
 
-    <SubmissionComp class="file-sub" />
+    <SubmissionComp :assignmentId="assignmentId" class="file-sub" />
     <CButton class="submit-btn" type="tertiary" size="lg">Submit Assignment</CButton>
 
 </template>

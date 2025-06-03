@@ -8,15 +8,8 @@
 
       <!-- File Upload Component -->
       <div class="file-upload">
-        <input 
-          type="file" 
-          ref="fileInput"
-          @change="handleFileSelect" 
-          multiple
-          accept="image/*"
-          style="display: none"
-        >
-        
+        <input type="file" ref="fileInput" @change="handleFileSelect" multiple accept="image/*" style="display: none">
+
         <!-- Header Section -->
         <div class="upload-header">
           <div class="button-group">
@@ -27,10 +20,10 @@
               <i class="icon">☁️</i> Upload
             </button>
             <button @click="clearFiles" class="button danger" :disabled="!files.length">
-              <i class="icon">X </i> 
+              <i class="icon">X </i>
             </button>
           </div>
-          
+
           <div class="progress-container">
             <div class="progress-bar" :style="{ width: uploadProgress + '%' }"></div>
             <span class="progress-text">{{ totalSize }}B / 1MB</span>
@@ -67,7 +60,14 @@
 </template>
 
 <script>
+
 export default {
+  props: {
+    assignmentId: {
+      type: Number,
+      required: true
+    }
+  },
   data() {
     return {
       files: [], // Stores all selected files
@@ -103,26 +103,31 @@ export default {
       this.uploadProgress = 0
     },
     async uploadFiles() {
-      this.uploadProgress = 0
-      const chunkSize = 1024 * 1024 // 1MB chunk size (simulate progress)
-      
-      try {
-        // Simulate upload progress
-        const interval = setInterval(() => {
-          this.uploadProgress += 10
-          if (this.uploadProgress >= 100) {
-            clearInterval(interval)
-            this.showToast('Files uploaded successfully!', 'success')
-            // In a real app, we need to process the files here
-            console.log('Files to upload:', this.files)
-          }
-        }, 300)
-        
-      } catch (error) {
-        this.showToast('Upload failed', 'error')
-        console.error('Upload error:', error)
+      if (!this.files.length) return;
+
+      const formData = new FormData();
+      for (let file of this.files) {
+        formData.append('files', file); // field name matches backend
       }
-    },
+
+      try {
+        const response = await fetch(`/api/assignments/${this.assignmentId}/submit`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+
+        this.showToast('Files uploaded successfully!', 'success');
+        this.clearFiles();
+      } catch (error) {
+        console.error('Upload error:', error);
+        this.showToast('Upload failed: ' + error.message, 'error');
+      }
+    }
+    ,
     formatSize(bytes) {
       if (bytes === 0) return '0 Bytes'
       const k = 1024
@@ -143,14 +148,14 @@ export default {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
 
-/* Base Styles */ 
+/* Base Styles */
 .upload-container {
   max-width: 60vw;
   margin: 2rem auto;
   font-family: "Quicksand", sans-serif;
   font-optical-sizing: auto;
-  font-weight:300;
-  
+  font-weight: 300;
+
 }
 
 
@@ -174,20 +179,30 @@ export default {
 }
 
 .toast.info {
-  background: #212121; /* blue */
+  background: #212121;
+  /* blue */
 }
 
 .toast.success {
-  background: #D0DFCC; /* green */
+  background: #D0DFCC;
+  /* green */
 }
 
 .toast.error {
-  background: #EF4444; /* red */
+  background: #EF4444;
+  /* red */
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Upload Header */
@@ -203,7 +218,7 @@ export default {
 .button-group {
   display: flex;
   gap: 0.5rem;
-  
+
 }
 
 .button {
@@ -215,9 +230,9 @@ export default {
   border: 1px solid #ddd;
   background: white;
   cursor: pointer;
- font-family: "Quicksand", sans-serif;
+  font-family: "Quicksand", sans-serif;
   font-optical-sizing: auto;
-  font-weight:300;
+  font-weight: 300;
   transition: all 0.2s;
 }
 
@@ -361,7 +376,7 @@ export default {
   color: #212121;
 }
 
-.badge.warning:hover{
+.badge.warning:hover {
   background-color: #FEF3C7;
   color: #212121;
 }
@@ -384,7 +399,8 @@ export default {
 }
 
 .empty-icon img {
-  width: 80px;        /* Default size */
+  width: 80px;
+  /* Default size */
   height: auto;
   max-width: 100%;
 }
@@ -392,13 +408,15 @@ export default {
 /* Adjust for different screen sizes */
 @media (min-width: 768px) {
   .empty-icon img {
-    width: 100px;     /* Slightly larger on bigger screens */
+    width: 100px;
+    /* Slightly larger on bigger screens */
   }
 }
 
 @media (max-width: 480px) {
   .empty-icon img {
-    width: 60px;      /* Smaller on mobile */
+    width: 60px;
+    /* Smaller on mobile */
   }
 }
 
@@ -407,7 +425,7 @@ export default {
   .upload-header {
     flex-direction: column;
   }
-  
+
   .progress-container {
     width: 100%;
     max-width: 100%;
