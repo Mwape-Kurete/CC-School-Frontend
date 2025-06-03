@@ -86,6 +86,10 @@ const onAnnouncementClick = (announcementId: number): void => {
     <h1>Announcements</h1>
   </div>
 
+    <div v-if="error" class="text-red-500 p-4 bg-red-50 rounded-lg mx-4 mb-4">
+      Error: {{ error }}
+    </div>
+
   <div class="dashboard-view">
     <!-- Search and filter -->
     <div class="search-filter-con mb-6 flex items-center gap-4">
