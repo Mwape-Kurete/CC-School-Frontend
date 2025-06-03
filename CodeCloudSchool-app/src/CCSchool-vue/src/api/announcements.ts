@@ -6,45 +6,39 @@ interface Announcement {
   announcementId: number;
   title: string;
   description: string;
-  date: string; // ISO date string
+  date: string;
   lecturerId: number;
-  courseId: number; 
-  courseName?: string; // Optional if your backend provides this
+  courseId: number;
+  courseName?: string;
 }
-const BASE_URL = '/api/Announce';
+
 
 export const AnnouncementService = {
   async getAnnouncementsByCourseId(courseId: number): Promise<Announcement[] | string> {
     try {
-      const response = await api.get(`${BASE_URL}/course/${courseId}`);
+      const response = await api.get(`/Announce/course/${courseId}`);
       return response.data;
     } catch (error: any) {
       const errorMsg = this.handleError(error);
-      console.error('Error:', errorMsg, error);
+      console.error('API Error:', errorMsg, error.response?.config?.url);
       return errorMsg;
     }
   },
 
   async getAnnouncementById(announcementId: number): Promise<Announcement | string> {
     try {
-      // Changed from '/api/announcements/' to '/api/Announce/'
-      const response = await api.get(`/api/Announce/${announcementId}`);
+      const response = await api.get(`/Announce/${announcementId}`);
       return response.data;
     } catch (error: any) {
-      console.error('Error fetching announcement:', error);
       return this.handleError(error);
     }
   },
 
-  // Extract error handling to a reusable method
   handleError(error: any): string {
-    if (error.response?.data?.message) {
-      return error.response.data.message;
+    if (error.response?.status === 404) {
+      return 'Announcement not found (404)';
     }
-    if (error.response?.data) {
-      return error.response.data;
-    }
-    return 'Failed to fetch data from server';
+    return error.response?.data?.message || 'Failed to fetch data';
   },
 
   formatAnnouncementDate(isoDate: string): string {
