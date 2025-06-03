@@ -1,0 +1,49 @@
+import api from './api';
+
+
+// Represents the structure of an announcement returned by the backend  
+interface Announcement {
+  announcementId: number;
+  title: string;
+  description: string;
+  date: string; // ISO date string
+  lecturerId: number;
+}
+
+export const AnnouncementService = {
+    
+  async getAnnouncementsByCourseId(courseId: number): Promise<Announcement[] | string> {
+    try {
+      const response = await api.get(`/api/announcements/course/${courseId}`);
+      return response.data; // Expects backend to return Announcement[]
+    } catch (error: any) {
+      console.error('Error fetching announcements:', error);
+      if (error.response?.data) {
+        return error.response.data;
+      }
+      return 'Failed to fetch announcements';
+    }
+  },
+
+  async getAnnouncementById(announcementId: number): Promise<Announcement | string> {
+    try {
+      const response = await api.get(`/api/announcements/${announcementId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching announcement:', error);
+      if (error.response?.data) {
+        return error.response.data;
+      }
+      return 'Failed to fetch announcement';
+    }
+  },
+
+  formatAnnouncementDate(isoDate: string): string {
+    const date = new Date(isoDate);
+    const day = date.getUTCDate();
+    const month = date.toLocaleString('default', { month: 'long', timeZone: 'UTC' });
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    return `${day} ${month} - ${hours}:${minutes}`;
+  }
+};
