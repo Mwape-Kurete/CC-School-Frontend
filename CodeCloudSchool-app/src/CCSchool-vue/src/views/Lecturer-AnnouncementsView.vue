@@ -3,12 +3,12 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import { AnnouncementService } from '@/api/announcement';
-import type { Announcement } from '@/api/announcement';
+import { AnnouncementService } from '@/api/announcements';
+import type { Announcement } from '@/api/announcements';
 import DOMPurify from 'dompurify';
 
 const router = useRouter();
-const courseId = ref<number>(1); // Replace with dynamic lecturer courseId if available
+const courseId = ref<number>(1);
 
 const title = ref('');
 const body = ref('');
@@ -28,6 +28,7 @@ const searchQuery = ref('');
 const announcementType = ref<'all' | 'recent' | 'old'>('all');
 const sortBy = ref<'date' | 'lecture' | 'subject'>('date');
 
+// Formatting functions
 const format = (cmd: string, value?: string) => {
   document.execCommand(cmd, false, value);
   body.value = editableDiv.value?.innerHTML || '';
@@ -37,6 +38,20 @@ const updateBody = () => {
   body.value = editableDiv.value?.innerHTML || '';
 };
 
+// Save to localStorage function
+function saveToLocalStorage(announcementData: Announcement) {
+  const key = `announcements_${courseId.value}_${announcementData.lecturerId}`;
+  const storedAnnouncements = JSON.parse(localStorage.getItem(key) || '[]');
+  const newAnnouncement = {
+    ...announcementData,
+    id: Date.now().toString(),
+    date: announcementData.date,
+  };
+  storedAnnouncements.push(newAnnouncement);
+  localStorage.setItem(key, JSON.stringify(storedAnnouncements));
+}
+
+// Main announcement sending function
 const sendAnnouncement = async () => {
   if (!title.value.trim() || !body.value.trim()) {
     errorMessage.value = 'Please fill in both title and body.';
@@ -50,7 +65,9 @@ const sendAnnouncement = async () => {
     const announcementData: Announcement = {
       title: title.value,
       description: DOMPurify.sanitize(body.value),
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
+      lecturerId: 1,
+      announcementId: Date.now(),
     };
 
     const result = await AnnouncementService.postAnnouncement(courseId.value, announcementData);
@@ -59,7 +76,17 @@ const sendAnnouncement = async () => {
       errorMessage.value = result;
     } else {
       await fetchAnnouncements();
-      router.push('/LecturerAnnounceOver'); // Assuming this shows announcements
+      saveToLocalStorage(announcementData);
+      
+      // Reset form after successful submission
+      title.value = '';
+      body.value = '';
+      if (editableDiv.value) {
+        editableDiv.value.innerHTML = '';
+      }
+      
+      errorMessage.value = '';
+      router.push('/LecturerAnnounceOver');
     }
   } catch (error: unknown) {
     errorMessage.value = 'Failed to create announcement. Please try again.';
@@ -69,8 +96,9 @@ const sendAnnouncement = async () => {
   }
 };
 
+// Fetch announcements function
 const fetchAnnouncements = async () => {
-  const result = await AnnouncementService.getAnnouncementByCourseId(courseId.value);
+  const result = await AnnouncementService.getAnnouncementsByCourseId(courseId.value);
   if (typeof result !== 'string') {
     announcements.value = result.map((a: any) => ({
       id: a.id,
@@ -84,6 +112,7 @@ const fetchAnnouncements = async () => {
 
 onMounted(fetchAnnouncements);
 
+// Date formatting helper
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return new Intl.DateTimeFormat('en-US', {
@@ -95,6 +124,7 @@ const formatDate = (dateString: string) => {
   }).format(date);
 };
 
+// Computed property for filtered announcements
 const filteredAnnouncements = computed(() => {
   let filtered = [...announcements.value];
 
@@ -134,6 +164,7 @@ const filteredAnnouncements = computed(() => {
 });
 </script>
 
+<!-- Your template and style sections remain unchanged -->
 <template>
   <div class="announcement-container">
     <h1 class="main-title">Create An Announcement</h1>

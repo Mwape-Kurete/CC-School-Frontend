@@ -2,6 +2,8 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
+import { AnnouncementService } from '@/api/announcements';
+import type { Announcement } from '@/api/announcements';
 
 const router = useRouter();
 const announcements = ref<Array<{
@@ -13,7 +15,10 @@ const announcements = ref<Array<{
 }>>([]);
 
 onMounted(() => {
-  const stored = sessionStorage.getItem('announcements');
+  const courseId = 1; // or dynamically get from route/store
+  const lecturerId = 1; // or dynamically get from user/session
+  const key = `announcements_${courseId}_${lecturerId}`;
+  const stored = localStorage.getItem(key);
   if (stored) {
     announcements.value = JSON.parse(stored);
   }
