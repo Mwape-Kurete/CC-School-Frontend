@@ -1,11 +1,10 @@
 <script setup lang="ts">
-// You can add component logic here later
+import TimetableComp from '@/components/TimetableComp.vue';
 </script>
 
 <template>
   <div class="courses-view">
-    <h1 class="text-3xl font-bold mb-4">This is the timetable</h1>
-    <!-- Add more dashboard content here -->
+     <TimetableComp />
   </div>
 </template>
 

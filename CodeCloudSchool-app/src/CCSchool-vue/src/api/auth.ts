@@ -4,7 +4,7 @@ import api from './api';
 interface LoginData {
   email: string;
   password: string;
-  role: 'admin' | 'lecturer' | 'student';
+  role: 'admin' | 'lecturer' | 'student' | 'lecturerreg'; // 'lecturerreg' for lecturer registration
 }
 
 
@@ -12,6 +12,9 @@ interface User {
   id: string;
   name: string;
   email: string;
+  role: 'student' | 'lecturer' | 'admin' | 'lecturerreg'; // 'lecturerreg' for lecturer registration
+  studentNumber?: string; // only present for students
+  lecturerId?: string; // only present for lecturers
 }
 
 interface StudentSignUp {
@@ -47,6 +50,9 @@ interface LecturerSignUp{
 export const AuthService = {
   async login({ email, password, role }: LoginData): Promise< User | string> {
     try {
+      if(role === 'lecturer'){
+        role = 'lecturerreg'; // Adjust role for lecturer registration
+      }
       const response = await api.post(`/${role}/login`, { email, password });
       console.log('Login response:', response);
       return response.data; // e.g. User data , "Login successful"
@@ -74,20 +80,6 @@ export const AuthService = {
     }
   },
 
-  async signUpLecturer(lectureData: LecturerSignUp)  : Promise<User | string >{
-    try{
-      const response = await api.post('/lecturer/register', lectureData);
-      console.log('Sign up Successful', response);
-      return response.data;
-    }catch(error:any){
-      console.log('Full error object:', error);
-      if(error.response && error.response.data){
-        return error.response.data;
-      }
-      return 'An unknown error occurred';
-    }
-  },
-
   async getLecturerAnnouncements (AnnounceData: LectAnnouncement) : Promise<LectAnnouncement [] | string >{
     try {
       const response = await api.get('/lecturer/announcements', {params:AnnounceData});
@@ -105,6 +97,25 @@ export const AuthService = {
   
 
 
+
+
+};
+
+export const LectAuthService = {
+
+   async signUpLecturer(lectureData: LecturerSignUp)  : Promise<User | string >{
+    try{
+      const response = await api.post('/lecturerreg/register', lectureData);
+      console.log('Sign up Successful', response);
+      return response.data;
+    }catch(error:any){
+      console.log('Full error object:', error);
+      if(error.response && error.response.data){
+        return error.response.data;
+      }
+      return 'An unknown error occurred';
+    }
+  },
 
 
 };

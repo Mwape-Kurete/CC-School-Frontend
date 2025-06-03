@@ -14,7 +14,7 @@ import Dropdown from 'primevue/dropdown'
 
 
 // import api service
-import { AuthService } from '@/api/auth'
+import { AuthService, LectAuthService } from '@/api/auth'
 
 const props = defineProps({
     variant: {
@@ -90,19 +90,20 @@ const login = async () => {
             // Redirect or store user session here
 
 
-            const user = response; 
-            
-            
+            const user = response;
+
+
             // store user role in local storage
             localStorage.setItem('userRole', user.role);
             if (user.role === 'Student') {
                 // user obj only has email, not studentNumber => get the student number out the email
-                user.studentNumber = user.email.split('@')[0]; 
+                user.studentNumber = user.email.split('@')[0];
                 console.log('Student number:', user.studentNumber);
 
-                localStorage.setItem('studentNumber', user.studentNumber );
+                localStorage.setItem('studentNumber', user.studentNumber);
                 router.push({ name: 'dashboard' });
             } else if (user.role === 'Lecturer') {
+                localStorage.setItem('lectId', user.lecturerId);
                 router.push({ name: 'lecturer-dash' });
             } else {
                 console.warn('Unknown user role:', user.role);
@@ -131,32 +132,76 @@ const signUp = async () => {
         loading.value = false
         return
     }
-    try {
-        console.log('Attempting to sign up...')
-        const response = await AuthService.signUpStudent({
-            name: name.value,
-            lastName: surname.value,
-            password: password.value,
-            gender: typeof gender.value === 'object' ? gender.value.value : gender.value, // extract actual string
-            address: address.value,
-            phoneNumber: phoneNo.value,
-            enrollmentDate: new Date().toISOString(), // REQUIRED
-            yearLevel: "1st Year", // or bind this to a form field
-        })
+    if (role.value === 'student') {
+        try {
+            console.log('Attempting to sign up...')
+            const response = await AuthService.signUpStudent({
+                name: name.value,
+                lastName: surname.value,
+                password: password.value,
+                gender: typeof gender.value === 'object' ? gender.value.value : gender.value, // extract actual string
+                address: address.value,
+                phoneNumber: phoneNo.value,
+                enrollmentDate: new Date().toISOString(), // REQUIRED
+                yearLevel: "1st Year", // or bind this to a form field
+            })
 
-        if (typeof response === 'string') {
-            // sign up failed, show message
-            errorMessage.value = response;
-        } else {
-            // sign up successful, response is a User object
-            console.log('sign up successful:', response);
-            alert('Your CC School email adress for signing in is: ' + response.email);
-            // TODO: login user after sign up
+            if (typeof response === 'string') {
+                // sign up failed, show message
+                errorMessage.value = response;
+            } else {
+                // sign up successful, response is a User object
+                console.log('sign up successful:', response);
+                alert('Your CC School email adress for signing in is: ' + response.email);
+
+                // store student number and role in local storage
+                localStorage.setItem('studentNumber', response.studentNumber);
+                localStorage.setItem('userRole', user.role);
+                // redirect user to course select page
+                router.push({ name: 'RegisterMajors'});
+            }
+        } catch (error) {
+            errorMessage.value = 'Sign Up failed. Please check your credentials.'
+        } finally {
+            loading.value = false
         }
-    } catch (error) {
-        errorMessage.value = 'Sign Up failed. Please check your credentials.'
-    } finally {
-        loading.value = false
+    }
+    else if (role.value === 'lecturer') {
+        try {
+            console.log('Attempting to sign up lecturer')
+            const response = await LectAuthService.signUpLecturer({
+                lectName: name.value,
+                    lecLastName: surname.value,
+                    name: name.value,
+                    lecEmail: email.value,
+                    lastName: surname.value,
+                    password: password.value,
+                    phoneNumber: phoneNo.value,
+                    department: "Computer Science",
+                    dateOfJoining: new Date().toISOString(), // REQUIRED
+                    isActive: true
+            })
+
+            if (typeof response === 'string') {
+                // sign up failed, show message
+                errorMessage.value = response;
+            } else {
+                // sign up successful, response is a User object
+                console.log('sign up successful:', response);
+                alert('The response is: ' + response);
+
+                // store student number and role in local storage
+                localStorage.setItem('lectId', response.lecturerId);
+                localStorage.setItem('userRole', user.role);
+                // redirect user to course select page
+                router.push({ name: 'RegisterMajors'});
+            }
+
+        } catch (error) {
+            errorMessage.value = 'Sign Up failed. Please check your credentials.'
+        } finally {
+            loading.value = false
+        }
     }
 }
 
@@ -178,7 +223,7 @@ const signUp = async () => {
                 </Divider>
 
                 <CDropdown type="ghost" size="sm" v-model="role" :options="roleOptions" optionLabel="label"
-                    class="role-dropdown w-full" />
+                    class="role-dropdown w-full mb-4" />
 
 
                 <div class="w-full mb-4">
@@ -218,6 +263,9 @@ const signUp = async () => {
             <!-- SIGN UP FORM -->
             <template v-else>
                 <h2 class="text-2xl font-semibold mb-6">Create an account</h2>
+
+                <CDropdown type="ghost" size="sm" v-model="role" :options="roleOptions" optionLabel="label"
+                    class="role-dropdown w-full mb-2" />
 
                 <div class="grid w-full gap-4 mb-4 one-row">
                     <div class="col-6">

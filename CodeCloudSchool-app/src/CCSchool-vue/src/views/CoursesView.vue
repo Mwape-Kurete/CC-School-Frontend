@@ -15,16 +15,6 @@ const courses = ref<Course[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
-
-
-
-// const courses = [
-//   { id: 'cs-101', name: 'CS 101' },
-//   { id: 'ai-210', name: 'AI 210' },
-//   { id: 'oop-101', name: 'OOP 101' },
-//   { id: 'csp-210', name: 'CSP 210' }
-// ]
-
 // fetch the courses when the component is mounted
 onMounted(async ()=> {
   try{

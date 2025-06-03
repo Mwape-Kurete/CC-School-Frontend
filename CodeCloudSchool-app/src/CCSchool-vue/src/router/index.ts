@@ -166,6 +166,16 @@ const router = createRouter({
       },
     },
     {
+      path: '/register-majors',
+      name: 'RegisterMajors',
+      component: () => import('@/views/student/MajorsSelectView.vue'),
+      meta: {
+        layout: 'TwoCol',
+        allowedRoles: ['student'],
+        page: 'register-majors',
+      }
+    },
+    {
       path: '/admin/settings',
       name: 'admin-settings',
       component: () => import('@/views/admin/SystemSettings.vue'),
