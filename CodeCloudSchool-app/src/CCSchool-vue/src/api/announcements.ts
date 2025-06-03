@@ -1,6 +1,5 @@
 import api from './api';
 
-
 // Represents the structure of an announcement returned by the backend  
 interface Announcement {
   announcementId: number;
@@ -12,11 +11,10 @@ interface Announcement {
   courseName?: string;
 }
 
-
 export const AnnouncementService = {
   async getAnnouncementsByCourseId(courseId: number): Promise<Announcement[] | string> {
     try {
-      const response = await api.get(`/api/courses/${courseId}`);
+      const response = await api.get(`/api/Announce/course/${courseId}`);
       return response.data;
     } catch (error: any) {
       const errorMsg = this.handleError(error);
@@ -27,7 +25,7 @@ export const AnnouncementService = {
 
   async getAnnouncementById(announcementId: number): Promise<Announcement | string> {
     try {
-       const response = await api.get(`/api/announce/${announcementId}`);
+       const response = await api.get(`/api/Announce/${announcementId}`);
       return response.data;
     } catch (error: any) {
       return this.handleError(error);
