@@ -12,35 +12,17 @@ interface Assignment {
 }
 
 export const AssignmentService = {
-    async getAssignmentsByCourseId(courseId: number): Promise<Assignment[] | string> {
+    async getAssignmentsByCourseId(courseId: number) : Promise<Assignment[] | string> {
         try {
-            const response = await api.get(`assignments/by-course/${courseId}`);
-            
-            console.log('Assignments response:', response.data);
-
-            const data = response.data.$values ?? response.data; 
-
-            if (!Array.isArray(data)) {
-                console.error('Unexpected assignments format:', data);
-                return 'Invalid response from server';
-            }
-
-            return data.map((assignment: any) => ({
-                id: assignment.id,
-                title: assignment.title,
-                description: assignment.description,
-                dueDate: assignment.dueDate,
-                courseId: assignment.courseId,
-                status: this.getAssignmentStatus(assignment.dueDate),
-                submissionFormat: assignment.submissionFormat,
-                maxAttempts: assignment.maxAttempts
-            }));
+            const response = await api.get(`/courses/${courseId}`);
+            console.log('Assignments response:', response.data.assignments.$values);
+            return response.data.assignments.$values; // should return an array of assignments for the course
         } catch (error: any) {
-            console.error('Error fetching assignments:', error);
-            if (error.response?.data) {
-                return error.response.data;
+            console.error('Full error object:', error);
+            if (error.response && error.response.data) {
+                return error.response.data; // e.g. "No courses found"
             }
-            return 'Failed to fetch assignments';
+            return 'An unknown error occurred';
         }
     },
 
@@ -83,5 +65,20 @@ export const AssignmentService = {
         const hours = date.getUTCHours().toString().padStart(2, '0');
         const minutes = date.getUTCMinutes().toString().padStart(2, '0');
         return `${day} ${month} - ${hours}:${minutes}`;
+    }, 
+
+
+
+        async getAssignmentById(assignmentId: number): Promise<Assignment | string> {
+        try {
+            const response = await api.get(`/assignments/${assignmentId}`);
+            return response.data; // should return an assignment object
+        } catch (error: any) {
+            console.error('Full error object:', error);
+            if(error.response && error.response.data) {
+                return error.response.data; // e.g. "Assignment not found"
+            }
+            return 'An unknown error occurred';
+        }
     }
 };

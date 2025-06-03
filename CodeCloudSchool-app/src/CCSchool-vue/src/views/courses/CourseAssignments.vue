@@ -24,9 +24,11 @@ const filterOptions = [
 
 
 import type { Course } from '@/api/courses';
-const course = ref<Course | null>(null);
+const course = ref<Course | null>(null); 
 
 onMounted(async () => {
+  // fetch the assignments for the course
+  await fetchAssignmentsByCourseId();
 
   const courseIdParam = route.params.courseId;
   const courseId = Array.isArray(courseIdParam) ? Number(courseIdParam[0]) : Number(courseIdParam);
@@ -43,11 +45,6 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to fetch course:', error);
   }
-
-
-  // fetch the assignments for the course
-  await fetchAssignmentsByCourseId();
-
 })
 
 // =====================================================================================
@@ -71,10 +68,9 @@ const fetchAssignmentsByCourseId = async (): Promise<void> => {
   // get the courseId from the route params
   const courseIdParam = route.params.courseId;
   const courseId = Array.isArray(courseIdParam) ? Number(courseIdParam[0]) : Number(courseIdParam);
-
+  
   try {
     const response = await AssignmentService.getAssignmentsByCourseId(courseId);
-    console.log('Raw response from backend:', response);
 
     if (typeof response === 'string') {
       console.error('Failed to fetch assignments:', response);
@@ -138,11 +134,16 @@ const onAssignmentClick = (assignmentId: number): void => {
     <div class="divider"></div>
 
     <div class="card-container">
-      <CardComp v-for="assignment in upcomingAssignments" @click="onAssignmentClick(assignment.assignment_ID)"
-        :key="assignment.assignment_ID" cardType="assignment" :assignmentTitle="assignment.title"
+      <CardComp
+        v-for="assignment in upcomingAssignments"
+        @click="onAssignmentClick(assignment.assignment_ID)"
+        :key="assignment.assignment_ID"
+        cardType="assignment"
+        :assignmentTitle="assignment.title"
         :assignmentBody="assignment.description || 'No description provided.'"
         :assignmentDate="AssignmentService.formatAssignmentDate(assignment.dueDate)"
-        moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..." />
+        moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
+      />
       <div v-if="!upcomingAssignments.length" class="text-gray-500">No upcoming assignments</div>
     </div>
 
@@ -151,10 +152,15 @@ const onAssignmentClick = (assignmentId: number): void => {
     <div class="divider"></div>
 
     <div class="card-container">
-      <CardComp v-for="assignment in pastAssignments" :key="assignment.assignment_ID" cardType="assignment"
-        :assignmentTitle="assignment.title" :assignmentBody="assignment.description || 'No description provided.'"
+      <CardComp
+        v-for="assignment in pastAssignments"
+        :key="assignment.assignment_ID"
+        cardType="assignment"
+        :assignmentTitle="assignment.title"
+        :assignmentBody="assignment.description || 'No description provided.'"
         :assignmentDate="AssignmentService.formatAssignmentDate(assignment.dueDate)"
-        moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..." />
+        moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
+      />
       <div v-if="!pastAssignments.length" class="text-gray-500">No past assignments</div>
     </div>
 
