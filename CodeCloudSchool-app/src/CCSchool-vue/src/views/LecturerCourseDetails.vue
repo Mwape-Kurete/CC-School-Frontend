@@ -7,7 +7,7 @@ import { AnnouncementService } from '@/api/announcements'
 import { ref, reactive, onMounted } from 'vue'
 
 //importing icons and primevue components
-import { PencilLine, Maximize2, Ban, Save } from 'lucide-vue-next'
+import { PencilLine, Maximize2, Ban, Save, CircleFadingArrowUp, RotateCcw } from 'lucide-vue-next'
 import { Plus } from 'lucide-vue-next'
 import InputText from 'primevue/inputtext'
 import FloatLabel from 'primevue/floatlabel'
@@ -22,7 +22,6 @@ import CButton from '@/components/ui/CButton.vue'
 import CMarkBreakdown from '@/components/CMarkBreakdown.vue'
 import LecturerCard from '@/components/LecturerCard.vue'
 import CButtonIcon from '@/components/ui/Cbutton-icon.vue'
-import Toast from 'primevue/toast'
 
 /*
 TODO:
@@ -111,8 +110,28 @@ onMounted(async () => {
   }
 })
 
+// Editing states
+const isEditing = ref(false)
+const fullUpdate = ref(false)
+
+const isEditingSection = reactive({
+  courseDescription: false,
+  courseWeekBreakdown: false,
+  courseSlides: false,
+  courseMarkBreakdown: false,
+  courseSemDescriptions: false,
+})
+
+const toggleFullEditMode = () => {
+  fullUpdate.value = !fullUpdate.value
+  // Set all sections to edit mode when fullUpdate is true
+  Object.keys(isEditingSection).forEach((key) => {
+    isEditingSection[key] = fullUpdate.value
+  })
+}
+
 // Save handler example
-const saveCourseDetails = async () => {
+const saveCourseDetails = async (isFullUpdate = false) => {
   try {
     isLoading.value = true
 
@@ -141,7 +160,10 @@ const saveCourseDetails = async () => {
       courseSemDescriptions: updatedCourse.courseSemDescriptions,
     })
 
-    // Reset editing states
+    // Reset states
+    if (isFullUpdate) {
+      fullUpdate.value = false
+    }
     isEditing.value = false
     Object.keys(isEditingSection).forEach((key) => {
       isEditingSection[key] = false
@@ -156,16 +178,6 @@ const saveCourseDetails = async () => {
     isLoading.value = false
   }
 }
-
-// Editing states
-const isEditing = ref(false)
-const isEditingSection = reactive({
-  courseDescription: false,
-  courseWeekBreakdown: false,
-  courseSlides: false,
-  courseMarkBreakdown: false,
-  courseSemDescriptions: false,
-})
 
 // COURSES WEEKLY BREAKDOWN
 const courseWeeklyBreakdown = ref([])
@@ -228,6 +240,45 @@ const addSemBreakdown = () => {
   semesterBreakdown.value.push({ description: trimmed })
   semesterDescription.value = ''
 }
+
+const clearContent = async () => {
+  try {
+    isLoading.value = true
+
+    const payload = {
+      courseDescription: '',
+      courseWeekBreakdown: [],
+      courseSlides: '',
+      courseMarkBreakdown: [],
+      courseSemDescriptions: [],
+    }
+    const clearedCourse = await LecturerCourseService.updateCourseDetails(courseId, payload)
+
+    // Update local state with any changes from server
+    Object.assign(courseData, {
+      courseName: clearedCourse.courseFullCode,
+      courseDescription: clearedCourse.courseAbout,
+      courseSlides: clearedCourse.courseSlides,
+      courseWeekBreakdown: clearedCourse.courseWeekBreakdown,
+      courseMarkBreakdown: clearedCourse.courseMarkBreakdown,
+      courseSemDescriptions: clearedCourse.courseSemDescriptions,
+    })
+
+    // Reset editing states
+    isEditing.value = false
+    Object.keys(isEditingSection).forEach((key) => {
+      isEditingSection[key] = false
+    })
+  } catch (err) {
+    error.value = err.message || 'Failed to save changes'
+  } finally {
+    //triggering page reload so that the get course details is re-called
+    window.location.reload()
+
+    //resetting isLoading
+    isLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -282,18 +333,55 @@ const addSemBreakdown = () => {
             </template>
           </CButtonIcon>
         </div>
-        <div class="right-cs-header" v-else-if="isEditing == true">
-          <CButtonIcon
-            id="edit-course"
-            type="primary"
-            size="md"
-            btnIconLabel="Exit Edit Mode"
-            @click="isEditing = false"
-          >
-            <template #icon>
-              <Ban size="20" />
-            </template>
-          </CButtonIcon>
+        <div class="right-cs-header header-btns" v-else-if="isEditing == true">
+          <div class="edit-types">
+            <CButtonIcon
+              class="edit-course-var"
+              type="primary"
+              size="md"
+              btnIconLabel="Reset Course Details"
+              @click="clearContent"
+            >
+              <template #icon>
+                <RotateCcw size="20" />
+              </template>
+            </CButtonIcon>
+            <CButtonIcon
+              class="edit-course-var"
+              type="primary"
+              size="md"
+              btnIconLabel="Update entire Course Content"
+              @click="toggleFullEditMode"
+            >
+              <template #icon>
+                <CircleFadingArrowUp size="20" />
+              </template>
+            </CButtonIcon>
+            <!--Below is save button for global changes-->
+            <CButtonIcon
+              v-if="fullUpdate"
+              class="edit-course-var"
+              type="primary"
+              size="md"
+              btnIconLabel="Save All Changes"
+              @click="saveCourseDetails(true)"
+            >
+              <template #icon>
+                <Save size="20" />
+              </template>
+            </CButtonIcon>
+            <CButtonIcon
+              class="edit-course-var exit-editing"
+              type="primary"
+              size="md"
+              btnIconLabel="Exit Edit Mode"
+              @click="isEditing = false"
+            >
+              <template #icon>
+                <Ban size="20" />
+              </template>
+            </CButtonIcon>
+          </div>
         </div>
       </div>
 
@@ -347,22 +435,11 @@ const addSemBreakdown = () => {
                 />
                 <label for="course-bio">Insert Course Description</label>
               </FloatLabel>
-              <CButtonIcon
-                class="add-icon-btn"
-                type="primary"
-                size="md"
-                btnIconLabel="update"
-                @click="addDescription"
-              >
-                <template #icon>
-                  <PencilLine size="16" />
-                </template>
-              </CButtonIcon>
             </p>
           </div>
         </div>
         <div class="active-editing" v-if="isEditingSection.courseDescription == false">
-          <div class="check-content text-center" v-if="courseData.courseDescription == null">
+          <div class="check-content text-center" v-if="courseData.courseDescription == ''">
             <p>No Content Yet. Edit this section to add content</p>
           </div>
           <div class="check-content" v-if="courseData.courseDescription !== null">
@@ -512,7 +589,7 @@ const addSemBreakdown = () => {
             </div>
           </div>
           <div class="active-editing" v-if="isEditingSection.courseSlides == false">
-            <div class="check-content text-center" v-if="courseData.courseSlides == null">
+            <div class="check-content text-center" v-if="courseData.courseSlides == ''">
               <p>No Content Yet. Edit this section to add content</p>
             </div>
             <div class="check-content text-center" v-if="courseData.courseSlides != null">
@@ -654,12 +731,12 @@ const addSemBreakdown = () => {
             <div class="right-cd">
               <h1 class="section-header">Year Breakdown</h1>
             </div>
-            <div class="left-cd" v-if="isEditingSection.courseMarkBreakdown == false">
+            <div class="left-cd" v-if="isEditingSection.courseSemDescriptions == false">
               <CButtonIcon
                 type="primary"
                 size="md"
                 btnIconLabel="Edit Section"
-                @click="isEditingSection = true"
+                @click="isEditingSection.courseSemDescriptions = true"
               >
                 <template #icon>
                   <PencilLine size="16" />
@@ -745,6 +822,22 @@ const addSemBreakdown = () => {
 </template>
 
 <style scoped>
+.header-btns {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.edit-types {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+#edit-course {
+  margin: 0;
+  margin-bottom: 2rem;
+}
+
 .section-header {
   margin-bottom: 2rem;
   color: #414141;
@@ -874,15 +967,7 @@ const addSemBreakdown = () => {
   margin: 2.5rem;
 }
 .course-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-#edit-course {
-  width: 15rem;
-  margin-top: 5rem;
-  margin-bottom: 1rem;
+  display: block;
 }
 
 /*mark breakdown */
