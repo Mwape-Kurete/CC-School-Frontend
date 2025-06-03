@@ -24,6 +24,12 @@ import LecturerCard from '@/components/LecturerCard.vue'
 import CButtonIcon from '@/components/ui/Cbutton-icon.vue'
 import Toast from 'primevue/toast'
 
+/*
+TODO:
+- Fix semester description
+- Fix Exit Edit Mode (currently sending in blanks which resets the form -> consider adding a clear course details button that does this instead where the 'exit edit mode' just toggles off the edit section buttons.
+*/
+
 // State management
 const isLoading = ref(false)
 const error = ref(null)
