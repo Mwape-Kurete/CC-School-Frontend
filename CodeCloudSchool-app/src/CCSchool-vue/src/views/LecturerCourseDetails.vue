@@ -1,6 +1,7 @@
 <script setup>
 //import api
 import { CourseService, LecturerCourseService } from '@/api/courses'
+import { AnnouncementService } from '@/api/announcements'
 
 //importing vue features
 import { ref, reactive, onMounted } from 'vue'
@@ -33,7 +34,7 @@ const courseBio = ref('')
 const newDescription = ref('')
 const semesterDescription = ref('')
 
-// Course data - initialize with proper structure
+// Course data - initialise with proper structure
 const courseData = reactive({
   courseName: '',
   courseDescription: '',
@@ -43,9 +44,39 @@ const courseData = reactive({
   courseSemDescriptions: [],
 })
 
+//announcment data initialization
+const announcementData = reactive({
+  announcementId: '',
+  title: '',
+  description: '',
+  date: '',
+  lecturerId: '',
+})
+
 // API Integration
 const courseId = 1
 
+//ANNOUNCEMENTS
+const fetchAnnouncements = async () => {
+  isLoading.value = true
+  try {
+    const response = await AnnouncementService.getAnnouncementsByCourseId(courseId)
+
+    if (typeof response === 'string') {
+      console.error('Error:', response)
+    } else {
+      announcements.value = response
+
+      announcementData.title = response.title
+      announcementData.description = response.description
+      announcementData.date = response.formatAnnouncementDate(announcement.date)
+    }
+  } catch (error) {
+    console.error('Failed to fetch announcements:', error)
+  }
+}
+
+//COURSES
 onMounted(async () => {
   isLoading.value = true
   try {
@@ -112,6 +143,10 @@ const saveCourseDetails = async () => {
   } catch (err) {
     error.value = err.message || 'Failed to save changes'
   } finally {
+    //triggering page reload so that the get course details is re-called
+    window.location.reload()
+
+    //resetting isLoading
     isLoading.value = false
   }
 }
@@ -209,33 +244,17 @@ const addSemBreakdown = () => {
       <div class="card-container">
         <CardComp
           cardType="announcement"
-          announcementTitle=" Computer science  workshop with Jacob  Anderson"
-          announcementBody="Lorem ipsum dolor sit amet, consectetur adipiscing elit..."
-          announcementDate="2023-10-15"
+          :announcementTitle="announcementData.title"
+          :announcementBody="announcementData.description"
+          :announcementDate="announcementData.date"
           moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
         />
 
         <div class="divider-card"></div>
 
-        <CardComp
-          cardType="announcement"
-          announcementTitle=" Computer science  workshop with Jacob  Anderson"
-          announcementBody="Lorem ipsum dolor sit amet, consectetur adipiscing elit..."
-          announcementDate="2023-10-15"
-          moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
-        />
-
-        <div class="divider-card"></div>
-
-        <CardComp
-          cardType="announcement"
-          announcementTitle=" Computer science  workshop with Jacob  Anderson"
-          announcementBody="Lorem ipsum dolor sit amet, consectetur adipiscing elit..."
-          announcementDate="2023-10-15"
-          moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
-        />
-
-        <div class="divider-card"></div>
+        <div v-if="!announcementData.length" class="text-gray-500">
+          You have not posted an announcement
+        </div>
       </div>
     </div>
 
@@ -548,37 +567,53 @@ const addSemBreakdown = () => {
         <br />
         <div class="active-editing" v-if="isEditingSection.courseMarkBreakdown == true">
           <!-- SECTION HEADER + TOTAL MARK -->
-          <div class="w-full mb-4">
+          <div class="w-full mb-4 editing-year-break">
             <FloatLabel>
-              <InputText v-model="newSection.title" class="w-full" id="section-title" />
-              <label for="section-title">Section Title</label>
+              <InputText
+                v-model="newSection.title"
+                class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+                id="section-title"
+              />
+              <label for="section-title">Type of Assignment (e.g., Formative)</label>
             </FloatLabel>
           </div>
 
           <div class="w-full mb-4">
             <FloatLabel>
-              <InputText v-model="newSection.mark" class="w-full" id="section-mark" />
-              <label for="section-mark">Total Mark (e.g., 30%)</label>
+              <InputText
+                v-model="newSection.mark"
+                class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+                id="section-mark"
+              />
+              <label for="section-mark">Total Mark for the assignment (e.g., 30%)</label>
             </FloatLabel>
           </div>
 
           <!-- INNER ITEMS LOOP -->
           <div class="w-full mb-4 flex gap-2">
             <FloatLabel class="flex-1">
-              <InputText v-model="newItem.description" id="desc-input" />
-              <label for="desc-input">Item Description</label>
+              <InputText
+                v-model="newItem.description"
+                id="desc-input"
+                class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+              />
+              <label for="desc-input">Assessmnet/Task title (e.g., Theory Quiz)</label>
             </FloatLabel>
             <FloatLabel class="w-24">
-              <InputText v-model="newItem.mark" id="mark-input" />
-              <label for="mark-input">Mark</label>
+              <InputText
+                v-model="newItem.mark"
+                id="mark-input"
+                class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+              />
+              <label for="mark-input">Assessmnet/Task Mark</label>
             </FloatLabel>
-            <Button icon="pi pi-plus" @click="addItemToSection" severity="primary" outlined />
+            <Button icon="pi pi-plus simple-plus" @click="addItemToSection" />
           </div>
 
           <!-- ADD SECTION BUTTON -->
 
           <CButtonIcon
-            class="add-icon-btn"
+            class="add-icon-btn add-sec-btn"
             type="primary"
             size="md"
             btnIconLabel="Add Breakdown"
@@ -842,6 +877,39 @@ const addSemBreakdown = () => {
   width: 15rem;
   margin-top: 5rem;
   margin-bottom: 1rem;
+}
+
+/*mark breakdown */
+.editing-year-break {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.editing-year-break > * {
+  margin-top: 1rem;
+}
+
+.add-sec-btn {
+  margin-top: 2rem;
+  min-width: 100%;
+  margin-bottom: 2rem;
+}
+
+button.p-button.p-component.p-button-icon-only {
+  border-radius: 9999px;
+  margin-top: 0.5rem;
+  height: 30px;
+  width: 30px;
+  background-color: #414141;
+  color: white;
+  border: none;
+
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+}
+
+button.p-button.p-component.p-button-icon-only:active {
+  background-color: #f0f1a5;
+  color: #414141;
 }
 
 /*inputs */

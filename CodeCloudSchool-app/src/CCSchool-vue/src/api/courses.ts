@@ -7,28 +7,27 @@ export interface Course{
     courseDescription: string,
 }
 
+//updated interface to handle 404 errors
 export interface CourseDetails {
-  courseFullCode: string,
-  courseAbout: string,
-  courseWeekBreakdown: WeeklyBreakdown[], // pluralised to reflect array
-  courseSlides: string,
-  courseMarkBreakdown: MarkBreakdown,
-  courseSemDescriptions: string[],
-}
-
-interface WeeklyBreakdown {
-  header: string,
-  description: string,
-}
-
-interface MarkBreakdown {
-  title: string,
-  mark: number,
-  items: {
-    description: string,
-    mark: number,
-  }[],
-}
+  courseFullCode: string;
+  courseAbout: string;
+  courseSlides: string;
+  courseWeekBreakdown: Array<{
+    header?: string;
+    description?: string;
+  }>;
+  courseMarkBreakdown: Array<{
+    title?: string;
+    mark?: string;
+    items?: Array<{
+      description?: string;
+      mark?: string;
+    }>;
+  }>;
+  courseSemDescriptions: Array<{
+    description?: string;
+  }>;
+} //The nullified fields are there to match what my backeend service expects
 
 
 export const CourseService = {
@@ -93,32 +92,24 @@ export const StudentCourseService = {
 }
 
 export const LecturerCourseService = {
-  async updateCourseDetails(courseId: number, courseUpdateData: CourseDetails): Promise<CourseDetails> {
+  async updateCourseDetails(courseId: number, courseUpdateData: any): Promise<any> {
     try {
-      // Transform data to match API expectations
+      // Transform data to match backend DTO structure
       const payload = {
-        $id: "1", // Add required metadata property
-        updatedDetails: { // Add required field
-          courseFullCode: courseUpdateData.courseFullCode,
-          courseAbout: courseUpdateData.courseAbout,
-          courseSlides: courseUpdateData.courseSlides,
-          courseWeekBreakdown: {
-            $id: "2", // Metadata property before $values
-            $values: courseUpdateData.courseWeekBreakdown || []
-          },
-          courseMarkBreakdown: {
-            $id: "3",
-            $values: courseUpdateData.courseMarkBreakdown || []
-          },
-          courseSemDescriptions: {
-            $id: "4",
-            $values: courseUpdateData.courseSemDescriptions || []
-          }
-        }
-      };
+        courseFullCode: courseUpdateData.courseFullCode || '',
+        courseAbout: courseUpdateData.courseAbout || '',
+        courseSlides: courseUpdateData.courseSlides || '',
+        courseWeekBreakdown: courseUpdateData.courseWeekBreakdown?.$values || [],
+        courseMarkBreakdown: (courseUpdateData.courseMarkBreakdown?.$values || []).map((section: any) => ({
+          title: section.title,
+          mark: section.mark,
+          items: section.items?.$values || []
+        })),
+        courseSemDescriptions: courseUpdateData.courseSemDescriptions?.$values || []
+      }; //this is an attempt to fix the 404: bad request issues the lecturer update course details was giving
 
       const response = await api.patch(
-        `api/Courses/courses/${courseId}/descript-details`,
+        `/Courses/courses/${courseId}/descript-details`,
         payload,
         {
           headers: {
@@ -131,7 +122,11 @@ export const LecturerCourseService = {
 
     } catch (error: any) {
       if (error.response) {
-        console.error('Full error response:', error.response);
+        console.error('API Error:', {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers
+        });
         throw new Error(
           error.response.data?.title ||
           `Update failed with status ${error.response.status}`
@@ -141,26 +136,43 @@ export const LecturerCourseService = {
     }
   },
 
-  async addCourseDetails(courseId: number, courseSendData: CourseDetails): Promise<CourseDetails> {
+  async addCourseDetails(courseId: number, courseSendData: any): Promise<any> {
     try {
+      // Similar transformation for POST
+      const payload = {
+        courseFullCode: courseSendData.courseFullCode || '',
+        courseAbout: courseSendData.courseAbout || '',
+        courseSlides: courseSendData.courseSlides || '',
+        courseWeekBreakdown: courseSendData.courseWeekBreakdown || [],
+        courseMarkBreakdown: (courseSendData.courseMarkBreakdown || []).map((section: any) => ({
+          title: section.title,
+          mark: section.mark,
+          items: section.items || []
+        })),
+        courseSemDescriptions: courseSendData.courseSemDescriptions || []
+      };
+
       const response = await api.post(
-        `Courses/courses/${courseId}/add-descript-details`, // Consistent path format
-        courseSendData,
+        `/Courses/courses/${courseId}/add-descript-details`,
+        payload,
         {
           headers: {
-            '/Content-Type': 'application/json'
-          },
+            'Content-Type': 'application/json',
+          }
         }
       );
+
       return response.data;
+
     } catch (error: any) {
       if (error.response) {
-        const errorMessage = error.response.data?.message
-          || error.response.data
-          || 'Failed to add course details';
-        throw new Error(`HTTP ${error.response.status}: ${errorMessage}`);
+        console.error('API Error:', error.response.data);
+        throw new Error(
+          error.response.data?.message ||
+          'Failed to add course details'
+        );
       }
-      throw new Error('Network error occurred while adding course details');
+      throw new Error('Network error occurred while adding course details'); //better exception handeling -> this is for debugging
     }
   }
 }
