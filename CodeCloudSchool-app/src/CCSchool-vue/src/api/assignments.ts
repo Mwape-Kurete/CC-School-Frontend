@@ -14,12 +14,23 @@ interface Assignment {
 export const AssignmentService = {
     async getAssignmentsByCourseId(courseId: number): Promise<Assignment[] | string> {
         try {
-            const response = await api.get(`/courses/${courseId}/assignments`);
-            return response.data.map((assignment: any) => ({
+            const response = await api.get(`assignments/by-course/${courseId}`);
+            
+            console.log('Assignments response:', response.data);
+
+            const data = response.data.$values ?? response.data; 
+
+            if (!Array.isArray(data)) {
+                console.error('Unexpected assignments format:', data);
+                return 'Invalid response from server';
+            }
+
+            return data.map((assignment: any) => ({
                 id: assignment.id,
                 title: assignment.title,
                 description: assignment.description,
                 dueDate: assignment.dueDate,
+                courseId: assignment.courseId,
                 status: this.getAssignmentStatus(assignment.dueDate),
                 submissionFormat: assignment.submissionFormat,
                 maxAttempts: assignment.maxAttempts
