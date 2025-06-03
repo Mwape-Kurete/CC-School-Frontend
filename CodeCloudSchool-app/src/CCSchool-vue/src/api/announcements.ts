@@ -2,13 +2,13 @@ import api from './api';
 
 
 // Represents the structure of an announcement returned by the backend  
-interface Announcement {
+export interface Announcement {
   announcementId: number;
   title: string;
   description: string;
   date: string; // ISO date string
   lecturerId: number;
-}
+}  
 
 export const AnnouncementService = {
     
@@ -35,6 +35,18 @@ export const AnnouncementService = {
         return error.response.data;
       }
       return 'Failed to fetch announcement';
+    }
+  },
+
+  async postAnnouncement(courseId: number, announcement: Announcement): Promise<Announcement | string> {
+    try {
+      const response = await api.post(`/courses/${courseId}/announcements`, announcement);
+      return response.data;
+    } catch (error: any) {
+      if (error.response && error.response.data) {
+        return error.response.data;
+      }
+      return 'An unknown error occurred';
     }
   },
 
