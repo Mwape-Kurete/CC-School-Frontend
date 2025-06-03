@@ -9,6 +9,7 @@ export interface Course{
 
 export interface CourseDetails {
   courseFullCode: string,
+  courseAbout: string,
   courseWeekBreakdown: WeeklyBreakdown[], // pluralised to reflect array
   courseSlides: string,
   courseMarkBreakdown: MarkBreakdown,
@@ -57,7 +58,7 @@ export const CourseService = {
         }
     },
 
-    async getCourseDetails(courseId: string): Promise<CourseDetails | string> {
+    async getCourseDetails(courseId: number): Promise<CourseDetails | string> {
     try {
       const response = await api.get(`/Courses/courses/${courseId}/details-descript`);
 
@@ -92,7 +93,74 @@ export const StudentCourseService = {
 }
 
 export const LecturerCourseService = {
+  async updateCourseDetails(courseId: number, courseUpdateData: CourseDetails): Promise<CourseDetails> {
+    try {
+      // Transform data to match API expectations
+      const payload = {
+        $id: "1", // Add required metadata property
+        updatedDetails: { // Add required field
+          courseFullCode: courseUpdateData.courseFullCode,
+          courseAbout: courseUpdateData.courseAbout,
+          courseSlides: courseUpdateData.courseSlides,
+          courseWeekBreakdown: {
+            $id: "2", // Metadata property before $values
+            $values: courseUpdateData.courseWeekBreakdown || []
+          },
+          courseMarkBreakdown: {
+            $id: "3",
+            $values: courseUpdateData.courseMarkBreakdown || []
+          },
+          courseSemDescriptions: {
+            $id: "4",
+            $values: courseUpdateData.courseSemDescriptions || []
+          }
+        }
+      };
 
+      const response = await api.patch(
+        `api/Courses/courses/${courseId}/descript-details`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
 
+      return response.data;
 
+    } catch (error: any) {
+      if (error.response) {
+        console.error('Full error response:', error.response);
+        throw new Error(
+          error.response.data?.title ||
+          `Update failed with status ${error.response.status}`
+        );
+      }
+      throw new Error(error.message || 'Network error during update');
+    }
+  },
+
+  async addCourseDetails(courseId: number, courseSendData: CourseDetails): Promise<CourseDetails> {
+    try {
+      const response = await api.post(
+        `Courses/courses/${courseId}/add-descript-details`, // Consistent path format
+        courseSendData,
+        {
+          headers: {
+            '/Content-Type': 'application/json'
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        const errorMessage = error.response.data?.message
+          || error.response.data
+          || 'Failed to add course details';
+        throw new Error(`HTTP ${error.response.status}: ${errorMessage}`);
+      }
+      throw new Error('Network error occurred while adding course details');
+    }
+  }
 }
