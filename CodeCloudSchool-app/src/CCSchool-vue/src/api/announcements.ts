@@ -16,7 +16,7 @@ interface Announcement {
 export const AnnouncementService = {
   async getAnnouncementsByCourseId(courseId: number): Promise<Announcement[] | string> {
     try {
-      const response = await api.get(`/Announce/course/${courseId}`);
+      const response = await api.get(`/api/courses/${courseId}`);
       return response.data;
     } catch (error: any) {
       const errorMsg = this.handleError(error);
@@ -27,7 +27,7 @@ export const AnnouncementService = {
 
   async getAnnouncementById(announcementId: number): Promise<Announcement | string> {
     try {
-      const response = await api.get(`/Announce/${announcementId}`);
+       const response = await api.get(`/api/announce/${announcementId}`);
       return response.data;
     } catch (error: any) {
       return this.handleError(error);
