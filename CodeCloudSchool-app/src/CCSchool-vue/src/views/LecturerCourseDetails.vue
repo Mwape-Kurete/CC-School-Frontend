@@ -23,23 +23,19 @@ import CMarkBreakdown from '@/components/CMarkBreakdown.vue'
 import LecturerCard from '@/components/LecturerCard.vue'
 import CButtonIcon from '@/components/ui/Cbutton-icon.vue'
 
-/*
-TODO:
-- Fix semester description
-- Fix Exit Edit Mode (currently sending in blanks which resets the form -> consider adding a clear course details button that does this instead where the 'exit edit mode' just toggles off the edit section buttons.
-*/
+//FUNCTIONALITY IMPLEMENTATION STARTS HERE
 
-// State management
-const isLoading = ref(false)
-const error = ref(null)
+// 2. CONSTANTS
+const courseId = 1 // Consider making this a prop if it can vary
 
-// Form fields initialized with API data
+// 3. REACTIVE STATE
+// Form fields
 const googleSlideurl = ref('')
 const courseBio = ref('')
 const newDescription = ref('')
 const semesterDescription = ref('')
 
-// Course data - initialise with proper structure
+// Course data
 const courseData = reactive({
   courseName: '',
   courseDescription: '',
@@ -49,7 +45,7 @@ const courseData = reactive({
   courseSemDescriptions: [],
 })
 
-//announcment data initialization
+// Announcement data
 const announcementData = reactive({
   announcementId: '',
   title: '',
@@ -58,59 +54,9 @@ const announcementData = reactive({
   lecturerId: '',
 })
 
-// API Integration
-const courseId = 1
-
-//ANNOUNCEMENTS
-const fetchAnnouncements = async () => {
-  isLoading.value = true
-  try {
-    const response = await AnnouncementService.getAnnouncementsByCourseId(courseId)
-
-    if (typeof response === 'string') {
-      console.error('Error:', response)
-    } else {
-      announcements.value = response
-
-      announcementData.title = response.title
-      announcementData.description = response.description
-      announcementData.date = response.formatAnnouncementDate(announcement.date)
-    }
-  } catch (error) {
-    console.error('Failed to fetch announcements:', error)
-  }
-}
-
-//COURSES
-onMounted(async () => {
-  isLoading.value = true
-  try {
-    const response = await CourseService.getCourseDetails(courseId)
-
-    if (response) {
-      // Transform API response to match component's expected structure
-      courseData.courseName = response.courseFullCode || ''
-      courseData.courseDescription = response.courseAbout || ''
-      courseData.courseSlides = response.courseSlides || ''
-
-      // Handle $values arrays
-      courseData.courseWeekBreakdown = response.courseWeekBreakdown?.$values || []
-      courseData.courseMarkBreakdown = response.courseMarkBreakdown?.$values || []
-      courseData.courseSemDescriptions = response.courseSemDescriptions?.$values || []
-
-      // Initialize form fields
-      googleSlideurl.value = courseData.courseSlides
-      courseBio.value = courseData.courseDescription
-    }
-  } catch (err) {
-    error.value = 'Failed to load course details'
-    console.error('API error:', err)
-  } finally {
-    isLoading.value = false
-  }
-})
-
-// Editing states
+// UI State
+const isLoading = ref(false)
+const error = ref(null)
 const isEditing = ref(false)
 const fullUpdate = ref(false)
 
@@ -122,80 +68,7 @@ const isEditingSection = reactive({
   courseSemDescriptions: false,
 })
 
-const toggleFullEditMode = () => {
-  fullUpdate.value = !fullUpdate.value
-  // Set all sections to edit mode when fullUpdate is true
-  Object.keys(isEditingSection).forEach((key) => {
-    isEditingSection[key] = fullUpdate.value
-  })
-}
-
-// Save handler example
-const saveCourseDetails = async (isFullUpdate = false) => {
-  try {
-    isLoading.value = true
-
-    const payload = {
-      courseFullCode: courseData.courseName,
-      courseAbout: courseBio.value,
-      courseSlides: googleSlideurl.value,
-      courseWeekBreakdown: { $values: courseData.courseWeekBreakdown },
-      courseMarkBreakdown: {
-        $values: courseData.courseMarkBreakdown.map((section) => ({
-          ...section,
-          items: { $values: section.items?.$values || [] },
-        })),
-      },
-      courseSemDescriptions: { $values: courseData.courseSemDescriptions },
-    }
-    const updatedCourse = await LecturerCourseService.updateCourseDetails(courseId, payload)
-
-    // Update local state with any changes from server
-    Object.assign(courseData, {
-      courseName: updatedCourse.courseFullCode,
-      courseDescription: updatedCourse.courseAbout,
-      courseSlides: updatedCourse.courseSlides,
-      courseWeekBreakdown: updatedCourse.courseWeekBreakdown,
-      courseMarkBreakdown: updatedCourse.courseMarkBreakdown,
-      courseSemDescriptions: updatedCourse.courseSemDescriptions,
-    })
-
-    // Reset states
-    if (isFullUpdate) {
-      fullUpdate.value = false
-    }
-    isEditing.value = false
-    Object.keys(isEditingSection).forEach((key) => {
-      isEditingSection[key] = false
-    })
-  } catch (err) {
-    error.value = err.message || 'Failed to save changes'
-  } finally {
-    //triggering page reload so that the get course details is re-called
-    window.location.reload()
-
-    //resetting isLoading
-    isLoading.value = false
-  }
-}
-
-// COURSES WEEKLY BREAKDOWN
-const courseWeeklyBreakdown = ref([])
-
-const addWeek = () => {
-  if (!newDescription.value.trim()) return
-
-  const weekNumber = courseWeeklyBreakdown.value.length + 1
-  courseWeeklyBreakdown.value.push({
-    header: `Week ${weekNumber}`,
-    description: newDescription.value.trim(),
-  })
-
-  newDescription.value = ''
-}
-
-// ASSIGNMENT BREAKDOWN
-const assignmentBreakdown = ref([])
+// Form models
 const newSection = reactive({
   title: '',
   mark: '',
@@ -207,78 +80,201 @@ const newItem = reactive({
   mark: '',
 })
 
-// Update to match API structure
-const addItemToSection = () => {
-  if (!newItem.description || !newItem.mark) return
-  if (!newSection.items.$values) {
-    newSection.items.$values = []
+// 4. LIFECYCLE HOOKS
+onMounted(async () => {
+  await loadInitialData()
+})
+
+// 5. DATA LOADING FUNCTIONS
+const loadInitialData = async () => {
+  isLoading.value = true
+  try {
+    await Promise.all([fetchCourseDetails(), fetchAnnouncements()])
+  } catch (err) {
+    error.value = 'Failed to load initial data'
+    console.error('Initialization error:', err)
+  } finally {
+    isLoading.value = false
   }
-  newSection.items.$values.push({
-    description: newItem.description,
-    mark: newItem.mark,
+}
+
+const fetchCourseDetails = async () => {
+  try {
+    const response = await CourseService.getCourseDetails(courseId)
+    if (response) {
+      // Transform API response
+      courseData.courseName = response.courseFullCode || ''
+      courseData.courseDescription = response.courseAbout || ''
+      courseData.courseSlides = response.courseSlides || ''
+      courseData.courseWeekBreakdown = response.courseWeekBreakdown?.$values || []
+      courseData.courseMarkBreakdown = response.courseMarkBreakdown?.$values || []
+      courseData.courseSemDescriptions = response.courseSemDescriptions?.$values || []
+
+      // Initialize form fields
+      googleSlideurl.value = courseData.courseSlides
+      courseBio.value = courseData.courseDescription
+    }
+  } catch (err) {
+    throw err // Let loadInitialData handle it
+  }
+}
+
+const fetchAnnouncements = async () => {
+  try {
+    const response = await AnnouncementService.getAnnouncementsByCourseId(courseId)
+    if (typeof response === 'string') {
+      console.error('Error:', response)
+    } else {
+      announcements.value = response
+      announcementData.title = response.title
+      announcementData.description = response.description
+      announcementData.date = response.formatAnnouncementDate(announcement.date)
+    }
+  } catch (err) {
+    throw err // Let loadInitialData handle it
+  }
+}
+
+// 6. EDIT MODE FUNCTIONS
+const toggleFullEditMode = () => {
+  fullUpdate.value = !fullUpdate.value
+  Object.keys(isEditingSection).forEach((key) => {
+    isEditingSection[key] = fullUpdate.value
+  })
+}
+
+// 7. CRUD OPERATIONS
+// -- Save Operations --
+const saveCourseDetails = async (isFullUpdate = false) => {
+  try {
+    isLoading.value = true
+    const payload = createSavePayload()
+    const updatedCourse = await LecturerCourseService.updateCourseDetails(courseId, payload)
+    updateLocalState(updatedCourse)
+    if (isFullUpdate) fullUpdate.value = false
+  } catch (err) {
+    error.value = err.message || 'Failed to save changes'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const createSavePayload = () => ({
+  courseFullCode: courseData.courseName,
+  courseAbout: courseBio.value,
+  courseSlides: googleSlideurl.value,
+  courseWeekBreakdown: courseData.courseWeekBreakdown,
+  courseMarkBreakdown: courseData.courseMarkBreakdown.map((section) => ({
+    title: section.title,
+    mark: section.mark,
+    items: section.items || [],
+  })),
+  courseSemDescriptions: courseData.courseSemDescriptions,
+})
+
+const updateLocalState = (updatedCourse) => {
+  Object.assign(courseData, {
+    courseName: updatedCourse.courseFullCode,
+    courseDescription: updatedCourse.courseAbout,
+    courseSlides: updatedCourse.courseSlides,
+    courseWeekBreakdown: updatedCourse.courseWeekBreakdown?.$values || [],
+    courseMarkBreakdown: updatedCourse.courseMarkBreakdown?.$values || [],
+    courseSemDescriptions: updatedCourse.courseSemDescriptions?.$values || [],
+  })
+}
+
+// -- Add Operations --
+const addWeek = () => {
+  if (!newDescription.value.trim()) return
+
+  courseData.courseWeekBreakdown.push({
+    header: `Week ${courseData.courseWeekBreakdown.length + 1}`,
+    description: newDescription.value.trim(),
+  })
+  newDescription.value = ''
+}
+
+const addSemBreakdown = () => {
+  if (!semesterDescription.value.trim()) return
+
+  courseData.courseSemDescriptions.push({
+    description: semesterDescription.value.trim(),
+  })
+  semesterDescription.value = ''
+}
+
+const addItemToSection = () => {
+  if (!newItem.description.trim() || !newItem.mark.trim()) return
+
+  if (!newSection.items) newSection.items = []
+  newSection.items.push({
+    description: newItem.description.trim(),
+    mark: newItem.mark.trim(),
   })
   newItem.description = ''
   newItem.mark = ''
 }
 
 const addSection = () => {
-  if (!newSection.title || !newSection.mark || !newSection.items.length) return
-  assignmentBreakdown.value.push({ ...newSection })
-  // Reset section
+  if (!newSection.title.trim() || !newSection.mark.trim() || !newSection.items?.length) return
+
+  courseData.courseMarkBreakdown.push({ ...newSection })
+  resetNewSection()
+}
+
+// 8. UTILITY FUNCTIONS
+const resetNewSection = () => {
   newSection.title = ''
   newSection.mark = ''
   newSection.items = []
 }
 
-// SEMESTER BREAKDOWN
-const semesterBreakdown = ref([])
-
-const addSemBreakdown = () => {
-  const trimmed = semesterDescription.value.trim()
-  if (!trimmed) return
-
-  semesterBreakdown.value.push({ description: trimmed })
-  semesterDescription.value = ''
-}
-
 const clearContent = async () => {
   try {
     isLoading.value = true
-
-    const payload = {
+    const clearedCourse = await LecturerCourseService.updateCourseDetails(courseId, {
       courseDescription: '',
       courseWeekBreakdown: [],
       courseSlides: '',
       courseMarkBreakdown: [],
       courseSemDescriptions: [],
-    }
-    const clearedCourse = await LecturerCourseService.updateCourseDetails(courseId, payload)
-
-    // Update local state with any changes from server
-    Object.assign(courseData, {
-      courseName: clearedCourse.courseFullCode,
-      courseDescription: clearedCourse.courseAbout,
-      courseSlides: clearedCourse.courseSlides,
-      courseWeekBreakdown: clearedCourse.courseWeekBreakdown,
-      courseMarkBreakdown: clearedCourse.courseMarkBreakdown,
-      courseSemDescriptions: clearedCourse.courseSemDescriptions,
     })
-
-    // Reset editing states
-    isEditing.value = false
-    Object.keys(isEditingSection).forEach((key) => {
-      isEditingSection[key] = false
-    })
+    updateLocalState(clearedCourse)
+    exitEditMode()
   } catch (err) {
-    error.value = err.message || 'Failed to save changes'
+    error.value = err.message || 'Failed to clear content'
   } finally {
-    //triggering page reload so that the get course details is re-called
-    window.location.reload()
-
-    //resetting isLoading
     isLoading.value = false
   }
 }
+
+const exitEditMode = () => {
+  isEditing.value = false
+  Object.keys(isEditingSection).forEach((key) => {
+    isEditingSection[key] = false
+  })
+}
+
+// 9. EVENT HANDLERS (for template)
+const handleSaveSection = async (sectionKey) => {
+  try {
+    await saveCourseDetails()
+    isEditingSection[sectionKey] = false
+    toast.add({
+      severity: 'success',
+      summary: 'Saved',
+      detail: 'Changes saved successfully',
+      life: 3000,
+    })
+  } catch (error) {
+    console.error('Error saving section:', error)
+  }
+}
+
+const handleAddWeek = () => addWeek()
+const handleAddSemesterBreakdown = () => addSemBreakdown()
+const handleAddItemToSection = () => addItemToSection()
+const handleAddSection = () => addSection()
 </script>
 
 <template>
@@ -415,7 +411,7 @@ const clearContent = async () => {
                 type="primary"
                 size="md"
                 btnIconLabel="Save Section"
-                @click="(saveCourseDetails(), (isEditingSection.courseDescription = false))"
+                @click="handleSaveSection('courseDescription')"
               >
                 <template #icon>
                   <PencilLine size="16" />
@@ -474,7 +470,7 @@ const clearContent = async () => {
                 type="primary"
                 size="md"
                 btnIconLabel="Save Section"
-                @click="(saveCourseDetails(), (isEditingSection.courseWeekBreakdown = false))"
+                @click="handleSaveSection('courseWeekBreakdown')"
               >
                 <template #icon>
                   <PencilLine size="16" />
@@ -499,7 +495,7 @@ const clearContent = async () => {
                 type="primary"
                 size="md"
                 btnIconLabel="Add Breakdown"
-                @click="addWeek"
+                @click="handleAddWeek"
               >
                 <template #icon>
                   <Plus size="16" />
@@ -551,7 +547,7 @@ const clearContent = async () => {
                 type="primary"
                 size="md"
                 btnIconLabel="Save Section"
-                @click="(saveCourseDetails(), (isEditingSection.courseSlides = false))"
+                @click="handleSaveSection('courseSlides')"
               >
                 <template #icon>
                   <PencilLine size="16" />
@@ -680,7 +676,7 @@ const clearContent = async () => {
                 id="desc-input"
                 class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
               />
-              <label for="desc-input">Assessmnet/Task title (e.g., Theory Quiz)</label>
+              <label for="desc-input">Assessment/Task title (e.g., Theory Quiz)</label>
             </FloatLabel>
             <FloatLabel class="w-24">
               <InputText
@@ -688,19 +684,23 @@ const clearContent = async () => {
                 id="mark-input"
                 class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
               />
-              <label for="mark-input">Assessmnet/Task Mark</label>
+              <label for="mark-input">Assessment/Task Mark</label>
             </FloatLabel>
-            <Button icon="pi pi-plus simple-plus" @click="addItemToSection" />
+            <Button
+              icon="pi pi-plus simple-plus"
+              @click="handleAddItemToSection"
+              :disabled="!newItem.description || !newItem.mark"
+            />
           </div>
 
           <!-- ADD SECTION BUTTON -->
-
           <CButtonIcon
             class="add-icon-btn add-sec-btn"
             type="primary"
             size="md"
-            btnIconLabel="Add Breakdown"
-            @click="addWeek"
+            btnIconLabel="Add Section"
+            @click="handleAddSection"
+            :disabled="!newSection.title || !newSection.mark || !newSection.items?.length"
           >
             <template #icon>
               <Plus size="16" />
@@ -776,7 +776,7 @@ const clearContent = async () => {
                 type="primary"
                 size="md"
                 btnIconLabel="Add Semester Description"
-                @click="addSemBreakdown"
+                @click="handleAddSemesterBreakdown"
               >
                 <template #icon>
                   <Plus size="16" />
@@ -804,10 +804,44 @@ const clearContent = async () => {
         <CButton type="secondary" size="md" :disabled="true" class="year-breadown-btn"
           >Semester 2</CButton
         >
-
-        <p>
-          {{ courseData.courseSemDescriptions[1]?.description }}
-        </p>
+        <div class="active-editing" v-if="isEditingSection.courseSemDescriptions == true">
+          <div class="input-cont">
+            <div class="w-full mb-4 flex gap-2 items-end">
+              <FloatLabel class="w-full">
+                <InputText
+                  id="week-break2"
+                  v-model="semesterDescription"
+                  class="w-full mt-2 border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+                />
+                <label for="week-break2">Add a Semester Description</label>
+              </FloatLabel>
+              <CButtonIcon
+                class="add-icon-btn"
+                type="primary"
+                size="md"
+                btnIconLabel="Add Semester Description"
+                @click="handleAddSemesterBreakdown"
+              >
+                <template #icon>
+                  <Plus size="16" />
+                </template>
+              </CButtonIcon>
+            </div>
+          </div>
+        </div>
+        <div class="active-editing" v-else-if="isEditingSection.courseSemDescriptions == false">
+          <div
+            class="check-content text-center"
+            v-if="courseData.courseSemDescriptions.length == 0"
+          >
+            <p>No Content Yet. Edit this section to add content</p>
+          </div>
+          <div class="check-content">
+            <p v-if="courseData.courseSemDescriptions.length > 1">
+              {{ courseData.courseSemDescriptions[1]?.description || 'No description' }}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
