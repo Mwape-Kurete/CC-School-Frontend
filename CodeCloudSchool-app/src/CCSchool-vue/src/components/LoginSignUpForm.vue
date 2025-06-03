@@ -14,7 +14,7 @@ import Dropdown from 'primevue/dropdown'
 
 
 // import api service
-import { AuthService } from '@/api/auth'
+import { AuthService, LectAuthService } from '@/api/auth'
 
 const props = defineProps({
     variant: {
@@ -103,6 +103,7 @@ const login = async () => {
                 localStorage.setItem('studentNumber', user.studentNumber);
                 router.push({ name: 'dashboard' });
             } else if (user.role === 'Lecturer') {
+                localStorage.setItem('lectId', user.lecturerId);
                 router.push({ name: 'lecturer-dash' });
             } else {
                 console.warn('Unknown user role:', user.role);
@@ -165,6 +166,43 @@ const signUp = async () => {
             loading.value = false
         }
     }
+    else if (role.value === 'lecturer') {
+        try {
+            console.log('Attempting to sign up lecturer')
+            const response = await LectAuthService.signUpLecturer({
+                lectName: name.value,
+                    lecLastName: surname.value,
+                    name: name.value,
+                    lecEmail: email.value,
+                    lastName: surname.value,
+                    password: password.value,
+                    phoneNumber: phoneNo.value,
+                    department: "Computer Science",
+                    dateOfJoining: new Date().toISOString(), // REQUIRED
+                    isActive: true
+            })
+
+            if (typeof response === 'string') {
+                // sign up failed, show message
+                errorMessage.value = response;
+            } else {
+                // sign up successful, response is a User object
+                console.log('sign up successful:', response);
+                alert('The response is: ' + response);
+
+                // store student number and role in local storage
+                localStorage.setItem('lectId', response.lecturerId);
+                localStorage.setItem('userRole', user.role);
+                // redirect user to course select page
+                router.push({ name: 'RegisterMajors'});
+            }
+
+        } catch (error) {
+            errorMessage.value = 'Sign Up failed. Please check your credentials.'
+        } finally {
+            loading.value = false
+        }
+    }
 }
 
 </script>
@@ -185,7 +223,7 @@ const signUp = async () => {
                 </Divider>
 
                 <CDropdown type="ghost" size="sm" v-model="role" :options="roleOptions" optionLabel="label"
-                    class="role-dropdown w-full" />
+                    class="role-dropdown w-full mb-4" />
 
 
                 <div class="w-full mb-4">
@@ -225,6 +263,9 @@ const signUp = async () => {
             <!-- SIGN UP FORM -->
             <template v-else>
                 <h2 class="text-2xl font-semibold mb-6">Create an account</h2>
+
+                <CDropdown type="ghost" size="sm" v-model="role" :options="roleOptions" optionLabel="label"
+                    class="role-dropdown w-full mb-2" />
 
                 <div class="grid w-full gap-4 mb-4 one-row">
                     <div class="col-6">
