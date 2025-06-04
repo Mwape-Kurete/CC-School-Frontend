@@ -158,16 +158,24 @@ const fetchAnnouncements = async () => {
   }
 }
 
+//fixed this
 const getEmbeddedSlideUrl = (url) => {
-  if (!url) return ''
-  if (url.includes('/edit') || url.includes('/view')) {
-    return url.replace(/\/(edit|view).*/, '/embed')
+  const validUrl = typeof url === 'string' ? url : url?.value
+  if (!validUrl) return ''
+  if (validUrl.includes('/edit') || validUrl.includes('/view')) {
+    return validUrl.replace(/\/(edit|view).*/, '/embed')
   }
-  return url + '/embed'
+  return validUrl + '/embed'
 }
 
 // 6. EDIT MODE FUNCTIONS
 const toggleFullEditMode = async () => {
+  draftWeekBreakdown.value = JSON.parse(JSON.stringify(courseData.courseWeekBreakdown))
+  draftMarkBreakdown.value = JSON.parse(JSON.stringify(courseData.courseMarkBreakdown))
+  draftSemDescriptions.value = JSON.parse(JSON.stringify(courseData.courseSemDescriptions))
+  draftCourseBio.value = courseBio.value
+  draftGoogleSlideUrl.value = googleSlideurl.value
+
   fullUpdate.value = !fullUpdate.value
   Object.keys(isEditingSection).forEach((key) => {
     isEditingSection[key] = fullUpdate.value
@@ -188,12 +196,23 @@ const enterSectionEdit = (key) => {
 // 7. CRUD OPERATIONS
 // -- Save Operations --
 const saveCourseDetails = async (isFullUpdate = false) => {
+  console.log('Embedded URL:', getEmbeddedSlideUrl(draftGoogleSlideUrl.value))
+
   try {
     isLoading.value = true
     courseBio.value = draftCourseBio.value
     googleSlideurl.value = draftGoogleSlideUrl.value
 
+    Object.keys(applySectionDrafts).forEach((key) => {
+      if (isEditingSection[key]) {
+        applySectionDrafts[key]()
+      }
+    })
+
     const payload = createSavePayload()
+
+    console.log('this is the payload:', +payload)
+
     const updatedCourse = await LecturerCourseService.updateCourseDetails(courseId, payload)
     updateLocalState(updatedCourse)
 
@@ -206,7 +225,6 @@ const saveCourseDetails = async (isFullUpdate = false) => {
     }
   } catch (err) {
     error.value = err.message || 'Failed to save changes'
-    alert('please try again, an error occured')
   } finally {
     isLoading.value = false
   }
@@ -215,7 +233,7 @@ const saveCourseDetails = async (isFullUpdate = false) => {
 const createSavePayload = () => ({
   courseFullCode: courseData.courseName,
   courseAbout: courseBio.value,
-  courseSlides: googleSlideurl.value || '',
+  courseSlides: getEmbeddedSlideUrl(draftGoogleSlideUrl.value),
   courseWeekBreakdown: draftWeekBreakdown.value,
   courseMarkBreakdown: draftMarkBreakdown.value,
   courseSemDescriptions: draftSemDescriptions.value,
@@ -255,7 +273,12 @@ const addWeek = () => {
 const addSemBreakdown = (semesterIndex = 0) => {
   const value = semesterInputs[semesterIndex].trim()
   if (!value) return
+
+  while (draftSemDescriptions.value.length <= semesterIndex) {
+    draftSemDescriptions.value.push({ description: '' })
+  }
   draftSemDescriptions.value[semesterIndex] = { description: value }
+
   semesterInputs[semesterIndex] = ''
 }
 
@@ -272,7 +295,8 @@ const addItemToSection = () => {
 
 const addSection = () => {
   if (!newSection.title.trim() || !newSection.mark.trim() || !newSection.items?.length) return
-  draftMarkBreakdown.value.push({ ...newSection })
+  draftMarkBreakdown.value.push(JSON.parse(JSON.stringify(newSection)))
+
   resetNewSection()
 }
 
@@ -331,11 +355,18 @@ const applySectionDrafts = {
 
 const handleSaveSection = async (sectionKey) => {
   try {
+    if (fullUpdate.value) {
+      fullUpdate.value = false
+      isEditing.value = false
+    }
+
     if (applySectionDrafts[sectionKey]) {
       applySectionDrafts[sectionKey]()
     }
     await saveCourseDetails()
     isEditingSection[sectionKey] = false
+
+    alert('Section saved successfully')
   } catch (error) {
     console.error('Error saving section:', error)
   }
@@ -348,6 +379,10 @@ const handleAddWeek = async () => {
 
 const handleAddSemesterBreakdown = async (index) => {
   addSemBreakdown(index)
+
+  await handleSaveSection('courseSemDescriptions')
+
+  console.log('Saving semester description', draftSemDescriptions.value)
 }
 
 const handleAddItemToSection = async () => {
@@ -356,6 +391,10 @@ const handleAddItemToSection = async () => {
 
 const handleAddSection = async () => {
   addSection()
+
+  await handleSaveSection('courseMarkBreakdown')
+
+  console.log('Adding section', newSection)
 }
 </script>
 
@@ -437,12 +476,16 @@ const handleAddSection = async () => {
             </CButtonIcon>
             <!--Below is save button for global changes-->
             <CButtonIcon
-              v-if="fullUpdate && hasUnsavedChanges"
+              v-if="fullUpdate"
               class="edit-course-var"
               type="primary"
               size="md"
               btnIconLabel="Save All Changes"
-              @click="saveCourseDetails(true)"
+              @click="
+                saveCourseDetails(true).then(() => {
+                  isEditing = false
+                })
+              "
             >
               <template #icon>
                 <Save size="20" />
@@ -649,13 +692,16 @@ const handleAddSection = async () => {
                 </FloatLabel>
               </div>
             </div>
+            <div class="text-xs text-gray-400 mt-2">
+              Current embedded URL: {{ getEmbeddedSlideUrl(courseData.courseSlides) }}
+            </div>
             <div class="save-cont">
               <CButtonIcon
                 type="primary"
                 size="md"
                 class="updateSave"
                 btnIconLabel="Save Changes"
-                @click="isEditingSection.courseSlides = false"
+                @click="handleSaveSection('courseSlides')"
               >
                 <template>
                   <Save size="16" />
@@ -765,6 +811,7 @@ const handleAddSection = async () => {
               />
               <label for="mark-input">Assessment/Task Mark</label>
             </FloatLabel>
+
             <Button
               icon="pi pi-plus simple-plus"
               @click="handleAddItemToSection"
@@ -773,6 +820,9 @@ const handleAddSection = async () => {
           </div>
 
           <!-- ADD SECTION BUTTON -->
+          <span class="w-full pb-3">
+            <small>Don't forget to add the section after adding tasks</small>
+          </span>
           <CButtonIcon
             class="add-icon-btn add-sec-btn"
             type="primary"
@@ -824,7 +874,7 @@ const handleAddSection = async () => {
                 type="primary"
                 size="md"
                 btnIconLabel="Save Section"
-                @click="(saveCourseDetails(), (isEditingSection.courseSemDescriptions = false))"
+                @click="handleSaveSection('courseSemDescriptions')"
               >
                 <template #icon>
                   <PencilLine size="16" />
