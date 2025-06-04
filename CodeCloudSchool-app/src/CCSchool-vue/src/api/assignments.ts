@@ -82,5 +82,30 @@ export const AssignmentService = {
 };
 
 export const AssignmentSubmissionService = {
-    
-}
+    async uploadSubmission(
+        assignmentId: number,
+        studentId: number,
+        file: File
+    ): Promise<string | object> {
+        const formData = new FormData();
+        formData.append('assignmentId', assignmentId.toString());
+        formData.append('studentId', studentId.toString());
+        formData.append('file', file);
+
+        try {
+            const response = await api.post('/submissions/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            return response.data; // Could be a Submission object
+        } catch (error: any) {
+            console.error('Error uploading submission:', error);
+            if (error.response?.data) {
+                return error.response.data; // Error message from backend
+            }
+            return 'Failed to upload submission';
+        }
+    }
+};

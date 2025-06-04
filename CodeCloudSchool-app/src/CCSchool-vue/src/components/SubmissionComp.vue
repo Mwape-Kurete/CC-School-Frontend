@@ -1,3 +1,109 @@
+<script>
+
+import { AssignmentSubmissionService } from '@/api/assignments';
+
+export default {
+  props: {
+    assignmentId: {
+      type: Number,
+      required: true
+    },
+    studentId: {
+      type: Number,
+      required: true
+    }
+  },
+  data() {
+    return {
+      files: [], // Stores all selected files
+      uploadProgress: 0, // Tracks upload percentage (0-100)
+      toast: {
+        visible: false,
+        message: '',
+        severity: 'info' // Can be 'info', 'success', 'error'
+      }
+    }
+  },
+  computed: {
+    totalSize() {
+      return this.files.reduce((sum, file) => sum + file.size, 0) // calculates total size of files in bytes 
+    }
+  },
+
+
+  methods: {
+    triggerFileInput() {
+      this.$refs.fileInput.click()
+    },
+    handleFileSelect(event) {
+      const newFiles = Array.from(event.target.files).map(file => ({
+        ...file,
+        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
+      }))
+      this.files = [...this.files, ...newFiles]
+    },
+    removeFile(index) {
+      this.files.splice(index, 1)
+    },
+    clearFiles() {
+      this.files = []
+      this.uploadProgress = 0
+    },
+
+    async uploadFiles() {
+      if (!this.files.length) {
+        this.showToast('No files to upload', 'error');
+        return;
+      }
+
+      try {
+        for (let i = 0; i < this.files.length; i++) {
+          const file = this.files[i];
+
+          // Optional: track individual file progress if you want to extend this
+          this.uploadProgress = Math.round((i / this.files.length) * 100);
+
+          const result = await AssignmentSubmissionService.uploadSubmission(
+            this.assignmentId,
+            this.studentId,
+            file
+          );
+
+          if (typeof result === 'string') {
+            this.showToast(`Failed to upload ${file.name}: ${result}`, 'error');
+          } else {
+            this.showToast(`Successfully uploaded ${file.name}`, 'success');
+          }
+        }
+
+        this.uploadProgress = 100;
+        this.clearFiles(); // Optionally clear files after success
+      } catch (err) {
+        this.showToast('An error occurred during upload', 'error');
+        console.error(err);
+      }
+    }
+
+
+    ,
+    formatSize(bytes) {
+      if (bytes === 0) return '0 Bytes'
+      const k = 1024
+      const sizes = ['Bytes', 'KB', 'MB', 'GB']
+      const i = Math.floor(Math.log(bytes) / Math.log(k))
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+    },
+    showToast(message, severity = 'info') {
+      this.toast = { visible: true, message, severity }
+      setTimeout(() => {
+        this.toast.visible = false
+      }, 3000)
+    }
+  }
+}
+</script>
+
+
 <template>
   <div class="upload-container">
     <div class="card">
@@ -59,91 +165,7 @@
   </div>
 </template>
 
-<script>
 
-export default {
-  props: {
-    assignmentId: {
-      type: Number,
-      required: true
-    }
-  },
-  data() {
-    return {
-      files: [], // Stores all selected files
-      uploadProgress: 0, // Tracks upload percentage (0-100)
-      toast: {
-        visible: false,
-        message: '',
-        severity: 'info' // Can be 'info', 'success', 'error'
-      }
-    }
-  },
-  computed: {
-    totalSize() {
-      return this.files.reduce((sum, file) => sum + file.size, 0) // calculates total size of files in bytes 
-    }
-  },
-  methods: {
-    triggerFileInput() {
-      this.$refs.fileInput.click()
-    },
-    handleFileSelect(event) {
-      const newFiles = Array.from(event.target.files).map(file => ({
-        ...file,
-        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
-      }))
-      this.files = [...this.files, ...newFiles]
-    },
-    removeFile(index) {
-      this.files.splice(index, 1)
-    },
-    clearFiles() {
-      this.files = []
-      this.uploadProgress = 0
-    },
-    async uploadFiles() {
-      if (!this.files.length) return;
-
-      const formData = new FormData();
-      for (let file of this.files) {
-        formData.append('files', file); // field name matches backend
-      }
-
-      try {
-        const response = await fetch(`/api/assignments/${this.assignmentId}/submit`, {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!response.ok) {
-          throw new Error(await response.text());
-        }
-
-        this.showToast('Files uploaded successfully!', 'success');
-        this.clearFiles();
-      } catch (error) {
-        console.error('Upload error:', error);
-        this.showToast('Upload failed: ' + error.message, 'error');
-      }
-    }
-    ,
-    formatSize(bytes) {
-      if (bytes === 0) return '0 Bytes'
-      const k = 1024
-      const sizes = ['Bytes', 'KB', 'MB', 'GB']
-      const i = Math.floor(Math.log(bytes) / Math.log(k))
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-    },
-    showToast(message, severity = 'info') {
-      this.toast = { visible: true, message, severity }
-      setTimeout(() => {
-        this.toast.visible = false
-      }, 3000)
-    }
-  }
-}
-</script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');

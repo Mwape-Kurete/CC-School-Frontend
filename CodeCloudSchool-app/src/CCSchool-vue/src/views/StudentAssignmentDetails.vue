@@ -3,11 +3,15 @@ import { useRoute } from 'vue-router';
 const route = useRoute();
 import { ref,onMounted } from 'vue';
 import { AssignmentService } from '@/api/assignments';
+import { StudentService } from '@/api/student';
 
 // Extracting assignmentID from the route parameters
 const assignmentIdNumber = route.params.assignmentId;
 const assignmentId = Array.isArray(assignmentIdNumber) ? Number(assignmentIdNumber[0]) : Number(assignmentIdNumber);
 console.log('Viewing assignment ID:', assignmentId)
+
+// fetch the student from localstorage
+const studentNumber = localStorage.getItem('studentNumber');
 
 // reactive references for data from api
 interface Assignment {
@@ -24,7 +28,7 @@ interface Assignment {
 // create ref of type assignment
 const assignmentDetails = ref<Assignment | null>(null); 
 
-
+const studentUserId = ref<number | null>(null);
 
 import SubmissionComp from '@/components/SubmissionComp.vue';
 import CButton from '@/components/ui/CButton.vue';
@@ -43,6 +47,7 @@ const attemptOptions = [
 onMounted(async () => {
     // Fetch assignment details when the component is mounted
     await fetchAssignmentDetails(assignmentId);
+    await getStudentDetails();
 })
 
 // Functions
@@ -61,6 +66,29 @@ const fetchAssignmentDetails = async (assignmentId: number) => {
         }
     } catch (error) {
         console.error('Failed to fetch assignments:', error);
+    }
+}
+
+const getStudentDetails = async () => {
+    try {
+        if (!studentNumber) {
+            console.error('No student number found in localStorage');
+            return null;
+        }
+        const student = await StudentService.getStudentByStudentNumber(studentNumber);
+        if (student && typeof student !== 'string') {
+            console.log('Student details:', student);
+            studentUserId.value = student.userId;
+        } else if (typeof student === 'string') {
+            console.error('Error fetching student:', student);
+            return null;
+        } else {
+            console.error('No student found with the given number');
+            return null;
+        }
+    } catch (error) {
+        console.error('Error fetching student details:', error);
+        return null;
     }
 }
 
@@ -127,8 +155,8 @@ const fetchAssignmentDetails = async (assignmentId: number) => {
         Window Plagiarism Declaration. Please see openwindow.co.za/plagiarism for more information.
     </p>
 
-    <SubmissionComp :assignmentId="assignmentId" class="file-sub" />
-    <CButton class="submit-btn" type="tertiary" size="lg">Submit Assignment</CButton>
+    <SubmissionComp :assignmentId="assignmentId" :studentId="studentUserId" class="file-sub" />
+    <!-- <CButton class="submit-btn" type="tertiary" size="lg">Submit Assignment</CButton> -->
 
 </template>
 
