@@ -12,24 +12,17 @@ interface Assignment {
 }
 
 export const AssignmentService = {
-    async getAssignmentsByCourseId(courseId: number): Promise<Assignment[] | string> {
+    async getAssignmentsByCourseId(courseId: number) : Promise<Assignment[] | string> {
         try {
-            const response = await api.get(`/courses/${courseId}/assignments`);
-            return response.data.map((assignment: any) => ({
-                id: assignment.id,
-                title: assignment.title,
-                description: assignment.description,
-                dueDate: assignment.dueDate,
-                status: this.getAssignmentStatus(assignment.dueDate),
-                submissionFormat: assignment.submissionFormat,
-                maxAttempts: assignment.maxAttempts
-            }));
+            const response = await api.get(`/courses/${courseId}`);
+            console.log('Assignments response:', response.data.assignments.$values);
+            return response.data.assignments.$values; // should return an array of assignments for the course
         } catch (error: any) {
-            console.error('Error fetching assignments:', error);
-            if (error.response?.data) {
-                return error.response.data;
+            console.error('Full error object:', error);
+            if (error.response && error.response.data) {
+                return error.response.data; // e.g. "No courses found"
             }
-            return 'Failed to fetch assignments';
+            return 'An unknown error occurred';
         }
     },
 
@@ -72,5 +65,47 @@ export const AssignmentService = {
         const hours = date.getUTCHours().toString().padStart(2, '0');
         const minutes = date.getUTCMinutes().toString().padStart(2, '0');
         return `${day} ${month} - ${hours}:${minutes}`;
+    }, 
+
+    async getAssignmentById(assignmentId: number): Promise<Assignment | string> {
+    try {
+        const response = await api.get(`/assignments/${assignmentId}`);
+        return response.data; // should return an assignment object
+    } catch (error: any) {
+        console.error('Full error object:', error);
+        if(error.response && error.response.data) {
+            return error.response.data; // e.g. "Assignment not found"
+        }
+        return 'An unknown error occurred';
+    }
+}
+};
+
+export const AssignmentSubmissionService = {
+    async uploadSubmission(
+        assignmentId: number,
+        studentId: number,
+        file: File
+    ): Promise<string | object> {
+        const formData = new FormData();
+        formData.append('assignmentId', assignmentId.toString());
+        formData.append('studentId', studentId.toString());
+        formData.append('file', file);
+
+        try {
+            const response = await api.post('/submissions/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            return response.data; // Could be a Submission object
+        } catch (error: any) {
+            console.error('Error uploading submission:', error);
+            if (error.response?.data) {
+                return error.response.data; // Error message from backend
+            }
+            return 'Failed to upload submission';
+        }
     }
 };

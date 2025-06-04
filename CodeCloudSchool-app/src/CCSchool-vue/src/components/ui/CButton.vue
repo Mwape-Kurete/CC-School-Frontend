@@ -1,15 +1,11 @@
 <template>
   <div class="c-button-wrapper">
-    <button
-      :class="[
-        'c-button',
-        `c-button--${type}`,
-        `c-button--${size}`,
-        { 'is-disabled': disabled || loading },
-      ]"
-      :disabled="disabled || loading"
-      @click="handleClick"
-    >
+    <button :class="[
+      'c-button',
+      `c-button--${type}`,
+      `c-button--${size}`,
+      { 'is-disabled': disabled || loading },
+    ]" :disabled="disabled || loading" @click="handleClick">
       <span v-if="loading" class="c-button__loader" />
       <span class="c-button__label">
         <slot />

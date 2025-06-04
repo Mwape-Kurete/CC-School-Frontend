@@ -1,11 +1,16 @@
 import api from './api';
 
 
+
 interface User {
-  id: string;
+  userId: number;
   name: string;
   email: string;
   lastName: string;
+  status: string;
+  phoneNumber: string;
+  studentNumber: string;
+  yearLevel: string;
 }
 
 
@@ -22,6 +27,21 @@ export const StudentService = {
       }
       return 'An unknown error occurred';
     }
+  },
+
+  async updateStatus(studentNumber: string, dto: { status: string }) {
+    const res = await api.put(`/student/${studentNumber}/status`, dto);
+    return res.data;
+  },
+
+  async reEnroll(studentNumber: string, dto: { yearLevel: string }) {
+    const res = await api.put(`/student/${studentNumber}/enroll`, dto);
+    return res.data;
+  },
+
+  async updatePassword(studentNumber: string, dto: { oldPassword: string, newPassword: string }) {
+    const res = await api.put(`/student/${studentNumber}/updatePassword`, dto);
+    return res.data;
   }
 };
 

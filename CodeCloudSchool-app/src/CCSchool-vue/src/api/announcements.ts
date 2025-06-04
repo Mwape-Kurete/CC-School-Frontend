@@ -14,8 +14,9 @@ export interface Announcement {
 export const AnnouncementService = {
   async getAnnouncementsByCourseId(courseId: number): Promise<Announcement[] | string> {
     try {
-      const response = await api.get(`/api/Announce/course/${courseId}`);
-      return response.data;
+      const response = await api.get(`/announce/by-course/${courseId}`);
+      console.log('Announcements response:', response.data);
+      return response.data.$values ?? response.data; // Handle both array and object formats
     } catch (error: any) {
       const errorMsg = this.handleError(error);
       console.error('API Error:', errorMsg, error.response?.config?.url);
