@@ -96,7 +96,7 @@ const filteredAnnouncements = computed(() => {
 // Handle announcement click
 const onAnnouncementClick = (announcementId: number): void => {
   router.push({
-    name: 'AnnouncementDetails',
+    name: 'studentannouncementdetails',
     params: {
       courseId: route.params.courseId,
       announcementId
