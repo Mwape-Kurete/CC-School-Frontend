@@ -125,7 +125,14 @@ const fetchCourseDetails = async () => {
       courseData.courseDescription = response.courseAbout || ''
       courseData.courseSlides = response.courseSlides || ''
       courseData.courseWeekBreakdown = response.courseWeekBreakdown?.$values || []
-      courseData.courseMarkBreakdown = response.courseMarkBreakdown?.$values || []
+
+      // ✅ FIXED: Deep unwrap nested items in mark breakdown
+      courseData.courseMarkBreakdown =
+        response.courseMarkBreakdown?.$values.map((section) => ({
+          ...section,
+          items: section.items?.$values || [],
+        })) || []
+
       courseData.courseSemDescriptions = response.courseSemDescriptions?.$values || []
 
       // Form inputs
@@ -162,10 +169,7 @@ const fetchAnnouncements = async () => {
 const getEmbeddedSlideUrl = (url) => {
   const validUrl = typeof url === 'string' ? url : url?.value
   if (!validUrl) return ''
-  if (validUrl.includes('/edit') || validUrl.includes('/view')) {
-    return validUrl.replace(/\/(edit|view).*/, '/embed')
-  }
-  return validUrl + '/embed'
+  return validUrl.replace(/\/(edit|view|preview).*/, '/embed')
 }
 
 // 6. EDIT MODE FUNCTIONS
@@ -185,6 +189,9 @@ const toggleFullEditMode = async () => {
     // User is cancelling update all, revert changes
     await fetchCourseDetails()
   }
+  if (fullUpdate.value) {
+    isEditing.value = true
+  }
 }
 
 const enterSectionEdit = (key) => {
@@ -200,8 +207,6 @@ const saveCourseDetails = async (isFullUpdate = false) => {
 
   try {
     isLoading.value = true
-    courseBio.value = draftCourseBio.value
-    googleSlideurl.value = draftGoogleSlideUrl.value
 
     Object.keys(applySectionDrafts).forEach((key) => {
       if (isEditingSection[key]) {
@@ -211,7 +216,7 @@ const saveCourseDetails = async (isFullUpdate = false) => {
 
     const payload = createSavePayload()
 
-    console.log('this is the payload:', +payload)
+    console.log('this is the payload:', payload)
 
     const updatedCourse = await LecturerCourseService.updateCourseDetails(courseId, payload)
     updateLocalState(updatedCourse)
@@ -230,14 +235,25 @@ const saveCourseDetails = async (isFullUpdate = false) => {
   }
 }
 
-const createSavePayload = () => ({
-  courseFullCode: courseData.courseName,
-  courseAbout: courseBio.value,
-  courseSlides: getEmbeddedSlideUrl(draftGoogleSlideUrl.value),
-  courseWeekBreakdown: draftWeekBreakdown.value,
-  courseMarkBreakdown: draftMarkBreakdown.value,
-  courseSemDescriptions: draftSemDescriptions.value,
-})
+const createSavePayload = () => {
+  return {
+    courseAbout: isEditingSection.courseDescription
+      ? draftCourseBio.value
+      : courseData.courseDescription,
+    courseSlides: isEditingSection.courseSlides
+      ? getEmbeddedSlideUrl(draftGoogleSlideUrl.value)
+      : courseData.courseSlides,
+    courseWeekBreakdown: isEditingSection.courseWeekBreakdown
+      ? draftWeekBreakdown.value
+      : courseData.courseWeekBreakdown,
+    courseMarkBreakdown: isEditingSection.courseMarkBreakdown
+      ? draftMarkBreakdown.value
+      : courseData.courseMarkBreakdown,
+    courseSemDescriptions: isEditingSection.courseSemDescriptions
+      ? draftSemDescriptions.value
+      : courseData.courseSemDescriptions,
+  }
+}
 
 // Sync local reactive state and form inputs with latest backend data after update or wipe
 const updateLocalState = (updatedCourse) => {
@@ -296,8 +312,6 @@ const addItemToSection = () => {
 const addSection = () => {
   if (!newSection.title.trim() || !newSection.mark.trim() || !newSection.items?.length) return
   draftMarkBreakdown.value.push(JSON.parse(JSON.stringify(newSection)))
-
-  resetNewSection()
 }
 
 // 8. UTILITY FUNCTIONS
@@ -327,10 +341,17 @@ const clearContent = async () => {
 }
 
 const exitEditMode = async () => {
+  // Ask user before discarding unsaved edits
+  if (hasUnsavedChanges.value) {
+    const confirmed = window.confirm('You have unsaved changes. Exit without saving?')
+    if (!confirmed) return // Cancel exit
+  }
+
   isEditing.value = false
+
   try {
     isLoading.value = true
-    await fetchCourseDetails() // reload original values
+    await fetchCourseDetails() // Only runs if user confirmed
     Object.keys(isEditingSection).forEach((key) => {
       isEditingSection[key] = false
     })
@@ -343,14 +364,21 @@ const exitEditMode = async () => {
 
 // 9. EVENT HANDLERS (for template)
 const applySectionDrafts = {
-  courseDescription: () => (courseBio.value = draftCourseBio.value),
-  courseSlides: () => (googleSlideurl.value = draftGoogleSlideUrl.value),
-  courseWeekBreakdown: () =>
-    (courseData.courseWeekBreakdown = JSON.parse(JSON.stringify(draftWeekBreakdown.value))),
-  courseMarkBreakdown: () =>
-    (courseData.courseMarkBreakdown = JSON.parse(JSON.stringify(draftMarkBreakdown.value))),
-  courseSemDescriptions: () =>
-    (courseData.courseSemDescriptions = JSON.parse(JSON.stringify(draftSemDescriptions.value))),
+  courseDescription: () => {
+    courseBio.value = draftCourseBio.value
+  },
+  courseSlides: () => {
+    googleSlideurl.value = draftGoogleSlideUrl.value
+  },
+  courseWeekBreakdown: () => {
+    courseData.courseWeekBreakdown = JSON.parse(JSON.stringify(draftWeekBreakdown.value))
+  },
+  courseMarkBreakdown: () => {
+    courseData.courseMarkBreakdown = JSON.parse(JSON.stringify(draftMarkBreakdown.value))
+  },
+  courseSemDescriptions: () => {
+    courseData.courseSemDescriptions = JSON.parse(JSON.stringify(draftSemDescriptions.value))
+  },
 }
 
 const handleSaveSection = async (sectionKey) => {
@@ -360,13 +388,9 @@ const handleSaveSection = async (sectionKey) => {
       isEditing.value = false
     }
 
-    if (applySectionDrafts[sectionKey]) {
-      applySectionDrafts[sectionKey]()
-    }
     await saveCourseDetails()
-    isEditingSection[sectionKey] = false
 
-    alert('Section saved successfully')
+    isEditingSection[sectionKey] = false
   } catch (error) {
     console.error('Error saving section:', error)
   }
@@ -380,9 +404,14 @@ const handleAddWeek = async () => {
 const handleAddSemesterBreakdown = async (index) => {
   addSemBreakdown(index)
 
-  await handleSaveSection('courseSemDescriptions')
+  // Let Vue DOM/reactivity update before using the new value
+  await nextTick()
 
-  console.log('Saving semester description', draftSemDescriptions.value)
+  applySectionDrafts.courseSemDescriptions()
+
+  console.log('Saving semester description', JSON.parse(JSON.stringify(draftSemDescriptions.value)))
+
+  await handleSaveSection('courseSemDescriptions')
 }
 
 const handleAddItemToSection = async () => {
@@ -394,6 +423,7 @@ const handleAddSection = async () => {
 
   await handleSaveSection('courseMarkBreakdown')
 
+  resetNewSection()
   console.log('Adding section', newSection)
 }
 </script>
@@ -829,10 +859,21 @@ const handleAddSection = async () => {
             size="md"
             btnIconLabel="Add Section"
             @click="handleAddSection"
-            :disabled="!newSection.title || !newSection.mark || !newSection.items?.length"
+            :disabled="!newSection.title || !newSection.mark || newSection.items.length === 0"
           >
             <template #icon>
               <Plus size="16" />
+            </template>
+          </CButtonIcon>
+          <CButtonIcon
+            class="edit-course-var mt-3"
+            type="primary"
+            size="md"
+            btnIconLabel="Save Mark Breakdown"
+            @click="handleSaveSection('courseMarkBreakdown')"
+          >
+            <template #icon>
+              <Save size="16" />
             </template>
           </CButtonIcon>
         </div>
