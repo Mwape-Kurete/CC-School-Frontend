@@ -260,12 +260,6 @@ const handleSaveSection = async (sectionKey) => {
   try {
     await saveCourseDetails()
     isEditingSection[sectionKey] = false
-    toast.add({
-      severity: 'success',
-      summary: 'Saved',
-      detail: 'Changes saved successfully',
-      life: 3000,
-    })
   } catch (error) {
     console.error('Error saving section:', error)
   }
