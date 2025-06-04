@@ -37,11 +37,12 @@ export default {
     },
     handleFileSelect(event) {
       const newFiles = Array.from(event.target.files).map(file => ({
-        ...file,
+        file, // keep original File object here
         preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
-      }))
-      this.files = [...this.files, ...newFiles]
-    },
+      }));
+      this.files = [...this.files, ...newFiles];
+    }
+    ,
     removeFile(index) {
       this.files.splice(index, 1)
     },
@@ -58,7 +59,8 @@ export default {
 
       try {
         for (let i = 0; i < this.files.length; i++) {
-          const file = this.files[i];
+          const fileWrapper = this.files[i];
+          const file = fileWrapper.file;
 
           // Optional: track individual file progress if you want to extend this
           this.uploadProgress = Math.round((i / this.files.length) * 100);

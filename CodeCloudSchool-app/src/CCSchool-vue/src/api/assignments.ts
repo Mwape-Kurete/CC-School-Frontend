@@ -91,7 +91,12 @@ export const AssignmentSubmissionService = {
         formData.append('assignmentId', assignmentId.toString());
         formData.append('studentId', studentId.toString());
         formData.append('file', file);
-
+        console.log('Uploading submission:', {
+            assignmentId,
+            studentId,
+            fileName: file.name,
+            fileType: file.type
+        });
         try {
             const response = await api.post('/submissions/upload', formData, {
                 headers: {
