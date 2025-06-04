@@ -563,6 +563,7 @@ const handleAddSection = async () => {
             </div>
             <div class="left-cd" v-if="isEditingSection.courseDescription == true">
               <CButtonIcon
+                v-if="!fullUpdate"
                 type="primary"
                 size="md"
                 btnIconLabel="Save Section"
@@ -622,6 +623,7 @@ const handleAddSection = async () => {
             </div>
             <div class="left-cd" v-if="isEditingSection.courseWeekBreakdown == true">
               <CButtonIcon
+                v-if="!fullUpdate"
                 type="primary"
                 size="md"
                 btnIconLabel="Save Section"
@@ -696,6 +698,7 @@ const handleAddSection = async () => {
             </div>
             <div class="left-cd" v-if="isEditingSection.courseSlides == true">
               <CButtonIcon
+                v-if="!fullUpdate"
                 type="primary"
                 size="md"
                 btnIconLabel="Save Section"
@@ -783,6 +786,7 @@ const handleAddSection = async () => {
             </div>
             <div class="left-cd" v-if="isEditingSection.courseMarkBreakdown == true">
               <CButtonIcon
+                v-if="!fullUpdate"
                 type="primary"
                 size="md"
                 btnIconLabel="Save Section"
@@ -912,6 +916,7 @@ const handleAddSection = async () => {
             </div>
             <div class="left-cd" v-if="isEditingSection.courseSemDescriptions == true">
               <CButtonIcon
+                v-if="!fullUpdate"
                 type="primary"
                 size="md"
                 btnIconLabel="Save Section"
