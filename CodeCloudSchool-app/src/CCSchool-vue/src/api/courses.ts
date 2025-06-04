@@ -99,11 +99,11 @@ export const LecturerCourseService = {
         courseFullCode: courseUpdateData.courseFullCode || '',
         courseAbout: courseUpdateData.courseAbout || '',
         courseSlides: courseUpdateData.courseSlides || '',
-        courseWeekBreakdown: courseUpdateData.courseWeekBreakdown?.$values || [],
-        courseMarkBreakdown: (courseUpdateData.courseMarkBreakdown?.$values || []).map((section: any) => ({
+        courseWeekBreakdown: courseUpdateData.courseWeekBreakdown || [],
+        courseMarkBreakdown: (courseUpdateData.courseMarkBreakdown || []).map((section: any) => ({
           title: section.title,
           mark: section.mark,
-          items: section.items?.$values || []
+          items: section.items || []
         })),
         courseSemDescriptions: courseUpdateData.courseSemDescriptions?.$values || []
       }; //this is an attempt to fix the 404: bad request issues the lecturer update course details was giving

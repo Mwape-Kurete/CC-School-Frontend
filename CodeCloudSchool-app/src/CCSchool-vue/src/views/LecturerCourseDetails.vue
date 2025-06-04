@@ -4,7 +4,7 @@ import { CourseService, LecturerCourseService } from '@/api/courses'
 import { AnnouncementService } from '@/api/announcements'
 
 //importing vue features
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 
 //importing icons and primevue components
 import { PencilLine, Maximize2, Ban, Save, CircleFadingArrowUp, RotateCcw } from 'lucide-vue-next'
@@ -33,7 +33,18 @@ const courseId = 1 // Consider making this a prop if it can vary
 const googleSlideurl = ref('')
 const courseBio = ref('')
 const newDescription = ref('')
-const semesterDescription = ref('')
+const semesterInputs = reactive(['', ''])
+
+//computed checks
+const hasUnsavedChanges = computed(() => {
+  return (
+    courseData.courseDescription !== courseBio.value ||
+    courseData.courseSlides !== googleSlideurl.value ||
+    courseData.courseWeekBreakdown.length > 0 ||
+    courseData.courseMarkBreakdown.length > 0 ||
+    courseData.courseSemDescriptions.length > 0
+  )
+})
 
 // Course data
 const courseData = reactive({
@@ -44,6 +55,13 @@ const courseData = reactive({
   courseMarkBreakdown: [],
   courseSemDescriptions: [],
 })
+
+// Draft copies to edit freely before confirming
+const draftCourseBio = ref('')
+const draftGoogleSlideUrl = ref('')
+const draftWeekBreakdown = ref([]) // Mirror of courseWeekBreakdown
+const draftMarkBreakdown = ref([]) // Mirror of courseMarkBreakdown
+const draftSemDescriptions = ref([]) // Mirror of courseSemDescriptions
 
 // Announcement data
 const announcementData = reactive({
@@ -110,9 +128,14 @@ const fetchCourseDetails = async () => {
       courseData.courseMarkBreakdown = response.courseMarkBreakdown?.$values || []
       courseData.courseSemDescriptions = response.courseSemDescriptions?.$values || []
 
-      // Initialize form fields
-      googleSlideurl.value = courseData.courseSlides
+      // Form inputs
       courseBio.value = courseData.courseDescription
+      googleSlideurl.value = courseData.courseSlides
+
+      // DRAFT CLONES
+      draftWeekBreakdown.value = JSON.parse(JSON.stringify(courseData.courseWeekBreakdown))
+      draftMarkBreakdown.value = JSON.parse(JSON.stringify(courseData.courseMarkBreakdown))
+      draftSemDescriptions.value = JSON.parse(JSON.stringify(courseData.courseSemDescriptions))
     }
   } catch (err) {
     throw err // Let loadInitialData handle it
@@ -135,12 +158,31 @@ const fetchAnnouncements = async () => {
   }
 }
 
+const getEmbeddedSlideUrl = (url) => {
+  if (!url) return ''
+  if (url.includes('/edit') || url.includes('/view')) {
+    return url.replace(/\/(edit|view).*/, '/embed')
+  }
+  return url + '/embed'
+}
+
 // 6. EDIT MODE FUNCTIONS
-const toggleFullEditMode = () => {
+const toggleFullEditMode = async () => {
   fullUpdate.value = !fullUpdate.value
   Object.keys(isEditingSection).forEach((key) => {
     isEditingSection[key] = fullUpdate.value
   })
+
+  if (!fullUpdate.value) {
+    // User is cancelling update all, revert changes
+    await fetchCourseDetails()
+  }
+}
+
+const enterSectionEdit = (key) => {
+  isEditingSection[key] = true
+  if (key === 'courseDescription') draftCourseBio.value = courseBio.value
+  if (key === 'courseSlides') draftGoogleSlideUrl.value = googleSlideurl.value
 }
 
 // 7. CRUD OPERATIONS
@@ -148,12 +190,23 @@ const toggleFullEditMode = () => {
 const saveCourseDetails = async (isFullUpdate = false) => {
   try {
     isLoading.value = true
+    courseBio.value = draftCourseBio.value
+    googleSlideurl.value = draftGoogleSlideUrl.value
+
     const payload = createSavePayload()
     const updatedCourse = await LecturerCourseService.updateCourseDetails(courseId, payload)
     updateLocalState(updatedCourse)
-    if (isFullUpdate) fullUpdate.value = false
+
+    if (isFullUpdate) {
+      fullUpdate.value = false
+      isEditing.value = false
+      Object.keys(isEditingSection).forEach((key) => {
+        isEditingSection[key] = false
+      })
+    }
   } catch (err) {
     error.value = err.message || 'Failed to save changes'
+    alert('please try again, an error occured')
   } finally {
     isLoading.value = false
   }
@@ -162,16 +215,13 @@ const saveCourseDetails = async (isFullUpdate = false) => {
 const createSavePayload = () => ({
   courseFullCode: courseData.courseName,
   courseAbout: courseBio.value,
-  courseSlides: googleSlideurl.value,
-  courseWeekBreakdown: courseData.courseWeekBreakdown,
-  courseMarkBreakdown: courseData.courseMarkBreakdown.map((section) => ({
-    title: section.title,
-    mark: section.mark,
-    items: section.items || [],
-  })),
-  courseSemDescriptions: courseData.courseSemDescriptions,
+  courseSlides: googleSlideurl.value || '',
+  courseWeekBreakdown: draftWeekBreakdown.value,
+  courseMarkBreakdown: draftMarkBreakdown.value,
+  courseSemDescriptions: draftSemDescriptions.value,
 })
 
+// Sync local reactive state and form inputs with latest backend data after update or wipe
 const updateLocalState = (updatedCourse) => {
   Object.assign(courseData, {
     courseName: updatedCourse.courseFullCode,
@@ -181,31 +231,36 @@ const updateLocalState = (updatedCourse) => {
     courseMarkBreakdown: updatedCourse.courseMarkBreakdown?.$values || [],
     courseSemDescriptions: updatedCourse.courseSemDescriptions?.$values || [],
   })
+
+  courseBio.value = updatedCourse.courseAbout
+  googleSlideurl.value = updatedCourse.courseSlides
+
+  draftWeekBreakdown.value = JSON.parse(JSON.stringify(courseData.courseWeekBreakdown))
+  draftMarkBreakdown.value = JSON.parse(JSON.stringify(courseData.courseMarkBreakdown))
+  draftSemDescriptions.value = JSON.parse(JSON.stringify(courseData.courseSemDescriptions))
 }
 
 // -- Add Operations --
 const addWeek = () => {
   if (!newDescription.value.trim()) return
 
-  courseData.courseWeekBreakdown.push({
-    header: `Week ${courseData.courseWeekBreakdown.length + 1}`,
+  draftWeekBreakdown.value.push({
+    header: `Week ${draftWeekBreakdown.value.length + 1}`,
     description: newDescription.value.trim(),
   })
+
   newDescription.value = ''
 }
 
-const addSemBreakdown = () => {
-  if (!semesterDescription.value.trim()) return
-
-  courseData.courseSemDescriptions.push({
-    description: semesterDescription.value.trim(),
-  })
-  semesterDescription.value = ''
+const addSemBreakdown = (semesterIndex = 0) => {
+  const value = semesterInputs[semesterIndex].trim()
+  if (!value) return
+  draftSemDescriptions.value[semesterIndex] = { description: value }
+  semesterInputs[semesterIndex] = ''
 }
 
 const addItemToSection = () => {
   if (!newItem.description.trim() || !newItem.mark.trim()) return
-
   if (!newSection.items) newSection.items = []
   newSection.items.push({
     description: newItem.description.trim(),
@@ -217,8 +272,7 @@ const addItemToSection = () => {
 
 const addSection = () => {
   if (!newSection.title.trim() || !newSection.mark.trim() || !newSection.items?.length) return
-
-  courseData.courseMarkBreakdown.push({ ...newSection })
+  draftMarkBreakdown.value.push({ ...newSection })
   resetNewSection()
 }
 
@@ -248,16 +302,38 @@ const clearContent = async () => {
   }
 }
 
-const exitEditMode = () => {
+const exitEditMode = async () => {
   isEditing.value = false
-  Object.keys(isEditingSection).forEach((key) => {
-    isEditingSection[key] = false
-  })
+  try {
+    isLoading.value = true
+    await fetchCourseDetails() // reload original values
+    Object.keys(isEditingSection).forEach((key) => {
+      isEditingSection[key] = false
+    })
+  } catch (err) {
+    error.value = err.message || 'Failed to reload content'
+  } finally {
+    isLoading.value = false
+  }
 }
 
 // 9. EVENT HANDLERS (for template)
+const applySectionDrafts = {
+  courseDescription: () => (courseBio.value = draftCourseBio.value),
+  courseSlides: () => (googleSlideurl.value = draftGoogleSlideUrl.value),
+  courseWeekBreakdown: () =>
+    (courseData.courseWeekBreakdown = JSON.parse(JSON.stringify(draftWeekBreakdown.value))),
+  courseMarkBreakdown: () =>
+    (courseData.courseMarkBreakdown = JSON.parse(JSON.stringify(draftMarkBreakdown.value))),
+  courseSemDescriptions: () =>
+    (courseData.courseSemDescriptions = JSON.parse(JSON.stringify(draftSemDescriptions.value))),
+}
+
 const handleSaveSection = async (sectionKey) => {
   try {
+    if (applySectionDrafts[sectionKey]) {
+      applySectionDrafts[sectionKey]()
+    }
     await saveCourseDetails()
     isEditingSection[sectionKey] = false
   } catch (error) {
@@ -265,10 +341,22 @@ const handleSaveSection = async (sectionKey) => {
   }
 }
 
-const handleAddWeek = () => addWeek()
-const handleAddSemesterBreakdown = () => addSemBreakdown()
-const handleAddItemToSection = () => addItemToSection()
-const handleAddSection = () => addSection()
+//making sure changes are actually made and not just stored locally
+const handleAddWeek = async () => {
+  addWeek()
+}
+
+const handleAddSemesterBreakdown = async (index) => {
+  addSemBreakdown(index)
+}
+
+const handleAddItemToSection = async () => {
+  addItemToSection()
+}
+
+const handleAddSection = async () => {
+  addSection()
+}
 </script>
 
 <template>
@@ -329,7 +417,7 @@ const handleAddSection = () => addSection()
               class="edit-course-var"
               type="primary"
               size="md"
-              btnIconLabel="Reset Course Details"
+              btnIconLabel="Wipe Course Details"
               @click="clearContent"
             >
               <template #icon>
@@ -340,7 +428,7 @@ const handleAddSection = () => addSection()
               class="edit-course-var"
               type="primary"
               size="md"
-              btnIconLabel="Update entire Course Content"
+              :btnIconLabel="fullUpdate ? 'Cancel Update All' : 'Update entire Course Content'"
               @click="toggleFullEditMode"
             >
               <template #icon>
@@ -349,7 +437,7 @@ const handleAddSection = () => addSection()
             </CButtonIcon>
             <!--Below is save button for global changes-->
             <CButtonIcon
-              v-if="fullUpdate"
+              v-if="fullUpdate && hasUnsavedChanges"
               class="edit-course-var"
               type="primary"
               size="md"
@@ -365,7 +453,7 @@ const handleAddSection = () => addSection()
               type="primary"
               size="md"
               btnIconLabel="Exit Edit Mode"
-              @click="isEditing = false"
+              @click="exitEditMode"
             >
               <template #icon>
                 <Ban size="20" />
@@ -393,7 +481,7 @@ const handleAddSection = () => addSection()
                 type="primary"
                 size="md"
                 btnIconLabel="Edit Section"
-                @click="isEditingSection.courseDescription = true"
+                @click="enterSectionEdit('courseDescription')"
               >
                 <template #icon>
                   <PencilLine size="16" />
@@ -420,7 +508,7 @@ const handleAddSection = () => addSection()
               <FloatLabel>
                 <Textarea
                   id="course-bio"
-                  v-model="courseBio"
+                  v-model="draftCourseBio"
                   class="w-8 border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
                 />
                 <label for="course-bio">Insert Course Description</label>
@@ -503,10 +591,7 @@ const handleAddSection = () => addSection()
             <p>No Content Yet. Edit this section to add content</p>
           </div>
           <div class="check-content text-center">
-            <CListGroup
-              :items="courseData.courseWeekBreakdown"
-              v-if="courseData.courseWeekBreakdown.length > 0"
-            />
+            <CListGroup :items="draftWeekBreakdown" />
           </div>
         </div>
       </div>
@@ -557,7 +642,7 @@ const handleAddSection = () => addSection()
                 <FloatLabel>
                   <InputText
                     id="g-slide-url"
-                    v-model="googleSlideurl"
+                    v-model="draftGoogleSlideUrl"
                     class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
                   />
                   <label for="g-slide-url">Upload Google Slide Link</label>
@@ -584,7 +669,7 @@ const handleAddSection = () => addSection()
             </div>
             <div class="check-content text-center" v-if="courseData.courseSlides != null">
               <iframe
-                :src="courseData.courseSlides + '/embed'"
+                :src="getEmbeddedSlideUrl(courseData.courseSlides)"
                 frameborder="0"
                 width="960"
                 height="569"
@@ -625,7 +710,7 @@ const handleAddSection = () => addSection()
                 type="primary"
                 size="md"
                 btnIconLabel="Save Section"
-                @click="(saveCourseDetails(), (isEditingSection.courseMarkBreakdown = false))"
+                @click="handleSaveSection('courseMarkBreakdown')"
               >
                 <template #icon>
                   <PencilLine size="16" />
@@ -706,10 +791,7 @@ const handleAddSection = () => addSection()
             <p>No Content Yet. Edit this section to add content</p>
           </div>
           <div class="check-content text-center">
-            <CMarkBreakdown
-              :items="courseData.courseMarkBreakdown"
-              v-if="courseData.courseMarkBreakdown.length > 0"
-            />
+            <CMarkBreakdown :items="draftMarkBreakdown" />
           </div>
         </div>
 
@@ -760,7 +842,7 @@ const handleAddSection = () => addSection()
               <FloatLabel class="w-full">
                 <InputText
                   id="week-break"
-                  v-model="semesterDescription"
+                  v-model="semesterInputs[0]"
                   class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
                 />
                 <label for="week-break">Add a Semester Description</label>
@@ -770,7 +852,7 @@ const handleAddSection = () => addSection()
                 type="primary"
                 size="md"
                 btnIconLabel="Add Semester Description"
-                @click="handleAddSemesterBreakdown"
+                @click="handleAddSemesterBreakdown(0)"
               >
                 <template #icon>
                   <Plus size="16" />
@@ -788,7 +870,7 @@ const handleAddSection = () => addSection()
           </div>
           <div class="check-content">
             <p v-if="courseData.courseSemDescriptions.length > 0">
-              {{ courseData.courseSemDescriptions[0]?.description || 'No description' }}
+              {{ draftSemDescriptions[0]?.description || 'No description' }}
             </p>
           </div>
         </div>
@@ -804,7 +886,7 @@ const handleAddSection = () => addSection()
               <FloatLabel class="w-full">
                 <InputText
                   id="week-break2"
-                  v-model="semesterDescription"
+                  v-model="semesterInputs[1]"
                   class="w-full mt-2 border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
                 />
                 <label for="week-break2">Add a Semester Description</label>
@@ -814,7 +896,7 @@ const handleAddSection = () => addSection()
                 type="primary"
                 size="md"
                 btnIconLabel="Add Semester Description"
-                @click="handleAddSemesterBreakdown"
+                @click="handleAddSemesterBreakdown(1)"
               >
                 <template #icon>
                   <Plus size="16" />
@@ -832,7 +914,7 @@ const handleAddSection = () => addSection()
           </div>
           <div class="check-content">
             <p v-if="courseData.courseSemDescriptions.length > 1">
-              {{ courseData.courseSemDescriptions[1]?.description || 'No description' }}
+              {{ draftSemDescriptions[1]?.description || 'No description' }}
             </p>
           </div>
         </div>
