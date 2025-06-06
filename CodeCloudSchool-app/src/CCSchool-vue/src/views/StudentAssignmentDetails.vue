@@ -9,7 +9,7 @@ import { AssignmentSubmissionService } from '@/api/assignments';
 // Extracting assignmentID from the route parameters
 const assignmentIdNumber = route.params.assignmentId;
 const assignmentId = Array.isArray(assignmentIdNumber) ? Number(assignmentIdNumber[0]) : Number(assignmentIdNumber);
-console.log('Viewing assignment ID:', assignmentId)
+
 
 // fetch the student from localstorage
 const studentNumber = localStorage.getItem('studentNumber');
@@ -53,8 +53,10 @@ onMounted(async () => {
     // Fetch assignment details when the component is mounted
     await fetchAssignmentDetails(assignmentId);
     await getStudentDetails();
+
     // Ensure studentUserId is available before calling
     if (studentUserId.value !== null) {
+        // console.log('Student User ID:', studentUserId.value);
         await getStudentSubmission(assignmentId, studentUserId.value);
     } else {
         console.warn('Student ID not available. Skipping submission check.');
@@ -71,7 +73,7 @@ const fetchAssignmentDetails = async (assignmentId: number) => {
         if (typeof response === 'string') {
             console.error('Failed to fetch assignment:', response);
         } else {
-            console.log('Assignment fetched successfully:', response);
+            // console.log('Assignment fetched successfully:', response);
             // store assignment details
             assignmentDetails.value = response as Assignment;
         }
@@ -88,7 +90,7 @@ const getStudentDetails = async () => {
         }
         const student = await StudentService.getStudentByStudentNumber(studentNumber);
         if (student && typeof student !== 'string') {
-            console.log('Student details:', student);
+            // console.log('Student details:', student);
             studentUserId.value = student.userId;
         } else if (typeof student === 'string') {
             console.error('Error fetching student:', student);
@@ -107,7 +109,7 @@ const getStudentSubmission = async (assignmentId: number, studentId: number) => 
     try {
         const submission = await AssignmentSubmissionService.getStudentSubmissions(assignmentId, studentId);
         if (submission && typeof submission !== 'string') {
-            console.log('Student submission:', submission);
+            // console.log('Student submission:', submission);
             hasSubmitted.value = true;
         } else if (typeof submission === 'string') {
             console.error('Error fetching submission:', submission);
@@ -188,8 +190,10 @@ const getStudentSubmission = async (assignmentId: number, studentId: number) => 
     <SubmissionComp v-if="!hasSubmitted" :assignmentId="assignmentId" :studentId="studentUserId" class="file-sub" />
     <!-- <CButton class="submit-btn" type="tertiary" size="lg">Submit Assignment</CButton> -->
     <div v-if="hasSubmitted" class="submission-feedback-text bg-green-100 text-green-800 px-4 py-2 rounded mb-4">
-     You’ve already submitted this assignment.
+        You’ve already submitted this assignment.
+
     </div>
+    <SubmissionComp v-if="hasSubmitted" :assignmentId="assignmentId" :studentId="studentUserId" class="file-sub" />
 
 </template>
 
@@ -229,12 +233,13 @@ details-con {
     margin-left: 30%
 }
 
-.submission-feedback-text{
-    color: #7abe67 !important;
+.submission-feedback-text {
+    color: white !important;
+    background-color: #C2BFF8 !important;
+    border-radius: 15px;
     font-size: 32px;
     font-weight: 600;
     font-family: 'QuickSand', sans-serif;
     text-align: center;
 }
-
 </style>
