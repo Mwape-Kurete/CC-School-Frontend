@@ -203,8 +203,8 @@ const router = createRouter({
       },
     },
     {
-      path: '/studentannouncementdetails',
-      name: 'studentannouncementdetails',
+      path: '/announcements/:announcementId',
+      name: 'AnnouncementDetails',
       component: () => import('@/views/StudentAnnouncementDetails.vue'),
       meta: {
         layout: 'TwoCol',

@@ -94,14 +94,14 @@ const filteredAnnouncements = computed(() => {
 
 // Handle announcement click
 const onAnnouncementClick = (announcementId: number): void => {
-  router.push({
-    name: 'AnnouncementDetails',
-    params: {
-      courseId: route.params.courseId,
-      announcementId
-    }
-  });
+  const courseIdParam = route.params.courseId;
+  const courseId = Array.isArray(courseIdParam) ? Number(courseIdParam[0]) : Number(courseIdParam);
+
+  console.log('Announcement clicked:', announcementId);
+  router.push({ name: 'AnnouncementDetails', params: { courseId, announcementId } });
 };
+
+
 
 
 </script>

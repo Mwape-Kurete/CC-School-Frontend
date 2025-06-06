@@ -3,9 +3,21 @@ import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import CButton from '@/components/ui/CButton.vue';
 import { AnnouncementService } from '@/api/announcements';
+import AvatarComp from '@/components/AvatarComp.vue';
+import { lecturerService, type Lecturer } from '@/api/lecturer';
 
 const route = useRoute();
 const announcement = ref<Announcement | null>(null);
+const lecturerDetails = ref<Lecturer | null>(null);
+
+
+// Extracting assignmentID from the route parameters
+const announcementIdNumber = route.params.announcementId;
+const announcementId = Array.isArray(announcementIdNumber) ? Number(announcementIdNumber[0]) : Number(announcementIdNumber);
+console.log('Viewing announcement ID:', announcementId);
+
+
+
 
 interface Announcement {
   announcementId: number;
@@ -18,27 +30,59 @@ interface Announcement {
   lecturerEmail?: string;
 }
 
+
+
 onMounted(async () => {
-  const announcementId = Number(route.params.announcementId);
+
+
   const response = await AnnouncementService.getAnnouncementById(announcementId);
-  
+
   if (typeof response !== 'string') {
     announcement.value = response;
+    console.log(announcement.value?.lecturerId);
   } else {
     console.error('Failed to load announcement:', response);
   }
+
+  // Fetch lecturer details if available
+  if (announcement.value && announcement.value.lecturerId) {
+    await getLecturerDetails(announcement.value.lecturerId);
+  } else {
+    console.warn('No lecturer ID found in announcement');
+  }
+
 });
+
+
+// functions 
+const getLecturerDetails = async (lecturerId: number) => {
+  try {
+    const response = await lecturerService.getLecturerByID(lecturerId);
+    if (response && typeof response !== 'string') {
+      lecturerDetails.value = response;
+    } else {
+      console.error('Failed to fetch lecturer details:', response);
+
+    }
+  } catch (error) {
+    console.error('Error fetching lecturer details:', error);
+  }
+}
+
 </script>
 
 <template>
   <div v-if="announcement">
     <!-- Lecturer info -->
     <div class="flex lecturer-info-con">
-      <img class="lecturer-img" src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=2080&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-        alt="Lecturer Image" />
+      <AvatarComp :name="lecturerDetails?.name ? lecturerDetails.name + ' ' + lecturerDetails.lastName : 'Lecturer Name'" class="lecturer-img" />
       <div class="lec-name-email">
-        <h2>Lecturer Name</h2>
-        <h4>lecturer@email.com</h4>
+        <h2>
+          {{ lecturerDetails ? lecturerDetails.name + ' ' + lecturerDetails.lastName : 'Lecturer Name' }}
+        </h2>
+        <h4>
+          {{ lecturerDetails ? lecturerDetails.lecEmail : ''}}
+        </h4>
       </div>
     </div>
 
@@ -58,16 +102,15 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-    .lecturer-info-con {
-        display: flex;
-        align-items: center;
-    }
+.lecturer-info-con {
+  display: flex;
+  align-items: center;
+}
 
-    .lecturer-img{
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        margin-right: 20px;
-    }
-
+.lecturer-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin-right: 20px;
+}
 </style>

@@ -26,7 +26,7 @@ export const AnnouncementService = {
   async getAnnouncementById(announcementId: number): Promise<Announcement | string> {
     try {
       // Changed from '/api/announcements/' to '/api/Announce/'
-      const response = await api.get(`/api/Announce/${announcementId}`);
+      const response = await api.get(`/announce/${announcementId}`);
       return response.data;
     } catch (error: any) {
       console.error('Error fetching announcement:', error);
