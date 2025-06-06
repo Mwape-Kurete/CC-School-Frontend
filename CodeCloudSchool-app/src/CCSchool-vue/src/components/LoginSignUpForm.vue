@@ -177,32 +177,57 @@ const signUp = async () => {
                 lastName: surname.value,
                 password: password.value,
                 phoneNumber: phoneNo.value,
-                department: "Computer Science",
+                department: "",
                 dateOfJoining: new Date().toISOString(), // REQUIRED
                 isActive: true
             })
 
-            if (typeof response === 'string') {
+            console.log(response.includes('Verification email sent. Please check your inbox.'));
+            if (!response.includes('Verification email sent. Please check your inbox.')) {
                 // sign up failed, show message
                 errorMessage.value = response;
             } else {
-                // sign up successful, response is a User object
+                // sign up successful and email sent, response is a string
                 console.log('sign up successful:', response);
-                alert('The response is: ' + response);
+                // redirect user 2fa screen
+                localStorage.setItem('userRole', role.value);
 
-                // store student number and role in local storage
-                localStorage.setItem('lectId', response.lecturerId);
-                localStorage.setItem('userRole', user.role);
-                // redirect user to course select page
-                router.push({ name: 'RegisterMajors' });
+                router.push({ name: '2FAView' });
             }
-
         } catch (error) {
             errorMessage.value = 'Sign Up failed. Please check your credentials.'
         } finally {
             loading.value = false
         }
     }
+    else if (role.value === 'admin') {
+        try {
+            console.log('Attempting to sign up admin');
+            const response = await AuthService.signUpAdmin({
+                name: name.value,
+                lastName: surname.value,
+                PrivateEmail: email.value,
+                password: password.value,
+                phoneNumber: phoneNo.value,
+                gender: typeof gender.value === 'object' ? gender.value.value : gender.value,
+                address: address.value,
+                isActive: true
+            });
+
+            if (!response.includes('Verification email sent. Please check your inbox.')) {
+                errorMessage.value = response;
+            } else {
+                console.log('Sign up successful:', response);
+                localStorage.setItem('userRole', role.value);
+                router.push({ name: '2FAView' });
+            }
+        } catch (error) {
+            errorMessage.value = 'Sign Up failed. Please check your credentials.';
+        } finally {
+            loading.value = false;
+        }
+    }
+
 }
 
 </script>
@@ -222,8 +247,8 @@ const signUp = async () => {
                     <span class="text-sm no-account"><strong>or</strong></span>
                 </Divider>
 
-                <CDropdown type="ghost" size="sm" v-model="role" :options="roleOptions" optionLabel="label"
-                    class="role-dropdown w-full mb-4" />
+                <Dropdown placeholder="Are you a Student, Lecturer, or Admin?" v-model="role" :options="roleOptions"
+                    optionLabel="label" class="minimal-dropdown w-full mb-4" />
 
 
                 <div class="w-full mb-4">
@@ -264,8 +289,8 @@ const signUp = async () => {
             <template v-else>
                 <h2 class="text-2xl font-semibold mb-6">Create an account</h2>
 
-                <CDropdown type="ghost" size="sm" v-model="role" :options="roleOptions" optionLabel="label"
-                    class="role-dropdown w-full mb-2" />
+                <Dropdown placeholder="Are you a Student, Lecturer, or Admin?" v-model="role" :options="roleOptions"
+                    optionLabel="label" class="minimal-dropdown w-full mb-2" />
 
                 <div class="grid w-full gap-4 mb-4 one-row">
                     <div class="col-6">
@@ -346,6 +371,11 @@ const signUp = async () => {
 </template>
 
 <style scoped>
+.role-dropdown {
+    border: 1px solid #212121;
+    border-radius: 25px !important;
+}
+
 .login-btn {
     background-color: black;
     border: 2px solid black;
@@ -403,5 +433,33 @@ const signUp = async () => {
 
 ::v-deep(.p-float-label > label) {
     background-color: transparent !important;
+}
+
+/* Target the visible dropdown container */
+::v-deep(.minimal-dropdown.p-dropdown) {
+    border: none;
+    border-bottom: 1px solid #9ca3af;
+    /* Tailwind gray-400 */
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0.5rem 0;
+}
+
+/* Remove inner padding to match inputs */
+::v-deep(.minimal-dropdown .p-dropdown-label) {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* Optional: caret down icon alignment */
+::v-deep(.minimal-dropdown .p-dropdown-trigger) {
+    padding-right: 0;
+}
+
+/* Optional: Dropdown open panel */
+::v-deep(.p-dropdown-panel) {
+    border-radius: 0.25rem;
+    border: 1px solid #d1d5db;
+    /* Tailwind gray-300 */
 }
 </style>

@@ -46,6 +46,16 @@ interface LecturerSignUp{
   address:string;
 }
 
+interface AdminSignUp {
+  id: number;
+  Name : string;
+  LastName: string;
+  Password: string;
+  PhoneNumber: string;
+  AdminRole: string;
+  AssignedDepartments : string;
+}
+
 
 export const AuthService = {
   async login({ email, password, role }: LoginData): Promise< User | string> {
@@ -117,7 +127,7 @@ export const LectAuthService = {
     try{
       const response = await api.post('/lecturerreg/register', lectureData);
       console.log('Sign up Successful', response);
-      return response.data;
+      return response.data; // now returns a string stating "Verification email sent"
     }catch(error:any){
       console.log('Full error object:', error);
       if(error.response && error.response.data){
@@ -129,3 +139,20 @@ export const LectAuthService = {
 
 
 };
+
+
+export const AdminAuthService = {
+  async signUpAdmin(adminData: AdminSignUp): Promise<User | string>{
+    try{
+      const response = await api.post('/admin/register', adminData);
+      console.log('Sign up Successful', response);
+      return response.data;
+    } catch(error:any){
+      console.log('Full error object:', error);
+      if(error.response && error.response.data){
+        return error.response.data;
+      }
+      return 'An unknown error occurred';
+    }
+  },
+}
