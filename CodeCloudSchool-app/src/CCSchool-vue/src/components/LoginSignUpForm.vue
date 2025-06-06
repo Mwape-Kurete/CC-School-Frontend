@@ -144,21 +144,21 @@ const signUp = async () => {
                 phoneNumber: phoneNo.value,
                 enrollmentDate: new Date().toISOString(), // REQUIRED
                 yearLevel: "1st Year", // or bind this to a form field
+                PrivateEmail: email.value
             })
 
-            if (typeof response === 'string') {
+
+            console.log(response.includes('Verification email sent. Please check your inbox.'));
+            if (!response.includes('Verification email sent. Please check your inbox.')) {
                 // sign up failed, show message
                 errorMessage.value = response;
             } else {
-                // sign up successful, response is a User object
+                // sign up successful and email sent, response is a string
                 console.log('sign up successful:', response);
-                alert('Your CC School email adress for signing in is: ' + response.email);
+                // redirect user 2fa screen
+                localStorage.setItem('userRole', role.value);
 
-                // store student number and role in local storage
-                localStorage.setItem('studentNumber', response.studentNumber);
-                localStorage.setItem('userRole', user.role);
-                // redirect user to course select page
-                router.push({ name: 'RegisterMajors'});
+                router.push({ name: '2FAView' });
             }
         } catch (error) {
             errorMessage.value = 'Sign Up failed. Please check your credentials.'
@@ -171,15 +171,15 @@ const signUp = async () => {
             console.log('Attempting to sign up lecturer')
             const response = await LectAuthService.signUpLecturer({
                 lectName: name.value,
-                    lecLastName: surname.value,
-                    name: name.value,
-                    lecEmail: email.value,
-                    lastName: surname.value,
-                    password: password.value,
-                    phoneNumber: phoneNo.value,
-                    department: "Computer Science",
-                    dateOfJoining: new Date().toISOString(), // REQUIRED
-                    isActive: true
+                lecLastName: surname.value,
+                name: name.value,
+                PrivateEmail: email.value,
+                lastName: surname.value,
+                password: password.value,
+                phoneNumber: phoneNo.value,
+                department: "Computer Science",
+                dateOfJoining: new Date().toISOString(), // REQUIRED
+                isActive: true
             })
 
             if (typeof response === 'string') {
@@ -194,7 +194,7 @@ const signUp = async () => {
                 localStorage.setItem('lectId', response.lecturerId);
                 localStorage.setItem('userRole', user.role);
                 // redirect user to course select page
-                router.push({ name: 'RegisterMajors'});
+                router.push({ name: 'RegisterMajors' });
             }
 
         } catch (error) {

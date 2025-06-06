@@ -70,7 +70,7 @@ export const AuthService = {
     try {
       const response = await api.post('/student/register', StudentSignUp);
       console.log('Sign Up response:', response);
-      return response.data; // should return a Student
+      return response.data; // now returns a string stating "Verification email sent" 
     } catch (error: any) {
       console.error('Full error object:', error);
       if (error.response && error.response.data) {
@@ -92,11 +92,21 @@ export const AuthService = {
       }
       return "An unkown error occured"
     }
+  },
+
+  async verifyEmail(token: string, role: string): Promise<string | any> {
+    try {
+      const response = await api.post(`/${role}/verify-email`, { token });
+      console.log('Email verification response:', response);
+      return response; //  "Email verified successfully"
+    } catch (error: any) {
+      console.error('Full error object:', error);
+      if (error.response && error.response.data) {
+        return error.response.data; // e.g. "Invalid or expired token"
+      }
+      return 'An unknown error occurred';
+    }
   }
-
-  
-
-
 
 
 };
