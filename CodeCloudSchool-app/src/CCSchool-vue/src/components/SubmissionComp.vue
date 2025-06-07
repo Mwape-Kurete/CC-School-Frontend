@@ -2,6 +2,9 @@
 
 import { AssignmentSubmissionService } from '@/api/assignments';
 
+
+
+
 export default {
   props: {
     assignmentId: {
@@ -15,15 +18,30 @@ export default {
   },
   data() {
     return {
-      files: [], // Stores all selected files
-      uploadProgress: 0, // Tracks upload percentage (0-100)
+      files: [],
+      uploadProgress: 0,
       toast: {
         visible: false,
         message: '',
-        severity: 'info' // Can be 'info', 'success', 'error'
+        severity: 'info'
+      },
+      hasSubmitted: false,
+      studentSubmission: null
+    }
+  },
+  watch: {
+    assignmentId(newVal) {
+      if (newVal && this.studentId) {
+        this.getStudentSubmission(newVal, this.studentId);
+      }
+    },
+    studentId(newVal) {
+      if (newVal && this.assignmentId) {
+        this.getStudentSubmission(this.assignmentId, newVal);
       }
     }
   },
+
   computed: {
     totalSize() {
       return this.files.reduce((sum, file) => sum + file.size, 0) // calculates total size of files in bytes 
@@ -62,7 +80,6 @@ export default {
           const fileWrapper = this.files[i];
           const file = fileWrapper.file;
 
-          // Optional: track individual file progress if you want to extend this
           this.uploadProgress = Math.round((i / this.files.length) * 100);
 
           const result = await AssignmentSubmissionService.uploadSubmission(
@@ -75,19 +92,70 @@ export default {
             this.showToast(`Failed to upload ${file.name}: ${result}`, 'error');
           } else {
             this.showToast(`Successfully uploaded ${file.name}`, 'success');
+            this.hasSubmitted = true;
+            this.$emit('submitted');
           }
         }
 
         this.uploadProgress = 100;
-        this.clearFiles(); // Optionally clear files after success
+        this.clearFiles();
       } catch (err) {
         this.showToast('An error occurred during upload', 'error');
         console.error(err);
       }
-    }
+    },
+    getFileUrl(path) {
+      if (!path) return '';
+
+      // Strip 'wwwroot' if present
+      const publicPath = path.replace(/^wwwroot[\\/]/, '');
+
+      // Replace backslashes with forward slashes (for Windows paths)
+      const forwardSlashPath = publicPath.replace(/\\/g, '/');
+
+      // Encode URI components to handle spaces, parentheses, etc.
+      // But only encode the path parts, not the entire URL prefix
+      const encodedPath = forwardSlashPath
+        .split('/')
+        .map(encodeURIComponent)
+        .join('/');
+
+      return `https://cc-school-backend.onrender.com/${encodedPath}`;
+    },
+
+    async getStudentSubmission(assignmentId, studentId) {
+      try {
+        if (!assignmentId || !studentId) {
+          console.error('Assignment ID or Student ID is missing');
+          this.hasSubmitted = false;
+          this.studentSubmission = null;
+          return;
+        }
+        const submission = await AssignmentSubmissionService.getStudentSubmissions(assignmentId, studentId);
+        if (submission && typeof submission !== 'string') {
+          console.log('Student submission:', submission);
 
 
-    ,
+          submission.fileUrl = this.getFileUrl(submission.filePath);
+          console.log('File URL:', submission.fileUrl);
+
+          this.hasSubmitted = true;
+          this.studentSubmission = submission;
+        } else if (typeof submission === 'string') {
+          console.error('Error fetching submission:', submission);
+          this.hasSubmitted = false;
+          this.studentSubmission = null;
+        } else {
+          console.error('No submission found for this assignment');
+          this.hasSubmitted = false;
+          this.studentSubmission = null;
+        }
+      } catch (error) {
+        console.error('Error fetching student submission:', error);
+        this.hasSubmitted = false;
+        this.studentSubmission = null;
+      }
+    },
     formatSize(bytes) {
       if (bytes === 0) return '0 Bytes'
       const k = 1024
@@ -101,7 +169,13 @@ export default {
         this.toast.visible = false
       }, 3000)
     }
+  },
+  mounted() {
+    if (this.assignmentId && this.studentId) {
+      this.getStudentSubmission(this.assignmentId, this.studentId);
+    }
   }
+
 }
 </script>
 
@@ -155,6 +229,24 @@ export default {
               </div>
             </div>
           </div>
+
+          <!-- if submission exists -->
+          <div v-if="hasSubmitted && studentSubmission" class="file-section">
+            <h5>Submitted File</h5>
+            <div class="file-grid">
+              <div class="file-card">
+                <img
+                  v-if="studentSubmission.fileUrl && (studentSubmission.fileUrl.endsWith('.jpg') || studentSubmission.fileUrl.endsWith('.png'))"
+                  :src="studentSubmission.fileUrl" width="100" height="50" class="file-preview" />
+                <div v-else class="file-icon">📄</div>
+                <span class="file-name">{{ studentSubmission.fileName }}</span>
+                <div class="file-size">{{ formatSize(studentSubmission.fileSize || 0) }}</div>
+                <span class="badge success">Submitted</span>
+                <a :href="studentSubmission.fileUrl" target="_blank" class="button secondary small">View</a>
+              </div>
+            </div>
+          </div>
+
 
           <!-- Empty State -->
           <div v-if="!files.length" class="empty-state">

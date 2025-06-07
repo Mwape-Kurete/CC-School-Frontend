@@ -1,17 +1,22 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 const route = useRoute();
-import { ref,onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { AssignmentService } from '@/api/assignments';
 import { StudentService } from '@/api/student';
+import { AssignmentSubmissionService } from '@/api/assignments';
 
 // Extracting assignmentID from the route parameters
 const assignmentIdNumber = route.params.assignmentId;
 const assignmentId = Array.isArray(assignmentIdNumber) ? Number(assignmentIdNumber[0]) : Number(assignmentIdNumber);
-console.log('Viewing assignment ID:', assignmentId)
+
 
 // fetch the student from localstorage
 const studentNumber = localStorage.getItem('studentNumber');
+
+// has the user submitted this assignment?
+const hasSubmitted = ref(false);
+
 
 // reactive references for data from api
 interface Assignment {
@@ -26,7 +31,7 @@ interface Assignment {
 }
 
 // create ref of type assignment
-const assignmentDetails = ref<Assignment | null>(null); 
+const assignmentDetails = ref<Assignment | null>(null);
 
 const studentUserId = ref<number | null>(null);
 
@@ -48,6 +53,14 @@ onMounted(async () => {
     // Fetch assignment details when the component is mounted
     await fetchAssignmentDetails(assignmentId);
     await getStudentDetails();
+
+    // Ensure studentUserId is available before calling
+    if (studentUserId.value !== null) {
+        // console.log('Student User ID:', studentUserId.value);
+        await getStudentSubmission(assignmentId, studentUserId.value);
+    } else {
+        console.warn('Student ID not available. Skipping submission check.');
+    }
 })
 
 // Functions
@@ -57,10 +70,10 @@ const fetchAssignmentDetails = async (assignmentId: number) => {
     try {
         const response = await AssignmentService.getAssignmentById(assignmentId);
 
-        if (typeof response === 'string'){
+        if (typeof response === 'string') {
             console.error('Failed to fetch assignment:', response);
         } else {
-            console.log('Assignment fetched successfully:', response);
+            // console.log('Assignment fetched successfully:', response);
             // store assignment details
             assignmentDetails.value = response as Assignment;
         }
@@ -77,7 +90,7 @@ const getStudentDetails = async () => {
         }
         const student = await StudentService.getStudentByStudentNumber(studentNumber);
         if (student && typeof student !== 'string') {
-            console.log('Student details:', student);
+            // console.log('Student details:', student);
             studentUserId.value = student.userId;
         } else if (typeof student === 'string') {
             console.error('Error fetching student:', student);
@@ -89,6 +102,25 @@ const getStudentDetails = async () => {
     } catch (error) {
         console.error('Error fetching student details:', error);
         return null;
+    }
+}
+
+const getStudentSubmission = async (assignmentId: number, studentId: number) => {
+    try {
+        const submission = await AssignmentSubmissionService.getStudentSubmissions(assignmentId, studentId);
+        if (submission && typeof submission !== 'string') {
+            // console.log('Student submission:', submission);
+            hasSubmitted.value = true;
+        } else if (typeof submission === 'string') {
+            console.error('Error fetching submission:', submission);
+            hasSubmitted.value = false;
+        } else {
+            console.error('No submission found for this assignment');
+            hasSubmitted.value = false;
+        }
+    } catch (error) {
+        console.error('Error fetching student submission:', error);
+        hasSubmitted.value = false;
     }
 }
 
@@ -107,8 +139,8 @@ const getStudentDetails = async () => {
         {{ assignmentDetails ? assignmentDetails.title : 'Loading title...' }}
     </h2>
     <h4 class="mb-4">
-        Due: 
-        {{assignmentDetails ? AssignmentService.formatAssignmentDate(assignmentDetails.dueDate) : 'Loading date...'}}
+        Due:
+        {{ assignmentDetails ? AssignmentService.formatAssignmentDate(assignmentDetails.dueDate) : 'Loading date...' }}
     </h4>
 
     <!-- Toggle Section -->
@@ -123,7 +155,7 @@ const getStudentDetails = async () => {
             {{ assignmentDetails ? assignmentDetails.title : 'Loading title...' }}
         </h1>
         <p>
-            {{ assignmentDetails ? assignmentDetails.description : 'Loading description...'}}
+            {{ assignmentDetails ? assignmentDetails.description : 'Loading description...' }}
         </p>
     </div>
 
@@ -140,7 +172,7 @@ const getStudentDetails = async () => {
     </div>
 
     <h4 class="text-2xl font-semibold mb-4">SUBMISSION DEADLINE
-        <br> {{assignmentDetails ? AssignmentService.formatAssignmentDate(assignmentDetails.dueDate) : 'Loading date...'}}
+        <br> {{ assignmentDetails ? AssignmentService.formatAssignmentDate(assignmentDetails.dueDate) : 'Loading date...'}}
     </h4>
 
     <h4 class="font-semibold mb-1">LATE SUBMISSION</h4>
@@ -155,23 +187,28 @@ const getStudentDetails = async () => {
         Window Plagiarism Declaration. Please see openwindow.co.za/plagiarism for more information.
     </p>
 
-    <SubmissionComp :assignmentId="assignmentId" :studentId="studentUserId" class="file-sub" />
+    <SubmissionComp v-if="!hasSubmitted" :assignmentId="assignmentId" :studentId="studentUserId" class="file-sub" />
     <!-- <CButton class="submit-btn" type="tertiary" size="lg">Submit Assignment</CButton> -->
+    <div v-if="hasSubmitted" class="submission-feedback-text bg-green-100 text-green-800 px-4 py-2 rounded mb-4">
+        You’ve already submitted this assignment.
+
+    </div>
+    <SubmissionComp v-if="hasSubmitted" :assignmentId="assignmentId" :studentId="studentUserId" class="file-sub" />
 
 </template>
 
 <style scoped>
-
 details-con {
     width: 100% !important;
 }
+
 .attempts-con {
     display: flex;
     justify-content: end;
 }
 
 .assignment-details {
-  transition: all 1s ease-in-out;
+    transition: all 1s ease-in-out;
 }
 
 .divider {
@@ -194,5 +231,15 @@ details-con {
 
 .submit-btn {
     margin-left: 30%
+}
+
+.submission-feedback-text {
+    color: white !important;
+    background-color: #C2BFF8 !important;
+    border-radius: 15px;
+    font-size: 32px;
+    font-weight: 600;
+    font-family: 'QuickSand', sans-serif;
+    text-align: center;
 }
 </style>

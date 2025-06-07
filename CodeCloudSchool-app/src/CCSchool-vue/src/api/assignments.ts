@@ -112,5 +112,21 @@ export const AssignmentSubmissionService = {
             }
             return 'Failed to upload submission';
         }
+    }, 
+
+    async getStudentSubmissions(assignmentId: number, studentId: number): Promise<object | string> {
+    try {
+        const response = await api.get(`/submissions/${assignmentId}/student/${studentId}`);
+        console.log('Student submission response:', response.data);
+        return response.data; // Single submission object
+    } catch (error: any) {
+        console.error('Error fetching student submission:', error);
+        if (error.response?.data) {
+            return error.response.data;
+        }
+        return 'Failed to fetch student submission';
     }
+}
+
+   
 };

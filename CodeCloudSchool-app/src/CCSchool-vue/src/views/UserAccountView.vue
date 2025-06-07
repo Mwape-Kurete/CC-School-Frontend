@@ -244,6 +244,8 @@ const changePassword = async () => {
 
 
 .username {
+  width: 100%;
+  text-align: center;
   font-family: 'QuickSand', sans-serif;
   font-size: 48px !important;
   font-weight: 800;
