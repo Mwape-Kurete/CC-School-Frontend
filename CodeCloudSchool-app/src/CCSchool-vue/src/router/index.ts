@@ -80,6 +80,15 @@ const router = createRouter({
       }
     },
     {
+      path: 'modules/:moduleId',
+      name:'ModuleDetail',
+      component: () => import('@/views/ModuleDetailsView.vue'),
+      meta: {
+        layout: 'TwoCol', 
+        page: 'module-details'
+      }
+    },
+    {
       path: 'assignments',
       name: 'CourseAssignments',
       component: () => import('@/views/courses/CourseAssignments.vue'),

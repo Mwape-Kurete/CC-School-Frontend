@@ -1,95 +1,156 @@
 <!-- DashboardView.vue -->
 <script setup lang="ts">
-import { ref } from 'vue';
-import { GraduationCap, BellRing, EllipsisVertical } from 'lucide-vue-next';
+import { ref, onMounted, computed } from 'vue';
 import CardComp from '@/components/CardComp.vue';
+import { ClassesService } from '@/api/classes';
+import type { Class } from '@/api/classes';
+import { StudentService } from '@/api/student';
+import { ImageGenServices } from '@/api/ImgGen';
 
-// Dropdown toggle logic
-const showDropdown = ref(false);
-const toggleDropdown = () => {
-  showDropdown.value = !showDropdown.value;
+
+
+const classes = ref<Class[]>([]);
+const userID = ref<number | undefined>();
+const userRole = ref<string | undefined>();
+const loading = ref(false);
+const error = ref<string | null>(null);
+
+
+// Load classes when component mounts
+onMounted(async () => {
+  await fetchStudent();
+  if (userID.value) {
+    await loadStudentClasses();
+  }
+
+});
+
+const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// Get today's day index (0 = Sunday, ..., 6 = Saturday)
+const todayIndex = new Date().getDay();
+
+// Generate days starting from today
+const sortedWeekDays = Array.from({ length: 7 }, (_, i) => (todayIndex + i) % 7);
+
+// Group classes by day (0-6)
+const groupedClasses = computed(() => {
+  const map = new Map<number, Class[]>();
+  for (const cls of classes.value) {
+    const day = cls.timeSlot.day;
+    if (!map.has(day)) map.set(day, []);
+    map.get(day)?.push(cls);
+  }
+  return map;
+});
+
+
+
+// functions 
+
+const fetchStudent = async () => {
+  try {
+    const studentNumber = localStorage.getItem('studentNumber');
+    if (!studentNumber) {
+      throw new Error('Student number not found in localStorage');
+    }
+    const response = await StudentService.getStudentByStudentNumber(studentNumber);
+    if (typeof response === 'string') {
+      throw new Error('Unexpected response type: string');
+    }
+    userID.value = response.userId;
+    userRole.value = response.role;
+  } catch (err) {
+    error.value = (err instanceof Error ? err.message : 'Failed to fetch student info');
+  }
 };
 
-//Module card data
-const modules = [
-  {
-    date: 'Monday, 14 April',
-    items: [
-      {
-        cardType: 'module',
-        moduleTitleLine1: 'Computer Science 101',
-        moduleEventLabel: 'CS 101 Class',
-        moduleCode: 'H6',
-        moduleClassId: 'H6',
-        moduleTime: '09:00 - 11:00'
-      },
-      {
-        cardType: 'module',
-        moduleTitleLine1: 'Artificial Intelligence 210',
-        moduleEventLabel: 'AI 210 Class',
-        moduleCode: 'D2',
-        moduleClassId: 'D2',
-        moduleTime: '13:00 - 16:00'
-      }
-    ]
-  },
 
-  {
-    date: 'Tuesday, 15 April',
-    items: [
-      {
-        cardType: 'module',
-        moduleTitleLine1: 'Data Structures 201',
-        moduleEventLabel: 'DS 201 Class',
-        moduleCode: 'B3',
-        moduleClassId: 'B3',
-        moduleTime: '10:00 - 12:00'
-      },
-    ]
-  },
+const loadStudentClasses = async () => {
+  loading.value = true;
+  error.value = null;
 
-  {
-    date: 'Wednesday, 16 April',
-    items: [
-      {
-        cardType: 'module',
-        moduleTitleLine1: 'Web Development 301',
-        moduleEventLabel: 'WD 301 Class',
-        moduleCode: 'A1',
-        moduleClassId: 'A1',
-        moduleTime: '11:00 - 13:00'
-      },
-    ]
+  try {
+    // Fetch classes by userId
+    const studentClasses = await ClassesService.getClassesByStudentId(userID.value as number);
+    classes.value = studentClasses;
+
+    // Fetch images for each class
+    for (const cls of studentClasses) {
+      cls.moduleImg = await ImageGenServices.fetchCourseImage(cls.className);
+    }
+
+  } catch (err: any) {
+    error.value = err.message || 'Failed to load classes';
+  } finally {
+    loading.value = false;
   }
-];
+}
+
+function getFormattedDateFromDayIndex(dayIndex: number): string {
+  const today = new Date();
+  const delta = (dayIndex - today.getDay() + 7) % 7;
+  const targetDate = new Date(today);
+  targetDate.setDate(today.getDate() + delta);
+
+  return targetDate.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+  }); // e.g., "8 June"
+}
+
+
+
+
 </script>
 
-<template>
-  
 
-    <!-- Main content section -->
-    <div class="dashboard-content">
-      <!-- Loop through each day's modules -->
-      <div v-for="day in modules" :key="day.date" class="day-section">
-        <h2 class="day-heading">{{ day.date }}</h2>
-        
-        <!-- Loop through each module for this day -->
-        <div v-for="(module, index) in day.items" :key="index" class="module-card">
-          <CardComp v-bind="module" />
-        </div>
+<template>
+  <div class="dashboard-content">
+
+    <div v-if="loading">Loading classes...</div>
+    <div v-if="error" class="error">{{ error }}</div>
+
+    <div v-if="userRole === 'Student'">
+
+      <div v-if="classes.length === 0">
+        No classes found.
       </div>
+
+      <!-- Loop through days starting from today -->
+      <div v-for="dayIndex in sortedWeekDays" :key="dayIndex">
+        <template v-if="groupedClasses.get(dayIndex)?.length">
+          <!-- Day Heading -->
+          <h2 class="day-heading">
+            {{ dayNames[dayIndex] }}, {{ getFormattedDateFromDayIndex(dayIndex) }}
+          </h2>
+
+          <!-- Classes under this day -->
+          <div v-for="cls in groupedClasses.get(dayIndex)" :key="cls.classID">
+            <CardComp :cardType="'module'" :moduleTitleLine1="cls.className"
+              :moduleEventLabel="cls.classDescription || 'No description'" :moduleCode="cls.courses?.courseName"
+              :moduleClassId="cls.Classroom"
+              :moduleTime="`${cls.timeSlot.startTime.substring(0, 5)} - ${cls.timeSlot.endTime.substring(0, 5)}`"
+              :moduleImg="cls.moduleImg" />
+          </div>
+        </template>
+      </div>
+
     </div>
 
+    <div v-else>
+      <p>You do not have permission to view classes.</p>
+    </div>
 
-
+  </div>
 </template>
 
-<style scoped>
 
+<style scoped>
 /* ---------------------------- */
 /* DASHBOARD MAIN CONTENT */
 /* ---------------------------- */
-.dashboard-content{
+.dashboard-content {
   padding: 1rem 2rem 0;
 }
 
@@ -130,8 +191,10 @@ const modules = [
   font-size: 14pt;
   margin-top: 20px;
 
-  color: #333; /* Darker color for better readability */
-  font-weight: 600; /* Slightly bolder */
+  color: #333;
+  /* Darker color for better readability */
+  font-weight: 600;
+  /* Slightly bolder */
 }
 
 /* ---------------------------- */

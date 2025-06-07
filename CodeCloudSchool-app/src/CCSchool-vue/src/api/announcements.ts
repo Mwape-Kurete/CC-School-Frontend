@@ -22,6 +22,7 @@ export const AnnouncementService = {
   async getAnnouncementById(id: string): Promise<Announcement | string> {
     try {
       const response = await api.get(`/announce/${id}`);
+      
       return response.data;
     } catch (error: any) {
       console.error('Error fetching announcement by ID:', error);
@@ -31,7 +32,7 @@ export const AnnouncementService = {
 
   async postAnnouncement(courseId: number, announcement: Announcement): Promise<Announcement | string> {
     try {
-      const response = await api.post(`/api/courses/${courseId}/announcements`, announcement);
+      const response = await api.post(`/announce/course/${courseId}`, announcement);
       return response.data;
     } catch (error: any) {
       console.error('Error posting announcement:', error);
@@ -42,6 +43,7 @@ export const AnnouncementService = {
   async getAnnouncementsByLecturerId(lecturerId: number): Promise<Announcement[] | string> {
     try {
       const response = await api.get(`/announce/lecturer/${lecturerId}`);
+     
       return response.data;
     } catch (error: any) {
       console.error('Error fetching announcements by lecturer ID:', error);
