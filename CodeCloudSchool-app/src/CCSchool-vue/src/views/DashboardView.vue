@@ -65,45 +65,7 @@ const modules = [
 </script>
 
 <template>
-  <div class="dashboard-header"> <!-- Dashboard Header -->
-    <div class="header-content">
-      <h1 class="title">Dashboard</h1>
-      <div class="controls-container">
-        <div class="tabs-container">
-          <div class="dropdown-container">
-            <button class="tab active" @click="toggleDropdown">
-              Today
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
-            <div v-if="showDropdown" class="dropdown-menu">
-              <div class="dropdown-item">This Week</div>
-              <div class="dropdown-item">This Month</div>
-              <div class="dropdown-item">Custom Range</div>
-            </div>
-          </div>
-          <button class="tab">
-            <GraduationCap :size="16" class="icon" />
-            Grade Overview
-          </button>
-        </div>
-        <div class="icon-buttons">
-          <button class="icon-button">
-            <div class="icon-circle">
-              <BellRing :size="16" />
-            </div>
-          </button>
-          <button class="icon-button">
-            <div class="icon-circle">
-              <EllipsisVertical :size="16" />
-            </div>
-          </button>
-        </div>
-      </div>
-    </div>
-    <div class="divider"></div>
-  </div>
+  
 
     <!-- Main content section -->
     <div class="dashboard-content">
