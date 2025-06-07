@@ -251,6 +251,6 @@ defineProps({
   padding: 0.4rem 1rem;
   border-radius: 999px;
   border: none;
-  width: 25%;
+  width: fit-content;
 }
 </style>
