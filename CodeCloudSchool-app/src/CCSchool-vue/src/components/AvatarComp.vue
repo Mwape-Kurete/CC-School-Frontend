@@ -20,11 +20,7 @@ const avatarUrl = computed(() => {
 </script>
 
 <template>
-  <img
-    :src="avatarUrl"
-    :alt="`Avatar for ${props.name}`"
-    class="w-16 h-16 rounded-full border border-gray-300"
-  />
+  <img :src="avatarUrl" :alt="`Avatar for ${props.name}`" class="w-16 h-16 rounded-full " />
 </template>
 
 <style scoped>
