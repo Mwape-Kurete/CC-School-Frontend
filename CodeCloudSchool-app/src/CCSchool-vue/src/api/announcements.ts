@@ -8,40 +8,34 @@ export interface Announcement {
   description: string;
   date: string; // ISO date string
   lecturerId: number;
-}
+}  
 
 export const AnnouncementService = {
+    
   async getAnnouncementsByCourseId(courseId: number): Promise<Announcement[] | string> {
     try {
-      const response = await api.get(`${BASE_URL}/course/${courseId}`);
-      return response.data;
+      const response = await api.get(`/api/announcements/course/${courseId}`);
+      return response.data; // Expects backend to return Announcement[]
     } catch (error: any) {
-      const errorMsg = this.handleError(error);
-      console.error('Error:', errorMsg, error);
-      return errorMsg;
+      console.error('Error fetching announcements:', error);
+      if (error.response?.data) {
+        return error.response.data;
+      }
+      return 'Failed to fetch announcements';
     }
   },
 
   async getAnnouncementById(announcementId: number): Promise<Announcement | string> {
     try {
-      // Changed from '/api/announcements/' to '/api/Announce/'
-      const response = await api.get(`/api/Announce/${announcementId}`);
+      const response = await api.get(`/api/announcements/${announcementId}`);
       return response.data;
     } catch (error: any) {
       console.error('Error fetching announcement:', error);
-      return this.handleError(error);
+      if (error.response?.data) {
+        return error.response.data;
+      }
+      return 'Failed to fetch announcement';
     }
-  },
-
-  // Extract error handling to a reusable method
-  handleError(error: any): string {
-    if (error.response?.data?.message) {
-      return error.response.data.message;
-    }
-    if (error.response?.data) {
-      return error.response.data;
-    }
-    return 'Failed to fetch data from server';
   },
 
   async postAnnouncement(courseId: number, announcement: Announcement): Promise<Announcement | string> {
@@ -58,12 +52,10 @@ export const AnnouncementService = {
 
   formatAnnouncementDate(isoDate: string): string {
     const date = new Date(isoDate);
-    return date.toLocaleDateString('en-US', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const day = date.getUTCDate();
+    const month = date.toLocaleString('default', { month: 'long', timeZone: 'UTC' });
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    return `${day} ${month} - ${hours}:${minutes}`;
   }
 };
