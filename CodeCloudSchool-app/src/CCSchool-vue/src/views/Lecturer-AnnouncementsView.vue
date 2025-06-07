@@ -16,6 +16,15 @@ const isLoading = ref(false);
 const errorMessage = ref('');
 const editableDiv = ref<HTMLElement | null>(null);
 
+// Toolbar button configurations
+const toolbarButtons = [
+  { cmd: 'bold', label: 'B', active: false },
+  { cmd: 'italic', label: 'I', active: false },
+  { cmd: 'underline', label: 'U', active: false },
+  { cmd: 'insertUnorderedList', label: '•', active: false },
+  { cmd: 'insertOrderedList', label: '1.', active: false }
+];
+
 const announcements = ref<Array<{
   id: string;
   title: string;
@@ -28,14 +37,38 @@ const searchQuery = ref('');
 const announcementType = ref<'all' | 'recent' | 'old'>('all');
 const sortBy = ref<'date' | 'lecture' | 'subject'>('date');
 
-// Formatting functions
+// Formatting function with selection preservation
 const format = (cmd: string, value?: string) => {
+  if (!editableDiv.value) return;
+
+  // Focus the editable div
+  editableDiv.value.focus();
+
+  // Apply the command directly
   document.execCommand(cmd, false, value);
-  body.value = editableDiv.value?.innerHTML || '';
+
+  updateBody();
+  updateActiveFormats();
+};
+
+// Check which formats are currently active
+const updateActiveFormats = () => {
+  toolbarButtons.forEach(btn => {
+    btn.active = document.queryCommandState(btn.cmd);
+  });
 };
 
 const updateBody = () => {
   body.value = editableDiv.value?.innerHTML || '';
+  updateActiveFormats();
+};
+
+// Clean pasted content
+const handlePaste = (e: ClipboardEvent) => {
+  e.preventDefault();
+  const text = e.clipboardData?.getData('text/plain') || '';
+  document.execCommand('insertText', false, text);
+  updateBody();
 };
 
 // Save to localStorage function
@@ -78,7 +111,7 @@ const sendAnnouncement = async () => {
       await fetchAnnouncements();
       saveToLocalStorage(announcementData);
       
-      // Reset form after successful submission
+      // Reset form
       title.value = '';
       body.value = '';
       if (editableDiv.value) {
@@ -164,7 +197,6 @@ const filteredAnnouncements = computed(() => {
 });
 </script>
 
-<!-- Your template and style sections remain unchanged -->
 <template>
   <div class="announcement-container">
     <h1 class="main-title">Create An Announcement</h1>
@@ -183,15 +215,24 @@ const filteredAnnouncements = computed(() => {
         <div class="input-group">
           <label class="input-label">Body</label>
           <div class="toolbar">
-            <button @click.prevent="format('bold')">B</button>
-            <button @click.prevent="format('italic')">I</button>
-            <button @click.prevent="format('underline')">U</button>
+            <button
+              v-for="btn in toolbarButtons"
+              :key="btn.cmd"
+              @click.prevent="format(btn.cmd)"
+              :class="{ 'active-format': btn.active }"
+              :title="btn.cmd"
+            >
+              {{ btn.label }}
+            </button>
           </div>
           <div
             ref="editableDiv"
             contenteditable="true"
+            v-html="body"
             @input="updateBody"
+            @paste="handlePaste"
             class="rich-textarea"
+            placeholder="Type your announcement here..."
           ></div>
         </div>
         <Button
@@ -200,20 +241,18 @@ const filteredAnnouncements = computed(() => {
           @click="sendAnnouncement"
           :loading="isLoading"
         />
-        <p v-if="errorMessage">{{ errorMessage }}</p>
+        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
       </div>
     </div>
   </div>
 </template>
 
-
-
 <style scoped>
-
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=Quicksand:wght@300..700&display=swap');
+
 .announcement-container {
   padding: 2rem;
-  
+  font-family: "Quicksand", sans-serif;
 }
 
 .main-title {
@@ -224,6 +263,9 @@ const filteredAnnouncements = computed(() => {
 }
 
 .announcement-card {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 2rem;
   max-width: 800px;
   margin: 0 auto;
@@ -236,10 +278,6 @@ const filteredAnnouncements = computed(() => {
   margin-bottom: 1.5rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid #e2e8f0;
-  font-family: "Quicksand", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 400;
-  font-style: normal;
 }
 
 .form-container {
@@ -252,7 +290,6 @@ const filteredAnnouncements = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  
 }
 
 .input-label {
@@ -267,37 +304,52 @@ const filteredAnnouncements = computed(() => {
   padding: 0.625rem 0.875rem;
   font-size: 0.875rem;
   width: 100%;
+  font-family: inherit;
 }
 
 .toolbar {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .toolbar button {
   background-color: #D0DFCC;
   border: 1px solid #aab7a7;
-  border-radius: 50px;
+  border-radius: 4px;
   padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
-  cursor: pointer; 
-  transition: background-color 0.2s ease;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 32px;
+  text-align: center;
 }
 
 .toolbar button:hover {
-  background-color: #e2e8f0;
+  background-color: #c0d0bd;
+}
+
+.toolbar button.active-format {
+  background-color: #aab7a7;
+  color: white;
 }
 
 .rich-textarea {
   min-height: 300px;
-  font-family: "Quicksand", sans-serif;
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
   background-color: white;
   padding: 1rem;
   line-height: 1.75;
   overflow-y: auto;
+  outline: none;
+}
+
+.rich-textarea:empty:before {
+  content: attr(placeholder);
+  color: #94a3b8;
+  pointer-events: none;
 }
 
 .send-button {
@@ -311,10 +363,43 @@ const filteredAnnouncements = computed(() => {
   font-size: 0.875rem;
   text-transform: uppercase;
   margin-top: 0.5rem;
-  margin-left: 100px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
 }
 
 .send-button:hover {
   background-color: #aab7a7;
+}
+
+.error-message {
+  color: #dc2626;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+/* Style the content inside the editable div */
+.rich-textarea b,
+.rich-textarea strong {
+  font-weight: bold;
+}
+
+.rich-textarea i,
+.rich-textarea em {
+  font-style: italic;
+}
+
+.rich-textarea u {
+  text-decoration: underline;
+}
+
+.rich-textarea ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+}
+
+.rich-textarea ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
 }
 </style>
