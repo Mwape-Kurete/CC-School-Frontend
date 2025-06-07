@@ -26,10 +26,17 @@ export interface Class {
   courses?: Course;
   students: Student[];
   lecturers: Lecturer[];
+  timeSlot : {
+    day: number,
+    endTime: string,
+    startTime: string
+  };
+  moduleImg: any;
+  Classroom: string;
   
 }
 
-export class ClassesService {
+export const ClassesService = {
 
   async getClassesByStudentId(studentId: number): Promise<Class[]> {
     const response = await api.get(`classes/bystudent/${studentId}`);
@@ -39,7 +46,9 @@ export class ClassesService {
       throw new Error(`Failed to fetch classes for student ${studentId}: ${response.statusText}`);
     }
 
-    const classes: Class[] = response.data;
-    return classes;
-  }
+    console.log("Classes Retrieved: ", response)
+    return response.data.$values || [];
+  }, 
+
+
 }

@@ -11,6 +11,7 @@ interface User {
   phoneNumber: string;
   studentNumber: string;
   yearLevel: string;
+  role: string;
 }
 
 
