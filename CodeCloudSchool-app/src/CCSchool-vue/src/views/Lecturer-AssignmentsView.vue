@@ -14,6 +14,15 @@ const submissionFormat = ref('');
 const assignmentDetailsHeader = ref('');
 const assignmentDetailsDescription = ref('');
 
+const descriptionEditor = ref<HTMLDivElement | null>(null);
+
+const formatText = (command: string) => {
+  if (descriptionEditor.value) {
+    descriptionEditor.value.focus();
+    document.execCommand(command, false);
+  }
+};
+
 const submissionFormats = [ 
   { value: 'pdf', label: 'PDF' },
   { value: 'docx', label: 'DOCX' },
@@ -181,18 +190,19 @@ function resetForm() {
             <label class="form-label">Assignment Details Description</label>
             <div class="description-editor">
               <div class="editor-toolbar">
-                <button class="toolbar-button" title="Bold"><strong>B</strong></button>
-                <button class="toolbar-button" title="Italic"><em>I</em></button>
-                <button class="toolbar-button" title="Link"><span class="underline">Link</span></button>
-                <button class="toolbar-button" title="Bullet List"><span>• List</span></button>
-                <button class="toolbar-button" title="Numbered List"><span>1. List</span></button>
+                <button class="toolbar-button" title="Bold" @click="formatText('bold')"><strong>B</strong></button>
+                <button class="toolbar-button" title="Italic" @click="formatText('italic')"><em>I</em></button>
+                <button class="toolbar-button" title="Underline" @click="formatText('underline')"><u>U</u></button>
+                <button class="toolbar-button" title="Bullet List" @click="formatText('insertUnorderedList')">• List</button>
+                <button class="toolbar-button" title="Numbered List" @click="formatText('insertOrderedList')">1. List</button>
               </div>
-              <textarea 
-                v-model="assignmentDetailsDescription"
-                placeholder="Type assignment description here" 
-                rows="8"
+              <div
+                ref="descriptionEditor"
+                contenteditable="true"
                 class="editor-textarea"
-              ></textarea>
+                :innerHTML="assignmentDetailsDescription"
+                @input="assignmentDetailsDescription = descriptionEditor?.innerHTML ?? ''"
+              ></div>
             </div>
           </div>
         </div>
@@ -338,6 +348,8 @@ function resetForm() {
   overflow: hidden;
 }
 
+
+
 .editor-toolbar {
   background-color: #f3f4f6;
   padding: 0.5rem;
@@ -357,8 +369,8 @@ function resetForm() {
   transition: background-color 0.2s;
 }
 
-.toolbar-button:hover {
-  background-color: #e5e7eb;
+.toolbar-button:hover:focus {
+  background-color: red;
 }
 
 .editor-textarea {
@@ -371,6 +383,12 @@ function resetForm() {
   background-color: white;
   border-bottom-left-radius: 0.5rem;
   border-bottom-right-radius: 0.5rem;
+}
+
+
+.editor-textarea .Bold {
+  font-family: "Quicksand", sans-serif;
+  font-weight: 900;
 }
 
 .editor-textarea:focus {
