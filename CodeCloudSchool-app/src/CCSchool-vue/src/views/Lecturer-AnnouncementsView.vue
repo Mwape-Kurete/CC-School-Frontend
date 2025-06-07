@@ -9,6 +9,7 @@ import DOMPurify from 'dompurify';
 
 const router = useRouter();
 const courseId = ref<number>(1);
+const lecturerId = ref<number>(1); // Get from auth/session in real app
 
 const title = ref('');
 const body = ref('');
@@ -25,45 +26,20 @@ const toolbarButtons = [
   { cmd: 'insertOrderedList', label: '1.', active: false }
 ];
 
-const announcements = ref<Array<{
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  moduleImg?: string;
-}>>([]);
+const announcements = ref<Announcement[]>([]);
 
-const searchQuery = ref('');
-const announcementType = ref<'all' | 'recent' | 'old'>('all');
-const sortBy = ref<'date' | 'lecture' | 'subject'>('date');
-
-// Formatting function with selection preservation
+// Formatting functions
 const format = (cmd: string, value?: string) => {
   if (!editableDiv.value) return;
-
-  // Focus the editable div
   editableDiv.value.focus();
-
-  // Apply the command directly
   document.execCommand(cmd, false, value);
-
   updateBody();
-  updateActiveFormats();
-};
-
-// Check which formats are currently active
-const updateActiveFormats = () => {
-  toolbarButtons.forEach(btn => {
-    btn.active = document.queryCommandState(btn.cmd);
-  });
 };
 
 const updateBody = () => {
   body.value = editableDiv.value?.innerHTML || '';
-  updateActiveFormats();
 };
 
-// Clean pasted content
 const handlePaste = (e: ClipboardEvent) => {
   e.preventDefault();
   const text = e.clipboardData?.getData('text/plain') || '';
@@ -71,18 +47,58 @@ const handlePaste = (e: ClipboardEvent) => {
   updateBody();
 };
 
-// Save to localStorage function
-function saveToLocalStorage(announcementData: Announcement) {
-  const key = `announcements_${courseId.value}_${announcementData.lecturerId}`;
-  const storedAnnouncements = JSON.parse(localStorage.getItem(key) || '[]');
-  const newAnnouncement = {
-    ...announcementData,
-    id: Date.now().toString(),
-    date: announcementData.date,
-  };
-  storedAnnouncements.push(newAnnouncement);
-  localStorage.setItem(key, JSON.stringify(storedAnnouncements));
-}
+// Combined storage functions
+const saveAnnouncement = async (announcementData: Announcement) => {
+  // Save to backend
+  const backendResult = await AnnouncementService.postAnnouncement(courseId.value, announcementData);
+  
+  if (typeof backendResult === 'string') {
+    throw new Error(backendResult);
+  }
+
+  // Save to localStorage
+  const localStorageKey = `announcements_${courseId.value}_${lecturerId.value}`;
+  const storedAnnouncements = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
+  
+  const updatedAnnouncements = [
+    ...storedAnnouncements,
+    {
+      ...backendResult,
+      // Ensure we have all required fields
+      id: backendResult.id || Date.now().toString(),
+      date: backendResult.date || new Date().toISOString()
+    }
+  ];
+  
+  localStorage.setItem(localStorageKey, JSON.stringify(updatedAnnouncements));
+  
+  return backendResult;
+};
+
+const loadAnnouncements = async () => {
+  try {
+    // Try to load from backend first
+    const backendAnnouncements = await AnnouncementService.getAnnouncementsByCourseId(courseId.value);
+    
+    if (typeof backendAnnouncements !== 'string') {
+      announcements.value = backendAnnouncements;
+      
+      // Update localStorage with fresh data from backend
+      const localStorageKey = `announcements_${courseId.value}_${lecturerId.value}`;
+      localStorage.setItem(localStorageKey, JSON.stringify(backendAnnouncements));
+    } else {
+      // Fallback to localStorage if backend fails
+      const localStorageKey = `announcements_${courseId.value}_${lecturerId.value}`;
+      const stored = localStorage.getItem(localStorageKey);
+      if (stored) {
+        announcements.value = JSON.parse(stored);
+      }
+      throw new Error(backendAnnouncements);
+    }
+  } catch (error) {
+    console.error('Error loading announcements:', error);
+  }
+};
 
 // Main announcement sending function
 const sendAnnouncement = async () => {
@@ -97,53 +113,40 @@ const sendAnnouncement = async () => {
   try {
     const announcementData: Announcement = {
       title: title.value,
-      description: DOMPurify.sanitize(body.value),
+      body: DOMPurify.sanitize(body.value),
       date: new Date().toISOString(),
-      lecturerId: 1,
-      announcementId: Date.now(),
+      lecturerId: lecturerId.value,
+      id: Date.now().toString() // Temporary ID until backend responds
     };
 
-    const result = await AnnouncementService.postAnnouncement(courseId.value, announcementData);
-
-    if (typeof result === 'string') {
-      errorMessage.value = result;
-    } else {
-      await fetchAnnouncements();
-      saveToLocalStorage(announcementData);
-      
-      // Reset form
-      title.value = '';
-      body.value = '';
-      if (editableDiv.value) {
-        editableDiv.value.innerHTML = '';
-      }
-      
-      errorMessage.value = '';
-      router.push('/LecturerAnnounceOver');
+    // Save to both storage locations
+    const result = await saveAnnouncement(announcementData);
+    
+    // Reset form
+    title.value = '';
+    body.value = '';
+    if (editableDiv.value) {
+      editableDiv.value.innerHTML = '';
     }
+    
+    // Refresh announcements
+    await loadAnnouncements();
+    router.push('/LecturerAnnounceOver');
   } catch (error: unknown) {
-    errorMessage.value = 'Failed to create announcement. Please try again.';
+    errorMessage.value = error instanceof Error ? error.message : 'Failed to create announcement';
     console.error('Error:', error);
   } finally {
     isLoading.value = false;
   }
 };
 
-// Fetch announcements function
-const fetchAnnouncements = async () => {
-  const result = await AnnouncementService.getAnnouncementsByCourseId(courseId.value);
-  if (typeof result !== 'string') {
-    announcements.value = result.map((a: any) => ({
-      id: a.id,
-      title: a.title,
-      description: a.description,
-      date: a.date,
-      moduleImg: a.moduleImg || null
-    }));
+// Initial load
+onMounted(() => {
+  loadAnnouncements();
+  if (editableDiv.value) {
+    editableDiv.value.innerHTML = body.value;
   }
-};
-
-onMounted(fetchAnnouncements);
+});
 
 // Date formatting helper
 const formatDate = (dateString: string) => {
@@ -156,45 +159,6 @@ const formatDate = (dateString: string) => {
     minute: '2-digit'
   }).format(date);
 };
-
-// Computed property for filtered announcements
-const filteredAnnouncements = computed(() => {
-  let filtered = [...announcements.value];
-
-  if (announcementType.value === 'recent') {
-    filtered = filtered.filter(a => {
-      const createdDate = new Date(a.date);
-      const now = new Date();
-      const diffInDays = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
-      return diffInDays <= 7;
-    });
-  } else if (announcementType.value === 'old') {
-    filtered = filtered.filter(a => {
-      const createdDate = new Date(a.date);
-      const now = new Date();
-      const diffInDays = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
-      return diffInDays > 7;
-    });
-  }
-
-  if (searchQuery.value.trim()) {
-    const q = searchQuery.value.toLowerCase();
-    filtered = filtered.filter(a =>
-      a.title.toLowerCase().includes(q) ||
-      a.description.toLowerCase().includes(q)
-    );
-  }
-
-  if (sortBy.value === 'date') {
-    filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  } else if (sortBy.value === 'lecture') {
-    filtered.sort((a, b) => a.title.localeCompare(b.title));
-  } else if (sortBy.value === 'subject') {
-    filtered.sort((a, b) => a.description.localeCompare(b.description));
-  }
-
-  return filtered;
-});
 </script>
 
 <template>
@@ -228,7 +192,6 @@ const filteredAnnouncements = computed(() => {
           <div
             ref="editableDiv"
             contenteditable="true"
-            v-html="body"
             @input="updateBody"
             @paste="handlePaste"
             class="rich-textarea"
@@ -248,8 +211,7 @@ const filteredAnnouncements = computed(() => {
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=Quicksand:wght@300..700&display=swap');
-
+/* Your existing styles remain unchanged */
 .announcement-container {
   padding: 2rem;
   font-family: "Quicksand", sans-serif;
@@ -378,7 +340,6 @@ const filteredAnnouncements = computed(() => {
   margin-top: 0.5rem;
 }
 
-/* Style the content inside the editable div */
 .rich-textarea b,
 .rich-textarea strong {
   font-weight: bold;
