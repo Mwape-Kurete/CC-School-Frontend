@@ -107,7 +107,7 @@ const login = async () => {
                 router.push({ name: 'lecturer-dash' });
             } else {
                 console.warn('Unknown user role:', user.role);
-                // Optional: Redirect to a generic page or show an error
+                localStorage.setItem('adminId', user.AdminId);
             }
         }
     } catch (error) {
@@ -160,7 +160,7 @@ const signUp = async () => {
                 console.log('sign up successful:', response);
                 // redirect user 2fa screen
                 localStorage.setItem('userRole', role.value);
-
+                localStorage.setItem('studentNumber', user.studentNumber);
                 router.push({ name: '2FAView' });
             }
         } catch (error) {
@@ -191,6 +191,7 @@ const signUp = async () => {
                 // success case
                 console.log('Sign up successful');
                 localStorage.setItem('userRole', role.value);
+                localStorage.setItem('lectId', user.lecturerId);
                 router.push({ name: '2FAView' });
             } else {
                 // failure case
@@ -213,7 +214,7 @@ const signUp = async () => {
                 phoneNumber: phoneNo.value,
                 AdminRole: "superadmin",
                 Department: "IT",
-                PrivateEmail: email.value     
+                PrivateEmail: email.value
             });
 
             console.log('Admin sign-up response:', response);
@@ -223,6 +224,7 @@ const signUp = async () => {
             } else {
                 console.log('Sign up successful:', response);
                 localStorage.setItem('userRole', role.value);
+                localStorage.setItem('adminId', user.AdminId);
                 router.push({ name: '2FAView' });
             }
         } catch (error) {
