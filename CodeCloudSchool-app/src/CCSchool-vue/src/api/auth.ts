@@ -54,6 +54,7 @@ interface AdminSignUp {
   PhoneNumber: string;
   AdminRole: string;
   AssignedDepartments : string;
+  PrivateEmail: String;
 }
 
 
@@ -126,7 +127,7 @@ export const LectAuthService = {
    async signUpLecturer(lectureData: LecturerSignUp)  : Promise<User | string >{
     try{
       const response = await api.post('/lecturerreg/register', lectureData);
-      console.log('Sign up Successful', response);
+      console.log('Sign up Successful', response.data);
       return response.data; // now returns a string stating "Verification email sent"
     }catch(error:any){
       console.log('Full error object:', error);
@@ -149,6 +150,7 @@ export const AdminAuthService = {
       return response.data;
     } catch(error:any){
       console.log('Full error object:', error);
+      console.log('Validation errors:', error.response.data.errors);
       if(error.response && error.response.data){
         return error.response.data;
       }

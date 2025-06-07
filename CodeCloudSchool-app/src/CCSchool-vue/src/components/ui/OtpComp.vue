@@ -54,6 +54,38 @@ const verifyOtp = async (otp) => {
             console.error("Error verifying OTP:", error);
         }
     }
+    else if (userRole.value === 'lecturer') {
+        try {
+            console.log("Verifying OTP for lecturer:", otp);
+            const response = await AuthService.verifyEmail(otp, 'lecturerreg');
+            if (response.status === 200) {
+                console.log("OTP verified successfully");
+
+                // then redirect to course selected page
+                router.push({ name: 'lecturer-dash' });
+            } else {
+                console.error("OTP verification failed");
+            }
+        } catch (error) {
+            console.error("Error verifying OTP:", error);
+        }
+    }
+    else if (userRole.value === 'admin') {
+        try {
+            console.log("Verifying OTP for admin:", otp);
+            const response = await AuthService.verifyEmail(otp, userRole.value);
+            if (response.status === 200) {
+                console.log("OTP verified successfully");
+
+                // then redirect to course selected page
+                router.push({ name: 'lecturer-dash' });
+            } else {
+                console.error("OTP verification failed");
+            }
+        } catch (error) {
+            console.error("Error verifying OTP:", error);
+        }
+    }
 
 }
 

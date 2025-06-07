@@ -14,7 +14,7 @@ import Dropdown from 'primevue/dropdown'
 
 
 // import api service
-import { AuthService, LectAuthService } from '@/api/auth'
+import { AdminAuthService, AuthService, LectAuthService } from '@/api/auth'
 
 const props = defineProps({
     variant: {
@@ -132,6 +132,9 @@ const signUp = async () => {
         loading.value = false
         return
     }
+
+    console.log(role.value);
+
     if (role.value === 'student') {
         try {
             console.log('Attempting to sign up...')
@@ -168,7 +171,7 @@ const signUp = async () => {
     }
     else if (role.value === 'lecturer') {
         try {
-            console.log('Attempting to sign up lecturer')
+            console.log('Attempting to sign up lecturer');
             const response = await LectAuthService.signUpLecturer({
                 lectName: name.value,
                 lecLastName: surname.value,
@@ -178,41 +181,42 @@ const signUp = async () => {
                 password: password.value,
                 phoneNumber: phoneNo.value,
                 department: "",
-                dateOfJoining: new Date().toISOString(), // REQUIRED
+                dateOfJoining: new Date().toISOString(),
                 isActive: true
-            })
+            });
 
-            console.log(response.includes('Verification email sent. Please check your inbox.'));
-            if (!response.includes('Verification email sent. Please check your inbox.')) {
-                // sign up failed, show message
-                errorMessage.value = response;
-            } else {
-                // sign up successful and email sent, response is a string
-                console.log('sign up successful:', response);
-                // redirect user 2fa screen
+            console.log('Sign up response:', response);
+
+            if (typeof response === 'string' && response.includes('Verification email sent')) {
+                // success case
+                console.log('Sign up successful');
                 localStorage.setItem('userRole', role.value);
-
                 router.push({ name: '2FAView' });
+            } else {
+                // failure case
+                errorMessage.value = typeof response === 'string' ? response : 'Sign-up failed.';
             }
         } catch (error) {
-            errorMessage.value = 'Sign Up failed. Please check your credentials.'
+            errorMessage.value = 'Sign Up failed. Please check your credentials.';
         } finally {
-            loading.value = false
+            loading.value = false;
         }
     }
+
     else if (role.value === 'admin') {
         try {
             console.log('Attempting to sign up admin');
-            const response = await AuthService.signUpAdmin({
-                name: name.value,
-                lastName: surname.value,
-                PrivateEmail: email.value,
-                password: password.value,
+            const response = await AdminAuthService.signUpAdmin({
+                FName: name.value,
+                LName: surname.value,
+                Password: password.value,
                 phoneNumber: phoneNo.value,
-                gender: typeof gender.value === 'object' ? gender.value.value : gender.value,
-                address: address.value,
-                isActive: true
+                AdminRole: "superadmin",
+                Department: "IT",
+                PrivateEmail: email.value     
             });
+
+            console.log('Admin sign-up response:', response);
 
             if (!response.includes('Verification email sent. Please check your inbox.')) {
                 errorMessage.value = response;
@@ -233,7 +237,7 @@ const signUp = async () => {
 </script>
 
 <template>
-    <form>
+    <form @submit.prevent>
         <div class="flex flex-col items-center p-6 w-full max-w-md mx-auto">
             <!-- LOGIN FORM -->
             <template v-if="currentFormVariant === 'login'">
@@ -248,7 +252,7 @@ const signUp = async () => {
                 </Divider>
 
                 <Dropdown placeholder="Are you a Student, Lecturer, or Admin?" v-model="role" :options="roleOptions"
-                    optionLabel="label" class="minimal-dropdown w-full mb-4" />
+                    optionValue="value" optionLabel="label" class="minimal-dropdown w-full mb-4" />
 
 
                 <div class="w-full mb-4">
@@ -290,7 +294,7 @@ const signUp = async () => {
                 <h2 class="text-2xl font-semibold mb-6">Create an account</h2>
 
                 <Dropdown placeholder="Are you a Student, Lecturer, or Admin?" v-model="role" :options="roleOptions"
-                    optionLabel="label" class="minimal-dropdown w-full mb-2" />
+                    optionValue="value" optionLabel="label" class="minimal-dropdown w-full mb-2" />
 
                 <div class="grid w-full gap-4 mb-4 one-row">
                     <div class="col-6">
