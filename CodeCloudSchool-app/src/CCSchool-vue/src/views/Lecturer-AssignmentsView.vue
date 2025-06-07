@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { AssignmentService } from '@/api/assignments';
 
@@ -14,20 +14,55 @@ const submissionFormat = ref('');
 const assignmentDetailsHeader = ref('');
 const assignmentDetailsDescription = ref('');
 
-const descriptionEditor = ref<HTMLDivElement | null>(null);
-
-const formatText = (command: string) => {
-  if (descriptionEditor.value) {
-    descriptionEditor.value.focus();
-    document.execCommand(command, false);
-  }
-};
-
 const submissionFormats = [ 
   { value: 'pdf', label: 'PDF' },
   { value: 'docx', label: 'DOCX' },
   { value: 'txt', label: 'TXT' }
 ];
+
+// Rich text editor functionality
+const editorRef = ref<HTMLElement | null>(null);
+const activeFormats = ref({
+  bold: false,
+  italic: false,
+  underline: false
+});
+
+function formatText(command: string, value: string = '') {
+  document.execCommand(command, false, value);
+  updateDescriptionContent();
+  checkActiveFormats();
+}
+
+function checkActiveFormats() {
+  if (!editorRef.value) return;
+  
+  activeFormats.value = {
+    bold: document.queryCommandState('bold'),
+    italic: document.queryCommandState('italic'),
+    underline: document.queryCommandState('underline')
+  };
+}
+
+function updateDescriptionContent() {
+  if (editorRef.value) {
+    assignmentDetailsDescription.value = editorRef.value.innerHTML;
+  }
+}
+
+function handlePaste(e: ClipboardEvent) {
+  e.preventDefault();
+  const text = e.clipboardData?.getData('text/plain') || '';
+  document.execCommand('insertText', false, text);
+  updateDescriptionContent();
+}
+
+// Initialize editor content when component mounts
+onMounted(() => {
+  if (editorRef.value && assignmentDetailsDescription.value) {
+    editorRef.value.innerHTML = assignmentDetailsDescription.value;
+  }
+});
 
 // Attempt controls
 function decrementAttempts() {
@@ -97,6 +132,9 @@ function resetForm() {
   assignmentDetailsDescription.value = '';
   attemptCount.value = 1;
   unlimitedAttempts.value = false;
+  if (editorRef.value) {
+    editorRef.value.innerHTML = '';
+  }
 }
 </script>
 
@@ -190,19 +228,60 @@ function resetForm() {
             <label class="form-label">Assignment Details Description</label>
             <div class="description-editor">
               <div class="editor-toolbar">
-                <button class="toolbar-button" title="Bold" @click="formatText('bold')"><strong>B</strong></button>
-                <button class="toolbar-button" title="Italic" @click="formatText('italic')"><em>I</em></button>
-                <button class="toolbar-button" title="Underline" @click="formatText('underline')"><u>U</u></button>
-                <button class="toolbar-button" title="Bullet List" @click="formatText('insertUnorderedList')">• List</button>
-                <button class="toolbar-button" title="Numbered List" @click="formatText('insertOrderedList')">1. List</button>
+                <button 
+                  @click="formatText('bold')" 
+                  class="toolbar-button" 
+                  :class="{ active: activeFormats.bold }"
+                  title="Bold"
+                >
+                  <strong>B</strong>
+                </button>
+                <button 
+                  @click="formatText('italic')" 
+                  class="toolbar-button" 
+                  :class="{ active: activeFormats.italic }"
+                  title="Italic"
+                >
+                  <em>I</em>
+                </button>
+                <button 
+                  @click="formatText('underline')" 
+                  class="toolbar-button" 
+                  :class="{ active: activeFormats.underline }"
+                  title="Underline"
+                >
+                  <span style="text-decoration: underline">U</span>
+                </button>
+                <button 
+                  @click="formatText('insertUnorderedList')" 
+                  class="toolbar-button" 
+                  title="Bullet List"
+                >
+                  <span>• List</span>
+                </button>
+                <button 
+                  @click="formatText('insertOrderedList')" 
+                  class="toolbar-button" 
+                  title="Numbered List"
+                >
+                  <span>1. List</span>
+                </button>
               </div>
               <div
-                ref="descriptionEditor"
+                ref="editorRef"
+                class="editor-content"
                 contenteditable="true"
-                class="editor-textarea"
-                :innerHTML="assignmentDetailsDescription"
-                @input="assignmentDetailsDescription = descriptionEditor?.innerHTML ?? ''"
+                @input="updateDescriptionContent"
+                @paste="handlePaste"
+                @mouseup="checkActiveFormats"
+                @keyup="checkActiveFormats"
+                placeholder="Type assignment description here"
               ></div>
+              <textarea 
+                v-model="assignmentDetailsDescription"
+                class="hidden-textarea"
+                aria-hidden="true"
+              ></textarea>
             </div>
           </div>
         </div>
@@ -218,7 +297,6 @@ function resetForm() {
     </div>
   </div>
 </template>
-
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=Quicksand:wght@300..700&display=swap');
@@ -305,9 +383,7 @@ function resetForm() {
 }
 
 .attempt-button.unlimited.active {
-  background-color: #dbeafe;
-    background-color: #D0DFCC;
-
+  background-color: #D0DFCC;
 }
 
 .attempt-count {
@@ -348,8 +424,6 @@ function resetForm() {
   overflow: hidden;
 }
 
-
-
 .editor-toolbar {
   background-color: #f3f4f6;
   padding: 0.5rem;
@@ -369,32 +443,37 @@ function resetForm() {
   transition: background-color 0.2s;
 }
 
-.toolbar-button:hover:focus {
-  background-color: red;
+.toolbar-button:hover {
+  background-color: #e5e7eb;
 }
 
-.editor-textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: none;
-  resize: vertical;
+.toolbar-button.active {
+  background-color: #D0DFCC;
+  color: white;
+}
+
+.editor-content {
   min-height: 150px;
-  font-family: inherit;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0 0 0.5rem 0.5rem;
+  outline: none;
   background-color: white;
-  border-bottom-left-radius: 0.5rem;
-  border-bottom-right-radius: 0.5rem;
+  font-family: inherit;
 }
 
-
-.editor-textarea .Bold {
-  font-family: "Quicksand", sans-serif;
-  font-weight: 900;
-}
-
-.editor-textarea:focus {
+.editor-content:focus {
   outline: none;
   box-shadow: 0 0 0 2px #d0dfccab;
+}
 
+.editor-content[placeholder]:empty:before {
+  content: attr(placeholder);
+  color: #9ca3af;
+}
+
+.hidden-textarea {
+  display: none;
 }
 
 /* Save Button */
@@ -413,13 +492,11 @@ function resetForm() {
 }
 
 .save-button:hover {
-    background-color: #abb7a8;
-
+  background-color: #abb7a8;
 }
 
 .save-button:focus {
   outline: none;
   box-shadow: 0 0 0 2px #d0dfccab;
-  
 }
 </style>

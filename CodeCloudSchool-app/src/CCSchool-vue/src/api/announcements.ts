@@ -11,7 +11,7 @@ export interface Announcement {
 export const AnnouncementService = {
   async getAnnouncementsByCourseId(courseId: number): Promise<Announcement[] | string> {
     try {
-      const response = await api.get(`/api/announcements/course/${courseId}`);
+      const response = await api.get(`/announce/course/${courseId}`);
       return response.data;
     } catch (error: any) {
       console.error('Error fetching announcements:', error);
@@ -21,7 +21,7 @@ export const AnnouncementService = {
 
   async getAnnouncementById(id: string): Promise<Announcement | string> {
     try {
-      const response = await api.get(`/api/announcements/${id}`);
+      const response = await api.get(`/announce/${id}`);
       return response.data;
     } catch (error: any) {
       console.error('Error fetching announcement by ID:', error);
@@ -41,7 +41,7 @@ export const AnnouncementService = {
 
   async getAnnouncementsByLecturerId(lecturerId: number): Promise<Announcement[] | string> {
     try {
-      const response = await api.get(`/api/announcements/lecturer/${lecturerId}`);
+      const response = await api.get(`/announce/lecturer/${lecturerId}`);
       return response.data;
     } catch (error: any) {
       console.error('Error fetching announcements by lecturer ID:', error);
