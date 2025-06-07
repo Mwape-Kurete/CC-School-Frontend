@@ -1,405 +1,1066 @@
 <script setup>
+//import api
+import { CourseService, LecturerCourseService } from '@/api/courses'
+import { AnnouncementService } from '@/api/announcements'
+
+//importing vue features
+import { ref, reactive, onMounted, computed } from 'vue'
+
+//importing icons and primevue components
+import { PencilLine, Maximize2, Ban, Save, CircleFadingArrowUp, RotateCcw } from 'lucide-vue-next'
+import { Plus } from 'lucide-vue-next'
+import InputText from 'primevue/inputtext'
+import FloatLabel from 'primevue/floatlabel'
+import Textarea from 'primevue/textarea'
+import Divider from 'primevue/divider'
+import Button from 'primevue/button'
+
+//importing components
 import CardComp from '@/components/CardComp.vue'
 import CListGroup from '@/components/CListGroup.vue'
 import CButton from '@/components/ui/CButton.vue'
-import Divider from 'primevue/divider'
 import CMarkBreakdown from '@/components/CMarkBreakdown.vue'
 import LecturerCard from '@/components/LecturerCard.vue'
 import CButtonIcon from '@/components/ui/Cbutton-icon.vue'
-import { PencilLine, Maximize2, Ban, Save, ArrowUpFromLine } from 'lucide-vue-next'
-import { ref, reactive } from 'vue'
-import InputText from 'primevue/inputtext'
-import FloatLabel from 'primevue/floatlabel'
 
-const assessmentGroups = [
-  {
-    title: 'Theory Assessments',
-    mark: '10%',
-    items: [
-      { description: 'Theme 1: Project Proposal Document', mark: '50%' },
-      { description: 'Theme 2: Project Report & Demonstration', mark: '50%' },
-    ],
-  },
-  {
-    title: 'Formative Assessments',
-    mark: '30%',
-    items: [
-      { description: 'Theme 1: Progress Feedback', mark: '25%' },
-      { description: 'Theme 1: Code Review', mark: '25%' },
-      { description: 'Theme 2: Progress Feedback', mark: '25%' },
-      { description: 'Theme 2: Code Review', mark: '25%' },
-    ],
-  },
-  {
-    title: 'Summative Assessments',
-    mark: '60%',
-    items: [
-      { description: 'Repository Administration', mark: '15%' },
-      { description: 'Functional Management System', mark: '70%' },
-      { description: 'Individual Contribution', mark: '15%' },
-    ],
-  },
-] //template for assesment layout
+//FUNCTIONALITY IMPLEMENTATION STARTS HERE
 
-const courseData = reactive({
-  courseName: 'Computer Science',
-  courseDescription: 'rendering from course data ',
-  courseWeekBreakdown: [
-    { header: 'Week 1 ', description: ' Course Introduction & Briefing.' },
-    { header: 'Week 2', description: 'Type-sensitive programming aka TS' },
-    { header: 'Week 3', description: ' Basic software architecture' },
-  ],
-  courseSlides:
-    'https://docs.google.com/presentation/d/1ZAwD8jemOHHxzsZoFGk9nIHYy9oJnjzJ7OSP1LckCn4',
-  courseMarkBreakdown: [
-    {
-      title: 'Theory Assessments',
-      mark: '10%',
-      items: [
-        { description: 'Theme 1: Project Proposal Document', mark: '50%' },
-        { description: 'Theme 2: Project Report & Demonstration', mark: '50%' },
-      ],
-    },
-    {
-      title: 'Formative Assessments',
-      mark: '30%',
-      items: [
-        { description: 'Theme 1: Progress Feedback', mark: '25%' },
-        { description: 'Theme 1: Code Review', mark: '25%' },
-        { description: 'Theme 2: Progress Feedback', mark: '25%' },
-        { description: 'Theme 2: Code Review', mark: '25%' },
-      ],
-    },
-    {
-      title: 'Summative Assessments',
-      mark: '60%',
-      items: [
-        { description: 'Repository Administration', mark: '15%' },
-        { description: 'Functional Management System', mark: '70%' },
-        { description: 'Individual Contribution', mark: '15%' },
-      ],
-    },
-  ],
-  courseSemDescriptions: [
-    {
-      description: 'Semester One description',
-    },
-    { description: 'Semester Two description' },
-  ],
+// 2. CONSTANTS
+const courseId = 1 // Consider making this a prop if it can vary
+
+// 3. REACTIVE STATE
+// Form fields
+const googleSlideurl = ref('')
+const courseBio = ref('')
+const newDescription = ref('')
+const semesterInputs = reactive(['', ''])
+
+//computed checks
+const hasUnsavedChanges = computed(() => {
+  return (
+    courseData.courseDescription !== courseBio.value ||
+    courseData.courseSlides !== googleSlideurl.value ||
+    courseData.courseWeekBreakdown.length > 0 ||
+    courseData.courseMarkBreakdown.length > 0 ||
+    courseData.courseSemDescriptions.length > 0
+  )
 })
 
-const editableData = reactive({ ...courseData }) //state management -> essentially storing the unsaved changes before user confirmation
-const isEditing = ref(false) //state management for making the course details editable
-const isEditingSection = ref(false) //state management for making the section editable
+// Course data
+const courseData = reactive({
+  courseName: '',
+  courseDescription: '',
+  courseWeekBreakdown: [],
+  courseSlides: '',
+  courseMarkBreakdown: [],
+  courseSemDescriptions: [],
+})
 
-//storing uploads
-const googleSlideurl = ref(null)
+// Draft copies to edit freely before confirming
+const draftCourseBio = ref('')
+const draftGoogleSlideUrl = ref('')
+const draftWeekBreakdown = ref([]) // Mirror of courseWeekBreakdown
+const draftMarkBreakdown = ref([]) // Mirror of courseMarkBreakdown
+const draftSemDescriptions = ref([]) // Mirror of courseSemDescriptions
 
-const sectionEdit = reactive({
-  courseName: false,
+// Announcement data
+const announcementData = reactive({
+  announcementId: '',
+  title: '',
+  description: '',
+  date: '',
+  lecturerId: '',
+})
+
+// UI State
+const isLoading = ref(false)
+const error = ref(null)
+const isEditing = ref(false)
+const fullUpdate = ref(false)
+
+const isEditingSection = reactive({
   courseDescription: false,
   courseWeekBreakdown: false,
   courseSlides: false,
   courseMarkBreakdown: false,
   courseSemDescriptions: false,
 })
+
+// Form models
+const newSection = reactive({
+  title: '',
+  mark: '',
+  items: [],
+})
+
+const newItem = reactive({
+  description: '',
+  mark: '',
+})
+
+// 4. LIFECYCLE HOOKS
+onMounted(async () => {
+  await loadInitialData()
+})
+
+// 5. DATA LOADING FUNCTIONS
+const loadInitialData = async () => {
+  isLoading.value = true
+  try {
+    await Promise.all([fetchCourseDetails(), fetchAnnouncements()])
+  } catch (err) {
+    error.value = 'Failed to load initial data'
+    console.error('Initialization error:', err)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const fetchCourseDetails = async () => {
+  try {
+    const response = await CourseService.getCourseDetails(courseId)
+    if (response) {
+      // Transform API response
+      courseData.courseName = response.courseFullCode || ''
+      courseData.courseDescription = response.courseAbout || ''
+      courseData.courseSlides = response.courseSlides || ''
+      courseData.courseWeekBreakdown = response.courseWeekBreakdown?.$values || []
+
+      // ✅ FIXED: Deep unwrap nested items in mark breakdown
+      courseData.courseMarkBreakdown =
+        response.courseMarkBreakdown?.$values.map((section) => ({
+          ...section,
+          items: section.items?.$values || [],
+        })) || []
+
+      courseData.courseSemDescriptions = response.courseSemDescriptions?.$values || []
+
+      // Form inputs
+      courseBio.value = courseData.courseDescription
+      googleSlideurl.value = courseData.courseSlides
+
+      // DRAFT CLONES
+      draftWeekBreakdown.value = JSON.parse(JSON.stringify(courseData.courseWeekBreakdown))
+      draftMarkBreakdown.value = JSON.parse(JSON.stringify(courseData.courseMarkBreakdown))
+      draftSemDescriptions.value = JSON.parse(JSON.stringify(courseData.courseSemDescriptions))
+    }
+  } catch (err) {
+    throw err // Let loadInitialData handle it
+  }
+}
+
+const fetchAnnouncements = async () => {
+  try {
+    const response = await AnnouncementService.getAnnouncementsByCourseId(courseId)
+    if (typeof response === 'string') {
+      console.error('Error:', response)
+    } else {
+      announcements.value = response
+      announcementData.title = response.title
+      announcementData.description = response.description
+      announcementData.date = response.formatAnnouncementDate(announcement.date)
+    }
+  } catch (err) {
+    throw err // Let loadInitialData handle it
+  }
+}
+
+//fixed this
+const getEmbeddedSlideUrl = (url) => {
+  const validUrl = typeof url === 'string' ? url : url?.value
+  if (!validUrl) return ''
+  return validUrl.replace(/\/(edit|view|preview).*/, '/embed')
+}
+
+// 6. EDIT MODE FUNCTIONS
+const toggleFullEditMode = async () => {
+  draftWeekBreakdown.value = JSON.parse(JSON.stringify(courseData.courseWeekBreakdown))
+  draftMarkBreakdown.value = JSON.parse(JSON.stringify(courseData.courseMarkBreakdown))
+  draftSemDescriptions.value = JSON.parse(JSON.stringify(courseData.courseSemDescriptions))
+  draftCourseBio.value = courseBio.value
+  draftGoogleSlideUrl.value = googleSlideurl.value
+
+  fullUpdate.value = !fullUpdate.value
+  Object.keys(isEditingSection).forEach((key) => {
+    isEditingSection[key] = fullUpdate.value
+  })
+
+  if (!fullUpdate.value) {
+    // User is cancelling update all, revert changes
+    await fetchCourseDetails()
+  }
+  if (fullUpdate.value) {
+    isEditing.value = true
+  }
+}
+
+const enterSectionEdit = (key) => {
+  isEditingSection[key] = true
+  if (key === 'courseDescription') draftCourseBio.value = courseBio.value
+  if (key === 'courseSlides') draftGoogleSlideUrl.value = googleSlideurl.value
+}
+
+// 7. CRUD OPERATIONS
+// -- Save Operations --
+const saveCourseDetails = async (isFullUpdate = false) => {
+  try {
+    isLoading.value = true
+
+    const partialPayload = {}
+
+    if (isFullUpdate || isEditingSection.courseDescription) {
+      partialPayload.courseAbout = draftCourseBio.value
+    }
+    if (isFullUpdate || isEditingSection.courseSlides) {
+      partialPayload.courseSlides = getEmbeddedSlideUrl(draftGoogleSlideUrl.value)
+    }
+    if (isFullUpdate || isEditingSection.courseWeekBreakdown) {
+      partialPayload.courseWeekBreakdown = draftWeekBreakdown.value
+    }
+    if (isFullUpdate || isEditingSection.courseMarkBreakdown) {
+      partialPayload.courseMarkBreakdown = draftMarkBreakdown.value.map((section) => ({
+        title: section.title,
+        mark: section.mark,
+        items: section.items || [],
+      }))
+    }
+    if (isFullUpdate || isEditingSection.courseSemDescriptions) {
+      partialPayload.courseSemDescriptions = draftSemDescriptions.value
+    }
+
+    if (Object.keys(partialPayload).length > 0) {
+      await LecturerCourseService.partialUpdateCourseDetails(courseId, partialPayload)
+    }
+
+    await fetchCourseDetails()
+    Object.keys(isEditingSection).forEach((key) => (isEditingSection[key] = false))
+
+    if (isFullUpdate) {
+      fullUpdate.value = false
+      isEditing.value = false
+    }
+
+    alert('Saved successfully')
+  } catch (err) {
+    console.error('Save failed:', err)
+    error.value = err.message || 'Failed to save changes'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const createSavePayload = () => {
+  return {
+    courseAbout: isEditingSection.courseDescription
+      ? draftCourseBio.value
+      : courseData.courseDescription,
+    courseSlides: isEditingSection.courseSlides
+      ? getEmbeddedSlideUrl(draftGoogleSlideUrl.value)
+      : courseData.courseSlides,
+    courseWeekBreakdown: isEditingSection.courseWeekBreakdown
+      ? draftWeekBreakdown.value
+      : courseData.courseWeekBreakdown,
+    courseMarkBreakdown: isEditingSection.courseMarkBreakdown
+      ? draftMarkBreakdown.value
+      : courseData.courseMarkBreakdown,
+    courseSemDescriptions: isEditingSection.courseSemDescriptions
+      ? draftSemDescriptions.value
+      : courseData.courseSemDescriptions,
+  }
+}
+
+// Sync local reactive state and form inputs with latest backend data after update or wipe
+const updateLocalState = (updatedCourse) => {
+  Object.assign(courseData, {
+    courseName: updatedCourse.courseFullCode,
+    courseDescription: updatedCourse.courseAbout,
+    courseSlides: updatedCourse.courseSlides,
+    courseWeekBreakdown: updatedCourse.courseWeekBreakdown?.$values || [],
+    courseMarkBreakdown: updatedCourse.courseMarkBreakdown?.$values || [],
+    courseSemDescriptions: updatedCourse.courseSemDescriptions?.$values || [],
+  })
+
+  courseBio.value = updatedCourse.courseAbout
+  googleSlideurl.value = updatedCourse.courseSlides
+
+  draftWeekBreakdown.value = JSON.parse(JSON.stringify(courseData.courseWeekBreakdown))
+  draftMarkBreakdown.value = JSON.parse(JSON.stringify(courseData.courseMarkBreakdown))
+  draftSemDescriptions.value = JSON.parse(JSON.stringify(courseData.courseSemDescriptions))
+}
+
+// -- Add Operations --
+const addWeek = () => {
+  if (!newDescription.value.trim()) return
+
+  draftWeekBreakdown.value.push({
+    header: `Week ${draftWeekBreakdown.value.length + 1}`,
+    description: newDescription.value.trim(),
+  })
+
+  newDescription.value = ''
+}
+
+const addSemBreakdown = (semesterIndex = 0) => {
+  const value = semesterInputs[semesterIndex].trim()
+  if (!value) return
+
+  while (draftSemDescriptions.value.length <= semesterIndex) {
+    draftSemDescriptions.value.push({ description: '' })
+  }
+  draftSemDescriptions.value[semesterIndex] = { description: value }
+
+  semesterInputs[semesterIndex] = ''
+}
+
+const addItemToSection = () => {
+  if (!newItem.description.trim() || !newItem.mark.trim()) return
+  if (!newSection.items) newSection.items = []
+  newSection.items.push({
+    description: newItem.description.trim(),
+    mark: newItem.mark.trim(),
+  })
+  newItem.description = ''
+  newItem.mark = ''
+}
+
+const addSection = () => {
+  if (!newSection.title.trim() || !newSection.mark.trim() || !newSection.items?.length) return
+  draftMarkBreakdown.value.push(JSON.parse(JSON.stringify(newSection)))
+}
+
+// 8. UTILITY FUNCTIONS
+const resetNewSection = () => {
+  newSection.title = ''
+  newSection.mark = ''
+  newSection.items = []
+}
+
+const clearContent = async () => {
+  try {
+    isLoading.value = true
+    const clearedCourse = await LecturerCourseService.updateCourseDetails(courseId, {
+      courseDescription: '',
+      courseWeekBreakdown: [],
+      courseSlides: '',
+      courseMarkBreakdown: [],
+      courseSemDescriptions: [],
+    })
+    updateLocalState(clearedCourse)
+    exitEditMode()
+  } catch (err) {
+    error.value = err.message || 'Failed to clear content'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const exitEditMode = async () => {
+  // Ask user before discarding unsaved edits
+  if (hasUnsavedChanges.value) {
+    const confirmed = window.confirm('You have unsaved changes. Exit without saving?')
+    if (!confirmed) return // Cancel exit
+  }
+
+  isEditing.value = false
+
+  try {
+    isLoading.value = true
+    await fetchCourseDetails() // Only runs if user confirmed
+    Object.keys(isEditingSection).forEach((key) => {
+      isEditingSection[key] = false
+    })
+  } catch (err) {
+    error.value = err.message || 'Failed to reload content'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 9. EVENT HANDLERS (for template)
+const applySectionDrafts = {
+  courseDescription: () => {
+    courseBio.value = draftCourseBio.value
+  },
+  courseSlides: () => {
+    googleSlideurl.value = draftGoogleSlideUrl.value
+  },
+  courseWeekBreakdown: () => {
+    courseData.courseWeekBreakdown = JSON.parse(JSON.stringify(draftWeekBreakdown.value))
+  },
+  courseMarkBreakdown: () => {
+    courseData.courseMarkBreakdown = JSON.parse(JSON.stringify(draftMarkBreakdown.value))
+  },
+  courseSemDescriptions: () => {
+    courseData.courseSemDescriptions = JSON.parse(JSON.stringify(draftSemDescriptions.value))
+  },
+}
+
+const handleSaveSection = async (sectionKey) => {
+  try {
+    if (fullUpdate.value) {
+      fullUpdate.value = false
+      isEditing.value = false
+    }
+
+    await saveCourseDetails()
+
+    isEditingSection[sectionKey] = false
+  } catch (error) {
+    console.error('Error saving section:', error)
+  }
+}
+
+//making sure changes are actually made and not just stored locally
+const handleAddWeek = async () => {
+  addWeek()
+}
+
+const handleAddSemesterBreakdown = async (index) => {
+  addSemBreakdown(index)
+
+  // Let Vue DOM/reactivity update before using the new value
+  await nextTick()
+
+  applySectionDrafts.courseSemDescriptions()
+
+  console.log('Saving semester description', JSON.parse(JSON.stringify(draftSemDescriptions.value)))
+
+  await handleSaveSection('courseSemDescriptions')
+}
+
+const handleAddItemToSection = async () => {
+  addItemToSection()
+}
+
+const handleAddSection = async () => {
+  addSection()
+
+  await handleSaveSection('courseMarkBreakdown')
+
+  resetNewSection()
+  console.log('Adding section', newSection)
+}
 </script>
 
 <template>
-  <div class="announcemnts-section">
-    <div class="cd-header">
-      <div class="right-cd">
-        <h1 class="section-header">Announcements</h1>
-      </div>
-      <div class="left-cd">
-        <CButtonIcon type="primary" size="md" btnIconLabel="View All Announcements">
-          <template #icon>
-            <Maximize2 size="16" />
-          </template>
-        </CButtonIcon>
-      </div>
-    </div>
-    <div class="card-container">
-      <CardComp
-        cardType="announcement"
-        announcementTitle=" Computer science  workshop with Jacob  Anderson"
-        announcementBody="Lorem ipsum dolor sit amet, consectetur adipiscing elit..."
-        announcementDate="2023-10-15"
-        moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
-      />
-
-      <div class="divider-card"></div>
-
-      <CardComp
-        cardType="announcement"
-        announcementTitle=" Computer science  workshop with Jacob  Anderson"
-        announcementBody="Lorem ipsum dolor sit amet, consectetur adipiscing elit..."
-        announcementDate="2023-10-15"
-        moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
-      />
-
-      <div class="divider-card"></div>
-
-      <CardComp
-        cardType="announcement"
-        announcementTitle=" Computer science  workshop with Jacob  Anderson"
-        announcementBody="Lorem ipsum dolor sit amet, consectetur adipiscing elit..."
-        announcementDate="2023-10-15"
-        moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
-      />
-
-      <div class="divider-card"></div>
-    </div>
-  </div>
-
-  <div class="course-details-section">
-    <div class="course-section-header">
-      <div class="left-cs-header">
-        <h1 class="section-header-lg">{{ courseData.courseName }}</h1>
-      </div>
-      <div class="right-cs-header" v-if="isEditing == false">
-        <CButtonIcon
-          id="edit-course"
-          type="primary"
-          size="md"
-          btnIconLabel="Edit Course Details"
-          @click="isEditing = true"
-        >
-          <template #icon>
-            <PencilLine size="20" />
-          </template>
-        </CButtonIcon>
-      </div>
-      <div class="right-cs-header" v-else-if="isEditing == true">
-        <CButtonIcon
-          id="edit-course"
-          type="primary"
-          size="md"
-          btnIconLabel="Cancel"
-          @click="isEditing = false"
-        >
-          <template #icon>
-            <Ban size="20" />
-          </template>
-        </CButtonIcon>
-      </div>
-    </div>
-
-    <div class="course-cover-img">
-      <img src="https://picsum.photos/seed/picsum/1200/1600" alt="course cover img" />
-    </div>
-
-    <div class="bio-section">
-      <div v-if="isEditing == false">
-        <h1 class="section-header">What You Will Learn</h1>
-      </div>
-      <div v-else-if="isEditing == true">
-        <div class="cd-header">
-          <div class="right-cd">
-            <h1 class="section-header">What You Will Learn</h1>
-          </div>
-          <div class="left-cd">
-            <CButtonIcon type="primary" size="md" btnIconLabel="Edit Section">
-              <template #icon>
-                <PencilLine size="16" />
-              </template>
-            </CButtonIcon>
-          </div>
+  <div v-if="isLoading">Loading course details...</div>
+  <div v-else-if="error" class="error">{{ error }}</div>
+  <div v-else>
+    <div class="announcemnts-section">
+      <div class="cd-header">
+        <div class="right-cd">
+          <h1 class="section-header">Announcements</h1>
+        </div>
+        <div class="left-cd">
+          <CButtonIcon type="primary" size="md" btnIconLabel="View All Announcements">
+            <template #icon>
+              <Maximize2 size="16" />
+            </template>
+          </CButtonIcon>
         </div>
       </div>
-      <p>
-        {{ courseData.courseDescription }}
-      </p>
-    </div>
+      <div class="card-container">
+        <CardComp
+          cardType="announcement"
+          :announcementTitle="announcementData.title"
+          :announcementBody="announcementData.description"
+          :announcementDate="announcementData.date"
+          moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
+        />
 
-    <div class="sem-overview-section">
-      <div v-if="isEditing == false">
-        <h1 class="section-header"></h1>
-      </div>
-      <div v-else-if="isEditing == true">
-        <div class="cd-header">
-          <div class="right-cd">
-            <h1 class="section-header"></h1>
-          </div>
-          <div class="left-cd">
-            <CButtonIcon type="primary" size="md" btnIconLabel="Edit Section">
-              <template #icon>
-                <PencilLine size="16" />
-              </template>
-            </CButtonIcon>
-          </div>
+        <div class="divider-card"></div>
+
+        <div v-if="!announcementData.length" class="text-gray-500">
+          You have not posted an announcement
         </div>
       </div>
-      <CListGroup :items="courseData.courseWeekBreakdown" />
     </div>
 
-    <div class="semester-break">
-      <h3>SEMESTER BREAK</h3>
-    </div>
-
-    <div class="google-slides-section">
-      <div v-if="isEditing == false">
-        <h1 class="section-header">SEMESTER BRIEF</h1>
-      </div>
-      <div v-else-if="isEditing == true">
-        <div class="cd-header">
-          <div class="right-cd">
-            <h1 class="section-header">SEMESTER BRIEF</h1>
-          </div>
-          <div class="left-cd" v-if="isEditingSection == false">
+    <div class="course-details-section">
+      <div class="course-section-header">
+        <div class="left-cs-header">
+          <h1 class="section-header-lg">{{ courseData.courseName }}</h1>
+        </div>
+        <div class="right-cs-header" v-if="isEditing == false">
+          <CButtonIcon
+            id="edit-course"
+            type="primary"
+            size="md"
+            btnIconLabel="Edit Course Details"
+            @click="isEditing = true"
+          >
+            <template #icon>
+              <PencilLine size="20" />
+            </template>
+          </CButtonIcon>
+        </div>
+        <div class="right-cs-header header-btns" v-else-if="isEditing == true">
+          <div class="edit-types">
             <CButtonIcon
+              class="edit-course-var"
               type="primary"
               size="md"
-              btnIconLabel="Edit Section"
-              @click="isEditingSection = true"
+              btnIconLabel="Wipe Course Details"
+              @click="clearContent"
             >
               <template #icon>
-                <PencilLine size="16" />
+                <RotateCcw size="20" />
               </template>
             </CButtonIcon>
-          </div>
-          <div class="left-cd" v-if="isEditingSection == true">
             <CButtonIcon
+              class="edit-course-var"
               type="primary"
               size="md"
-              btnIconLabel="Save Section"
-              @click="isEditingSection = false"
+              :btnIconLabel="fullUpdate ? 'Cancel Update All' : 'Update entire Course Content'"
+              @click="toggleFullEditMode"
             >
               <template #icon>
-                <PencilLine size="16" />
+                <CircleFadingArrowUp size="20" />
+              </template>
+            </CButtonIcon>
+            <!--Below is save button for global changes-->
+            <CButtonIcon
+              v-if="fullUpdate"
+              class="edit-course-var"
+              type="primary"
+              size="md"
+              btnIconLabel="Save All Changes"
+              @click="
+                saveCourseDetails(true).then(() => {
+                  isEditing = false
+                })
+              "
+            >
+              <template #icon>
+                <Save size="20" />
+              </template>
+            </CButtonIcon>
+            <CButtonIcon
+              class="edit-course-var exit-editing"
+              type="primary"
+              size="md"
+              btnIconLabel="Exit Edit Mode"
+              @click="exitEditMode"
+            >
+              <template #icon>
+                <Ban size="20" />
               </template>
             </CButtonIcon>
           </div>
         </div>
       </div>
-      <div class="slides-container">
-        <div class="active-editing" v-if="isEditingSection == true">
+
+      <div class="course-cover-img">
+        <img src="https://picsum.photos/seed/picsum/1200/1600" alt="course cover img" />
+      </div>
+
+      <div class="bio-section">
+        <div v-if="isEditing == false">
+          <h1 class="section-header">What You Will Learn</h1>
+        </div>
+        <div v-else-if="isEditing == true">
+          <div class="cd-header">
+            <div class="right-cd">
+              <h1 class="section-header">What You Will Learn</h1>
+            </div>
+            <div class="left-cd" v-if="isEditingSection.courseDescription == false">
+              <CButtonIcon
+                type="primary"
+                size="md"
+                btnIconLabel="Edit Section"
+                @click="enterSectionEdit('courseDescription')"
+              >
+                <template #icon>
+                  <PencilLine size="16" />
+                </template>
+              </CButtonIcon>
+            </div>
+            <div class="left-cd" v-if="isEditingSection.courseDescription == true && !fullUpdate">
+              <CButtonIcon
+                v-if="!fullUpdate"
+                type="primary"
+                size="md"
+                btnIconLabel="Save Section"
+                @click="handleSaveSection('courseDescription')"
+              >
+                <template #icon>
+                  <PencilLine size="16" />
+                </template>
+              </CButtonIcon>
+            </div>
+          </div>
+        </div>
+        <div class="active-editing" v-if="isEditingSection.courseDescription == true">
           <div class="input-cont">
-            <div class="w-full mb-4">
+            <p>
               <FloatLabel>
+                <Textarea
+                  id="course-bio"
+                  v-model="draftCourseBio"
+                  class="w-8 border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+                />
+                <label for="course-bio">Insert Course Description</label>
+              </FloatLabel>
+            </p>
+          </div>
+        </div>
+        <div class="active-editing" v-if="isEditingSection.courseDescription == false">
+          <div class="check-content text-center" v-if="courseData.courseDescription == ''">
+            <p>No Content Yet. Edit this section to add content</p>
+          </div>
+          <div class="check-content" v-if="courseData.courseDescription !== null">
+            <p>{{ courseData.courseDescription }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="sem-overview-section">
+        <div v-if="isEditing == false">
+          <h2 class="section-header">weekly breakdown</h2>
+        </div>
+        <div v-else-if="isEditing == true">
+          <div class="cd-header">
+            <div class="right-cd">
+              <h2 class="section-header">weekly breakdown</h2>
+            </div>
+            <div class="left-cd" v-if="isEditingSection.courseWeekBreakdown == false">
+              <CButtonIcon
+                type="primary"
+                size="md"
+                btnIconLabel="Edit Section"
+                @click="isEditingSection.courseWeekBreakdown = true"
+              >
+                <template #icon>
+                  <PencilLine size="16" />
+                </template>
+              </CButtonIcon>
+            </div>
+            <div class="left-cd" v-if="isEditingSection.courseWeekBreakdown == true && !fullUpdate">
+              <CButtonIcon
+                v-if="!fullUpdate"
+                type="primary"
+                size="md"
+                btnIconLabel="Save Section"
+                @click="handleSaveSection('courseWeekBreakdown')"
+              >
+                <template #icon>
+                  <PencilLine size="16" />
+                </template>
+              </CButtonIcon>
+            </div>
+          </div>
+        </div>
+        <div class="active-editing" v-if="isEditingSection.courseWeekBreakdown == true">
+          <div class="input-cont">
+            <div class="w-full mb-4 flex gap-2 items-end">
+              <FloatLabel class="w-full">
                 <InputText
-                  id="g-slide-url"
-                  v-model="googleSlideurl"
+                  id="week-break"
+                  v-model="newDescription"
                   class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
                 />
-                <label for="g-slide-url">Upload Google Slide Link</label>
+                <label for="week-break">Add a weekly breakdown</label>
               </FloatLabel>
+              <CButtonIcon
+                class="add-icon-btn"
+                type="primary"
+                size="md"
+                btnIconLabel="Add Breakdown"
+                @click="handleAddWeek"
+              >
+                <template #icon>
+                  <Plus size="16" />
+                </template>
+              </CButtonIcon>
             </div>
-            <CButtonIcon
-              type="primary"
-              size="md"
-              class="updateSave"
-              btnIconLabel="Upload Google Slides"
+          </div>
+        </div>
+        <div class="active-editing" v-if="isEditingSection.courseWeekBreakdown == false">
+          <div class="check-content text-center" v-if="courseData.courseWeekBreakdown.length == 0">
+            <p>No Content Yet. Edit this section to add content</p>
+          </div>
+          <div class="check-content text-center">
+            <CListGroup :items="draftWeekBreakdown" />
+          </div>
+        </div>
+      </div>
+
+      <div class="semester-break">
+        <h3>SEMESTER BREAK</h3>
+      </div>
+
+      <div class="google-slides-section">
+        <div v-if="isEditing == false">
+          <h1 class="section-header">SEMESTER BRIEF</h1>
+        </div>
+        <div v-else-if="isEditing == true">
+          <div class="cd-header">
+            <div class="right-cd">
+              <h1 class="section-header">SEMESTER BRIEF</h1>
+            </div>
+            <div class="left-cd" v-if="isEditingSection.courseSlides == false">
+              <CButtonIcon
+                type="primary"
+                size="md"
+                btnIconLabel="Edit Section"
+                @click="isEditingSection.courseSlides = true"
+              >
+                <template #icon>
+                  <PencilLine size="16" />
+                </template>
+              </CButtonIcon>
+            </div>
+            <div class="left-cd" v-if="isEditingSection.courseSlides == true && !fullUpdate">
+              <CButtonIcon
+                v-if="!fullUpdate"
+                type="primary"
+                size="md"
+                btnIconLabel="Save Section"
+                @click="handleSaveSection('courseSlides')"
+              >
+                <template #icon>
+                  <PencilLine size="16" />
+                </template>
+              </CButtonIcon>
+            </div>
+          </div>
+        </div>
+        <div class="slides-container">
+          <div class="active-editing" v-if="isEditingSection.courseSlides == true">
+            <div class="input-cont">
+              <div class="w-full mb-4">
+                <FloatLabel>
+                  <InputText
+                    id="g-slide-url"
+                    v-model="draftGoogleSlideUrl"
+                    class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+                  />
+                  <label for="g-slide-url">Upload Google Slide Link</label>
+                </FloatLabel>
+              </div>
+            </div>
+            <div class="text-xs text-gray-400 mt-2">
+              Current embedded URL: {{ getEmbeddedSlideUrl(courseData.courseSlides) }}
+            </div>
+            <div class="save-cont">
+              <CButtonIcon
+                type="primary"
+                size="md"
+                class="updateSave"
+                btnIconLabel="Save Changes"
+                @click="handleSaveSection('courseSlides')"
+              >
+                <template>
+                  <Save size="16" />
+                </template>
+              </CButtonIcon>
+            </div>
+          </div>
+          <div class="active-editing" v-if="isEditingSection.courseSlides == false">
+            <div class="check-content text-center" v-if="courseData.courseSlides == ''">
+              <p>No Content Yet. Edit this section to add content</p>
+            </div>
+            <div class="check-content text-center" v-if="courseData.courseSlides != null">
+              <iframe
+                :src="getEmbeddedSlideUrl(courseData.courseSlides)"
+                frameborder="0"
+                width="960"
+                height="569"
+                allowfullscreen="true"
+                mozallowfullscreen="true"
+                webkitallowfullscreen="true"
+                class="slides-iframe"
+              ></iframe>
+            </div>
+          </div>
+        </div>
+        <Divider class="mt-5 mb-5" />
+      </div>
+
+      <div class="mark-breakdown-section">
+        <div v-if="isEditing == false">
+          <h1 class="section-header">Mark Breakdown</h1>
+        </div>
+        <div v-else-if="isEditing == true">
+          <div class="cd-header">
+            <div class="right-cd">
+              <h1 class="section-header">Mark Breakdown</h1>
+            </div>
+            <div class="left-cd" v-if="isEditingSection.courseMarkBreakdown == false">
+              <CButtonIcon
+                type="primary"
+                size="md"
+                btnIconLabel="Edit Section"
+                @click="isEditingSection.courseMarkBreakdown = true"
+              >
+                <template #icon>
+                  <PencilLine size="16" />
+                </template>
+              </CButtonIcon>
+            </div>
+            <div class="left-cd" v-if="isEditingSection.courseMarkBreakdown == true && !fullUpdate">
+              <CButtonIcon
+                v-if="!fullUpdate"
+                type="primary"
+                size="md"
+                btnIconLabel="Save Section"
+                @click="handleSaveSection('courseMarkBreakdown')"
+              >
+                <template #icon>
+                  <PencilLine size="16" />
+                </template>
+              </CButtonIcon>
+            </div>
+          </div>
+        </div>
+        <CButton type="secondary" size="md" :disabled="true" class="mark-breadown-btn mb-2"
+          >MARK BREKDOWN</CButton
+        >
+        <br />
+        <div class="active-editing" v-if="isEditingSection.courseMarkBreakdown == true">
+          <!-- SECTION HEADER + TOTAL MARK -->
+          <div class="w-full mb-4 editing-year-break">
+            <FloatLabel>
+              <InputText
+                v-model="newSection.title"
+                class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+                id="section-title"
+              />
+              <label for="section-title">Type of Assignment (e.g., Formative)</label>
+            </FloatLabel>
+          </div>
+
+          <div class="w-full mb-4">
+            <FloatLabel>
+              <InputText
+                v-model="newSection.mark"
+                class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+                id="section-mark"
+              />
+              <label for="section-mark">Total Mark for the assignment (e.g., 30%)</label>
+            </FloatLabel>
+          </div>
+
+          <!-- INNER ITEMS LOOP -->
+          <div class="w-full mb-4 flex gap-2">
+            <FloatLabel class="flex-1">
+              <InputText
+                v-model="newItem.description"
+                id="desc-input"
+                class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+              />
+              <label for="desc-input">Assessment/Task title (e.g., Theory Quiz)</label>
+            </FloatLabel>
+            <FloatLabel class="w-24">
+              <InputText
+                v-model="newItem.mark"
+                id="mark-input"
+                class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+              />
+              <label for="mark-input">Assessment/Task Mark</label>
+            </FloatLabel>
+
+            <Button
+              icon="pi pi-plus simple-plus"
+              @click="handleAddItemToSection"
+              :disabled="!newItem.description || !newItem.mark"
+            />
+          </div>
+
+          <!-- ADD SECTION BUTTON -->
+          <span class="w-full pb-3">
+            <small>Don't forget to add the section after adding tasks</small>
+          </span>
+          <CButtonIcon
+            class="add-icon-btn add-sec-btn"
+            type="primary"
+            size="md"
+            btnIconLabel="Add Section"
+            @click="handleAddSection"
+            :disabled="!newSection.title || !newSection.mark || newSection.items.length === 0"
+          >
+            <template #icon>
+              <Plus size="16" />
+            </template>
+          </CButtonIcon>
+          <CButtonIcon
+            class="edit-course-var mt-3"
+            type="primary"
+            size="md"
+            btnIconLabel="Save Mark Breakdown"
+            @click="handleSaveSection('courseMarkBreakdown')"
+          >
+            <template #icon>
+              <Save size="16" />
+            </template>
+          </CButtonIcon>
+        </div>
+        <div class="active-editing" v-if="isEditingSection.courseMarkBreakdown == false">
+          <div class="check-content text-center" v-if="courseData.courseMarkBreakdown.length == 0">
+            <p>No Content Yet. Edit this section to add content</p>
+          </div>
+          <div class="check-content text-center">
+            <CMarkBreakdown :items="draftMarkBreakdown" />
+          </div>
+        </div>
+
+        <Divider class="mb-2" />
+      </div>
+
+      <div class="year-breakdown-section">
+        <div v-if="isEditing == false">
+          <h1 class="section-header">Year Breakdown</h1>
+        </div>
+        <div v-else-if="isEditing == true">
+          <div class="cd-header">
+            <div class="right-cd">
+              <h1 class="section-header">Year Breakdown</h1>
+            </div>
+            <div class="left-cd" v-if="isEditingSection.courseSemDescriptions == false">
+              <CButtonIcon
+                type="primary"
+                size="md"
+                btnIconLabel="Edit Section"
+                @click="isEditingSection.courseSemDescriptions = true"
+              >
+                <template #icon>
+                  <PencilLine size="16" />
+                </template>
+              </CButtonIcon>
+            </div>
+            <div
+              class="left-cd"
+              v-if="isEditingSection.courseSemDescriptions == true && !fullUpdate"
             >
-              <template>
-                <ArrowUpFromLine size="16" />
-              </template>
-            </CButtonIcon>
-          </div>
-          <div class="save-cont">
-            <CButtonIcon
-              type="primary"
-              size="md"
-              class="updateSave"
-              btnIconLabel="Save Changes"
-              @click="isEditingSection = false"
-            >
-              <template>
-                <Save size="16" />
-              </template>
-            </CButtonIcon>
+              <CButtonIcon
+                v-if="!fullUpdate"
+                type="primary"
+                size="md"
+                btnIconLabel="Save Section"
+                @click="handleSaveSection('courseSemDescriptions')"
+              >
+                <template #icon>
+                  <PencilLine size="16" />
+                </template>
+              </CButtonIcon>
+            </div>
           </div>
         </div>
-        <div class="active-editing" v-if="isEditingSection == false">
-          <iframe
-            :src="courseData.courseSlides + '/embed'"
-            frameborder="0"
-            width="960"
-            height="569"
-            allowfullscreen="true"
-            mozallowfullscreen="true"
-            webkitallowfullscreen="true"
-            class="slides-iframe"
-          ></iframe>
+        <CButton type="secondary" size="md" :disabled="true" class="year-breadown-btn mb-2"
+          >Semester
+        </CButton>
+        <div class="active-editing" v-if="isEditingSection.courseSemDescriptions == true">
+          <div class="input-cont">
+            <div class="w-full mb-4 flex gap-2 items-end">
+              <FloatLabel class="w-full">
+                <InputText
+                  id="week-break"
+                  v-model="semesterInputs[0]"
+                  class="w-full border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+                />
+                <label for="week-break">Add a Semester Description</label>
+              </FloatLabel>
+              <CButtonIcon
+                class="add-icon-btn"
+                type="primary"
+                size="md"
+                btnIconLabel="Add Semester Description"
+                @click="handleAddSemesterBreakdown(0)"
+              >
+                <template #icon>
+                  <Plus size="16" />
+                </template>
+              </CButtonIcon>
+            </div>
+          </div>
+        </div>
+        <div class="active-editing" v-else-if="isEditingSection.courseSemDescriptions == false">
+          <div
+            class="check-content text-center"
+            v-if="courseData.courseSemDescriptions.length == 0"
+          >
+            <p>No Content Yet. Edit this section to add content</p>
+          </div>
+          <div class="check-content">
+            <p v-if="courseData.courseSemDescriptions.length > 0">
+              {{ draftSemDescriptions[0]?.description || 'No description' }}
+            </p>
+          </div>
+        </div>
+
+        <Divider class="year-break-div" />
+
+        <CButton type="secondary" size="md" :disabled="true" class="year-breadown-btn"
+          >Semester 2</CButton
+        >
+        <div class="active-editing" v-if="isEditingSection.courseSemDescriptions == true">
+          <div class="input-cont">
+            <div class="w-full mb-4 flex gap-2 items-end">
+              <FloatLabel class="w-full">
+                <InputText
+                  id="week-break2"
+                  v-model="semesterInputs[1]"
+                  class="w-full mt-2 border-0 border-b-2 border-gray-300 focus:border-gray-500 rounded-none"
+                />
+                <label for="week-break2">Add a Semester Description</label>
+              </FloatLabel>
+              <CButtonIcon
+                class="add-icon-btn"
+                type="primary"
+                size="md"
+                btnIconLabel="Add Semester Description"
+                @click="handleAddSemesterBreakdown(1)"
+              >
+                <template #icon>
+                  <Plus size="16" />
+                </template>
+              </CButtonIcon>
+            </div>
+          </div>
+        </div>
+        <div class="active-editing" v-else-if="isEditingSection.courseSemDescriptions == false">
+          <div
+            class="check-content text-center"
+            v-if="courseData.courseSemDescriptions.length == 0"
+          >
+            <p>No Content Yet. Edit this section to add content</p>
+          </div>
+          <div class="check-content">
+            <p v-if="courseData.courseSemDescriptions.length > 1">
+              {{ draftSemDescriptions[1]?.description || 'No description' }}
+            </p>
+          </div>
         </div>
       </div>
-      <Divider class="mt-5 mb-5" />
     </div>
 
-    <div class="mark-breakdown-section">
-      <div v-if="isEditing == false">
-        <h1 class="section-header">Mark Breakdown</h1>
-      </div>
-      <div v-else-if="isEditing == true">
-        <div class="cd-header">
-          <div class="right-cd">
-            <h1 class="section-header">Mark Breakdown</h1>
-          </div>
-          <div class="left-cd">
-            <CButtonIcon type="primary" size="md" btnIconLabel="Edit Section">
-              <template #icon>
-                <PencilLine size="16" />
-              </template>
-            </CButtonIcon>
-          </div>
-        </div>
-      </div>
-      <CButton type="secondary" size="md" :disabled="true" class="mark-breadown-btn mb-2"
-        >MARK BREKDOWN</CButton
-      >
-      <br />
-      <CMarkBreakdown :items="courseData.courseMarkBreakdown" />
-      <Divider class="mb-2" />
+    <div class="lecturer-contact-card-section">
+      <LecturerCard
+        img="https://picsum.photos/id/237/200/300"
+        name="Dr. Jane Doe"
+        email="jane.doe@example.com"
+      />
     </div>
-
-    <div class="year-breakdown-section">
-      <div v-if="isEditing == false">
-        <h1 class="section-header">Year Breakdown</h1>
-      </div>
-      <div v-else-if="isEditing == true">
-        <div class="cd-header">
-          <div class="right-cd">
-            <h1 class="section-header">Year Breakdown</h1>
-          </div>
-          <div class="left-cd">
-            <CButtonIcon type="primary" size="md" btnIconLabel="Edit Section">
-              <template #icon>
-                <PencilLine size="16" />
-              </template>
-            </CButtonIcon>
-          </div>
-        </div>
-      </div>
-      <CButton type="secondary" size="md" :disabled="true" class="year-breadown-btn mb-2"
-        >Semester
-      </CButton>
-
-      <p>
-        {{ courseData.courseSemDescriptions[0]?.description }}
-      </p>
-
-      <Divider class="year-break-div" />
-
-      <CButton type="secondary" size="md" :disabled="true" class="year-breadown-btn"
-        >Semester 2</CButton
-      >
-
-      <p>
-        {{ courseData.courseSemDescriptions[1]?.description }}
-      </p>
-    </div>
-  </div>
-
-  <div class="lecturer-contact-card-section">
-    <LecturerCard
-      img="https://picsum.photos/id/237/200/300"
-      name="Dr. Jane Doe"
-      email="jane.doe@example.com"
-    />
   </div>
 </template>
 
 <style scoped>
+.header-btns {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.edit-types {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+#edit-course {
+  margin: 0;
+  margin-bottom: 2rem;
+}
+
 .section-header {
   margin-bottom: 2rem;
   color: #414141;
@@ -453,6 +1114,12 @@ const sectionEdit = reactive({
 }
 
 /*COURSE MASTER SECTION */
+
+/*weekly breakdown*/
+.add-icon-btn {
+  width: 50%;
+}
+
 .course-cover-img > img {
   width: 100%;
   height: 300px;
@@ -523,15 +1190,40 @@ const sectionEdit = reactive({
   margin: 2.5rem;
 }
 .course-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: block;
 }
 
-#edit-course {
-  width: 15rem;
-  margin-top: 5rem;
+/*mark breakdown */
+.editing-year-break {
+  margin-top: 1rem;
   margin-bottom: 1rem;
+}
+
+.editing-year-break > * {
+  margin-top: 1rem;
+}
+
+.add-sec-btn {
+  margin-top: 2rem;
+  min-width: 100%;
+  margin-bottom: 2rem;
+}
+
+button.p-button.p-component.p-button-icon-only {
+  border-radius: 9999px;
+  margin-top: 0.5rem;
+  height: 30px;
+  width: 30px;
+  background-color: #414141;
+  color: white;
+  border: none;
+
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+}
+
+button.p-button.p-component.p-button-icon-only:active {
+  background-color: #f0f1a5;
+  color: #414141;
 }
 
 /*inputs */
