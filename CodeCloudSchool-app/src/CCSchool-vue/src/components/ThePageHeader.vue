@@ -1,6 +1,6 @@
 <script setup>
 import { useRoute } from 'vue-router'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 import CSearch from './ui/CSearch.vue'
 import CButtonIcon from './ui/CButton-icon.vue'
@@ -17,6 +17,16 @@ const props = defineProps({
 })
 
 const selectedRange = ref(null)
+
+onMounted(() => {
+  if (userName.role === 'lecturer') {
+    userName.value = localStorage.getItem('lectId')
+  } else if (userName.role === 'student') {
+    userName.value = localStorage.getItem('studentNumber')
+  } else {
+    userName.value = 'adminId'
+  }
+})
 </script>
 
 <template>
