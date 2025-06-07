@@ -5,6 +5,27 @@ defineProps({
     default: () => [],
   },
 })
+
+//auto calculate
+const computePercentage = (entryMark, totalMark) => {
+  const entry = parseFloat(entryMark)
+  const total = parseFloat(totalMark)
+  if (isNaN(entry) || isNaN(total) || total === 0) return '0%'
+  return `${((entry / total) * 100).toFixed(1)}%`
+}
+
+const sumItems = (items) => {
+  return items.reduce((acc, item) => {
+    const mark = parseFloat(item.mark)
+    return isNaN(mark) ? acc : acc + mark
+  }, 0)
+}
+
+const hasMismatch = (group) => {
+  const total = parseFloat(group.mark)
+  const itemSum = sumItems(group.items)
+  return Math.abs(itemSum - total) > 0.01
+}
 </script>
 
 <template>
@@ -12,13 +33,18 @@ defineProps({
     <div v-for="(group, index) in items" :key="index" class="list-group">
       <div class="list-group-header">
         <h2 class="list-main">{{ group.title }}</h2>
-        <p class="listG-mark">{{ group.mark }}</p>
+        <p class="listG-mark">{{ group.mark }}%</p>
       </div>
 
       <div v-for="(entry, i) in group.items" :key="i" class="list-Gs">
         <p class="listG-descript">{{ entry.description }}</p>
-        <p class="listG-mark">{{ entry.mark }}</p>
+        <p class="listG-mark">{{ computePercentage(entry.mark, group.mark) }}</p>
       </div>
+
+      <p v-if="hasMismatch(group)" class="text-red-500 text-xs mt-2 ml-2">
+        ⚠️ Total of subtasks ({{ sumItems(group.items).toFixed(1) }}%) doesn't match
+        {{ group.mark }}%
+      </p>
 
       <div v-if="index < items.length - 1" class="divider" />
     </div>

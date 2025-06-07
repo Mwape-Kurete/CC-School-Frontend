@@ -203,32 +203,46 @@ const enterSectionEdit = (key) => {
 // 7. CRUD OPERATIONS
 // -- Save Operations --
 const saveCourseDetails = async (isFullUpdate = false) => {
-  console.log('Embedded URL:', getEmbeddedSlideUrl(draftGoogleSlideUrl.value))
-
   try {
     isLoading.value = true
 
-    Object.keys(applySectionDrafts).forEach((key) => {
-      if (isEditingSection[key]) {
-        applySectionDrafts[key]()
-      }
-    })
+    const partialPayload = {}
 
-    const payload = createSavePayload()
+    if (isFullUpdate || isEditingSection.courseDescription) {
+      partialPayload.courseAbout = draftCourseBio.value
+    }
+    if (isFullUpdate || isEditingSection.courseSlides) {
+      partialPayload.courseSlides = getEmbeddedSlideUrl(draftGoogleSlideUrl.value)
+    }
+    if (isFullUpdate || isEditingSection.courseWeekBreakdown) {
+      partialPayload.courseWeekBreakdown = draftWeekBreakdown.value
+    }
+    if (isFullUpdate || isEditingSection.courseMarkBreakdown) {
+      partialPayload.courseMarkBreakdown = draftMarkBreakdown.value.map((section) => ({
+        title: section.title,
+        mark: section.mark,
+        items: section.items || [],
+      }))
+    }
+    if (isFullUpdate || isEditingSection.courseSemDescriptions) {
+      partialPayload.courseSemDescriptions = draftSemDescriptions.value
+    }
 
-    console.log('this is the payload:', payload)
+    if (Object.keys(partialPayload).length > 0) {
+      await LecturerCourseService.partialUpdateCourseDetails(courseId, partialPayload)
+    }
 
-    const updatedCourse = await LecturerCourseService.updateCourseDetails(courseId, payload)
-    updateLocalState(updatedCourse)
+    await fetchCourseDetails()
+    Object.keys(isEditingSection).forEach((key) => (isEditingSection[key] = false))
 
     if (isFullUpdate) {
       fullUpdate.value = false
       isEditing.value = false
-      Object.keys(isEditingSection).forEach((key) => {
-        isEditingSection[key] = false
-      })
     }
+
+    alert('Saved successfully')
   } catch (err) {
+    console.error('Save failed:', err)
     error.value = err.message || 'Failed to save changes'
   } finally {
     isLoading.value = false
@@ -561,7 +575,7 @@ const handleAddSection = async () => {
                 </template>
               </CButtonIcon>
             </div>
-            <div class="left-cd" v-if="isEditingSection.courseDescription == true">
+            <div class="left-cd" v-if="isEditingSection.courseDescription == true && !fullUpdate">
               <CButtonIcon
                 v-if="!fullUpdate"
                 type="primary"
@@ -621,7 +635,7 @@ const handleAddSection = async () => {
                 </template>
               </CButtonIcon>
             </div>
-            <div class="left-cd" v-if="isEditingSection.courseWeekBreakdown == true">
+            <div class="left-cd" v-if="isEditingSection.courseWeekBreakdown == true && !fullUpdate">
               <CButtonIcon
                 v-if="!fullUpdate"
                 type="primary"
@@ -696,7 +710,7 @@ const handleAddSection = async () => {
                 </template>
               </CButtonIcon>
             </div>
-            <div class="left-cd" v-if="isEditingSection.courseSlides == true">
+            <div class="left-cd" v-if="isEditingSection.courseSlides == true && !fullUpdate">
               <CButtonIcon
                 v-if="!fullUpdate"
                 type="primary"
@@ -784,7 +798,7 @@ const handleAddSection = async () => {
                 </template>
               </CButtonIcon>
             </div>
-            <div class="left-cd" v-if="isEditingSection.courseMarkBreakdown == true">
+            <div class="left-cd" v-if="isEditingSection.courseMarkBreakdown == true && !fullUpdate">
               <CButtonIcon
                 v-if="!fullUpdate"
                 type="primary"
@@ -914,7 +928,10 @@ const handleAddSection = async () => {
                 </template>
               </CButtonIcon>
             </div>
-            <div class="left-cd" v-if="isEditingSection.courseSemDescriptions == true">
+            <div
+              class="left-cd"
+              v-if="isEditingSection.courseSemDescriptions == true && !fullUpdate"
+            >
               <CButtonIcon
                 v-if="!fullUpdate"
                 type="primary"

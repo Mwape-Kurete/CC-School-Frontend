@@ -136,6 +136,49 @@ export const LecturerCourseService = {
     }
   },
 
+  async partialUpdateCourseDetails(courseId: number, courseUpdateData: any): Promise<any> {
+  try {
+    const partialPayload: any = {}
+
+    if (courseUpdateData.courseFullCode !== undefined) {
+      partialPayload.courseFullCode = courseUpdateData.courseFullCode
+    }
+    if (courseUpdateData.courseAbout !== undefined) {
+      partialPayload.courseAbout = courseUpdateData.courseAbout
+    }
+    if (courseUpdateData.courseSlides !== undefined) {
+      partialPayload.courseSlides = courseUpdateData.courseSlides
+    }
+    if (courseUpdateData.courseWeekBreakdown !== undefined) {
+      partialPayload.courseWeekBreakdown = courseUpdateData.courseWeekBreakdown
+    }
+    if (courseUpdateData.courseMarkBreakdown !== undefined) {
+      partialPayload.courseMarkBreakdown = courseUpdateData.courseMarkBreakdown.map((section: any) => ({
+        title: section.title,
+        mark: section.mark,
+        items: section.items || []
+      }))
+    }
+    if (courseUpdateData.courseSemDescriptions !== undefined) {
+      partialPayload.courseSemDescriptions =
+        courseUpdateData.courseSemDescriptions.$values || courseUpdateData.courseSemDescriptions
+    }
+
+    const response = await api.patch(`/Courses/courses/${courseId}/descript-details/patch`, partialPayload)
+    return response.data
+
+  } catch (error: any) {
+    if (error.response) {
+      console.error('API Error:', error.response.data)
+      throw new Error(
+        error.response.data?.message ||
+        'Failed to partially update course details'
+      )
+    }
+    throw new Error('Network error occurred while updating course details')
+  }
+},
+
   async addCourseDetails(courseId: number, courseSendData: any): Promise<any> {
     try {
       // Similar transformation for POST
