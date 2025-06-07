@@ -39,7 +39,7 @@ async function fetchAssignments() {
           allAssignments.push({
             id: backendAssignment.id,
             title: backendAssignment.title,
-            description: backendAssignment.description,
+            description: backendAssignment.description, 
             dueDate: backendAssignment.dueDate,
             status: getAssignmentStatus(backendAssignment.dueDate)
           });

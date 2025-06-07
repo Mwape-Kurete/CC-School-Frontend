@@ -110,7 +110,7 @@ const onAssignmentClick = (assignmentId: number): void => {
 
 <template>
   <div class="course-assignments">
-    <h1>{{ course?.courseDescription }} - Assignments</h1>
+    <!-- <h1>{{ course?.courseDescription }} - Assignments</h1> -->
   </div>
 
   <!-- page content -->

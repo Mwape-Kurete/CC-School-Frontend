@@ -166,6 +166,25 @@ const router = createRouter({
       },
     },
     {
+      path: '/2fa',
+      name: '2FAView',
+      component: () => import('@/views/student/2FAView.vue'),
+      meta: {
+        layout: 'LoginReg',
+        page: '2fa'
+      }
+    },
+    {
+      path: '/register-majors',
+      name: 'RegisterMajors',
+      component: () => import('@/views/student/MajorsSelectView.vue'),
+      meta: {
+        layout: 'TwoCol',
+        allowedRoles: ['student'],
+        page: 'register-majors',
+      }
+    },
+    {
       path: '/admin/settings',
       name: 'admin-settings',
       component: () => import('@/views/admin/SystemSettings.vue'),
@@ -193,8 +212,8 @@ const router = createRouter({
       },
     },
     {
-      path: '/studentannouncementdetails',
-      name: 'studentannouncementdetails',
+      path: '/announcements/:announcementId',
+      name: 'AnnouncementDetails',
       component: () => import('@/views/StudentAnnouncementDetails.vue'),
       meta: {
         layout: 'TwoCol',

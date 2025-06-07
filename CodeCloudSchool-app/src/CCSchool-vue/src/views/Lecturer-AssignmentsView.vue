@@ -45,7 +45,7 @@ async function saveAssignment() {
     header: assignmentDetailsHeader.value,
     description: assignmentDetailsDescription.value,
     attempts: unlimitedAttempts.value ? 'unlimited' : attemptCount.value,
-    status: 'unpublished'
+    status: 'unpublished' 
   };
 
   try {
@@ -74,7 +74,7 @@ function saveToLocalStorage(assignmentData: any) {
     ...assignmentData,
     id: Date.now(),
     dueDate: assignmentData.dueDate,
-    status: 'unpublished'
+    status: 'unpublished' 
   };
   assignments.push(newAssignment);
   localStorage.setItem('assignments', JSON.stringify(assignments));

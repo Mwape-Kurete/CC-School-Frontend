@@ -14,7 +14,7 @@ import Dropdown from 'primevue/dropdown'
 
 
 // import api service
-import { AuthService } from '@/api/auth'
+import { AdminAuthService, AuthService, LectAuthService } from '@/api/auth'
 
 const props = defineProps({
     variant: {
@@ -90,23 +90,24 @@ const login = async () => {
             // Redirect or store user session here
 
 
-            const user = response; 
-            
-            
+            const user = response;
+
+
             // store user role in local storage
             localStorage.setItem('userRole', user.role);
             if (user.role === 'Student') {
                 // user obj only has email, not studentNumber => get the student number out the email
-                user.studentNumber = user.email.split('@')[0]; 
+                user.studentNumber = user.email.split('@')[0];
                 console.log('Student number:', user.studentNumber);
 
-                localStorage.setItem('studentNumber', user.studentNumber );
+                localStorage.setItem('studentNumber', user.studentNumber);
                 router.push({ name: 'dashboard' });
             } else if (user.role === 'Lecturer') {
+                localStorage.setItem('lectId', user.lecturerId);
                 router.push({ name: 'lecturer-dash' });
             } else {
                 console.warn('Unknown user role:', user.role);
-                // Optional: Redirect to a generic page or show an error
+                localStorage.setItem('adminId', user.AdminId);
             }
         }
     } catch (error) {
@@ -131,39 +132,114 @@ const signUp = async () => {
         loading.value = false
         return
     }
-    try {
-        console.log('Attempting to sign up...')
-        const response = await AuthService.signUpStudent({
-            name: name.value,
-            lastName: surname.value,
-            password: password.value,
-            gender: typeof gender.value === 'object' ? gender.value.value : gender.value, // extract actual string
-            address: address.value,
-            phoneNumber: phoneNo.value,
-            enrollmentDate: new Date().toISOString(), // REQUIRED
-            yearLevel: "1st Year", // or bind this to a form field
-        })
 
-        if (typeof response === 'string') {
-            // sign up failed, show message
-            errorMessage.value = response;
-        } else {
-            // sign up successful, response is a User object
-            console.log('sign up successful:', response);
-            alert('Your CC School email adress for signing in is: ' + response.email);
-            // TODO: login user after sign up
+    console.log(role.value);
+
+    if (role.value === 'student') {
+        try {
+            console.log('Attempting to sign up...')
+            const response = await AuthService.signUpStudent({
+                name: name.value,
+                lastName: surname.value,
+                password: password.value,
+                gender: typeof gender.value === 'object' ? gender.value.value : gender.value, // extract actual string
+                address: address.value,
+                phoneNumber: phoneNo.value,
+                enrollmentDate: new Date().toISOString(), // REQUIRED
+                yearLevel: "1st Year", // or bind this to a form field
+                PrivateEmail: email.value
+            })
+
+
+            console.log(response.includes('Verification email sent. Please check your inbox.'));
+            if (!response.includes('Verification email sent. Please check your inbox.')) {
+                // sign up failed, show message
+                errorMessage.value = response;
+            } else {
+                // sign up successful and email sent, response is a string
+                console.log('sign up successful:', response);
+                // redirect user 2fa screen
+                localStorage.setItem('userRole', role.value);
+                localStorage.setItem('studentNumber', user.studentNumber);
+                router.push({ name: '2FAView' });
+            }
+        } catch (error) {
+            errorMessage.value = 'Sign Up failed. Please check your credentials.'
+        } finally {
+            loading.value = false
         }
-    } catch (error) {
-        errorMessage.value = 'Sign Up failed. Please check your credentials.'
-    } finally {
-        loading.value = false
     }
+    else if (role.value === 'lecturer') {
+        try {
+            console.log('Attempting to sign up lecturer');
+            const response = await LectAuthService.signUpLecturer({
+                lectName: name.value,
+                lecLastName: surname.value,
+                name: name.value,
+                PrivateEmail: email.value,
+                lastName: surname.value,
+                password: password.value,
+                phoneNumber: phoneNo.value,
+                department: "",
+                dateOfJoining: new Date().toISOString(),
+                isActive: true
+            });
+
+            console.log('Sign up response:', response);
+
+            if (typeof response === 'string' && response.includes('Verification email sent')) {
+                // success case
+                console.log('Sign up successful');
+                localStorage.setItem('userRole', role.value);
+                localStorage.setItem('lectId', user.lecturerId);
+                router.push({ name: '2FAView' });
+            } else {
+                // failure case
+                errorMessage.value = typeof response === 'string' ? response : 'Sign-up failed.';
+            }
+        } catch (error) {
+            errorMessage.value = 'Sign Up failed. Please check your credentials.';
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    else if (role.value === 'admin') {
+        try {
+            console.log('Attempting to sign up admin');
+            const response = await AdminAuthService.signUpAdmin({
+                FName: name.value,
+                LName: surname.value,
+                Password: password.value,
+                phoneNumber: phoneNo.value,
+                AdminRole: "superadmin",
+                Department: "IT",
+                PrivateEmail: email.value
+            });
+
+            console.log('Admin sign-up response:', response);
+
+            if (!response.includes('Verification email sent. Please check your inbox.')) {
+                errorMessage.value = response;
+            } else {
+                console.log('Sign up successful:', response);
+                localStorage.setItem('userRole', role.value);
+                localStorage.setItem('adminId', user.AdminId);
+                router.push({ name: '2FAView' });
+            }
+        } catch (error) {
+            errorMessage.value = 'Sign Up failed. Please check your credentials.';
+        } finally {
+            loading.value = false;
+        }
+    }
+
 }
 
 </script>
 
 <template>
-    <form>
+    <form @submit.prevent>
         <div class="flex flex-col items-center p-6 w-full max-w-md mx-auto">
             <!-- LOGIN FORM -->
             <template v-if="currentFormVariant === 'login'">
@@ -177,8 +253,8 @@ const signUp = async () => {
                     <span class="text-sm no-account"><strong>or</strong></span>
                 </Divider>
 
-                <CDropdown type="ghost" size="sm" v-model="role" :options="roleOptions" optionLabel="label"
-                    class="role-dropdown w-full" />
+                <Dropdown placeholder="Are you a Student, Lecturer, or Admin?" v-model="role" :options="roleOptions"
+                    optionValue="value" optionLabel="label" class="minimal-dropdown w-full mb-4" />
 
 
                 <div class="w-full mb-4">
@@ -218,6 +294,9 @@ const signUp = async () => {
             <!-- SIGN UP FORM -->
             <template v-else>
                 <h2 class="text-2xl font-semibold mb-6">Create an account</h2>
+
+                <Dropdown placeholder="Are you a Student, Lecturer, or Admin?" v-model="role" :options="roleOptions"
+                    optionValue="value" optionLabel="label" class="minimal-dropdown w-full mb-2" />
 
                 <div class="grid w-full gap-4 mb-4 one-row">
                     <div class="col-6">
@@ -298,6 +377,11 @@ const signUp = async () => {
 </template>
 
 <style scoped>
+.role-dropdown {
+    border: 1px solid #212121;
+    border-radius: 25px !important;
+}
+
 .login-btn {
     background-color: black;
     border: 2px solid black;
@@ -355,5 +439,33 @@ const signUp = async () => {
 
 ::v-deep(.p-float-label > label) {
     background-color: transparent !important;
+}
+
+/* Target the visible dropdown container */
+::v-deep(.minimal-dropdown.p-dropdown) {
+    border: none;
+    border-bottom: 1px solid #9ca3af;
+    /* Tailwind gray-400 */
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0.5rem 0;
+}
+
+/* Remove inner padding to match inputs */
+::v-deep(.minimal-dropdown .p-dropdown-label) {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* Optional: caret down icon alignment */
+::v-deep(.minimal-dropdown .p-dropdown-trigger) {
+    padding-right: 0;
+}
+
+/* Optional: Dropdown open panel */
+::v-deep(.p-dropdown-panel) {
+    border-radius: 0.25rem;
+    border: 1px solid #d1d5db;
+    /* Tailwind gray-300 */
 }
 </style>
