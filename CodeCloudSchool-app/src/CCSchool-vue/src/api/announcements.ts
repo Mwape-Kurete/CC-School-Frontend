@@ -39,6 +39,16 @@ export const AnnouncementService = {
     }
   },
 
+  async getAnnouncementsByLecturerId(lecturerId: number): Promise<Announcement[] | string> {
+    try {
+      const response = await api.get(`/api/announcements/lecturer/${lecturerId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching announcements by lecturer ID:', error);
+      return error.response?.data || 'Failed to fetch announcements by lecturer';
+    }
+  },
+
   formatAnnouncementDate(isoDate: string): string {
     const date = new Date(isoDate);
     const day = date.getUTCDate();

@@ -42,5 +42,23 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
+  font-family: "Quicksand", sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Light Theme Variables */
+:root {
+  --bg-color: #f9fafb;
+  --text-color: #1e293b;
+  --card-bg: #ffffff;
+}
+
+/* Dark Theme Variables */
+body.dark-mode {
+  --bg-color: #1e293b;
+  --text-color: #f8fafc;
+  --card-bg: #334155;
 }
 </style>

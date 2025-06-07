@@ -211,7 +211,7 @@ const formatDate = (dateString: string) => {
 </template>
 
 <style scoped>
-/* Your existing styles remain unchanged */
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600&display=swap');
 .announcement-container {
   padding: 2rem;
   font-family: "Quicksand", sans-serif;
