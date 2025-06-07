@@ -1,12 +1,11 @@
 import api from './api';
 
-
 // Represents the structure of an announcement returned by the backend  
 export interface Announcement {
   announcementId: number;
   title: string;
   description: string;
-  date: string; // ISO date string
+  date: string;
   lecturerId: number;
 }  
 

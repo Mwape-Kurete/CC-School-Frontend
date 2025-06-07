@@ -49,3 +49,21 @@ export const MajorServices = {
         }
     }
 }
+
+
+export const StudentMajorServices = {
+    // pass the userID of the student here as studentID
+    async fetchStudentMajors (studentId: number): Promise<major[] | string> {
+        try {
+            const response = await api.get(`majors/getMajorsByStudentId/${studentId}`);
+            console.log('Student majors fetched:', response.data);
+            return response.data.$values; // e.g. array of majors for the student
+        } catch (error: any) {
+            console.error('Full error object:', error);
+            if (error.response && error.response.data) {
+                return error.response.data;
+            }
+            return 'An unknown error occurred';
+        }
+    }
+}

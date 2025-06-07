@@ -38,7 +38,7 @@ defineProps({
     }"
   >
     <!-- MODULE CARD -->
-    <template v-if="cardType === 'module'">
+    <template v-if="cardType === 'module'" @click="$emit('click', $event)">
       <!-- Left Section -->
       <div
         class="left-section"
@@ -70,7 +70,7 @@ defineProps({
     </template>
 
     <!-- ANNOUNCEMENT CARD -->
-    <template v-else-if="cardType === 'announcement'">
+    <template v-else-if="cardType === 'announcement'" @click="$emit('click', $event)">
       <div
         class="announcement-avatar"
         :style="
@@ -97,7 +97,7 @@ defineProps({
       </div>
     </template>
 
-    <template v-else>
+    <template v-else @click="$emit('click', $event)">
       <div
         class="announcement-avatar"
         :style="
