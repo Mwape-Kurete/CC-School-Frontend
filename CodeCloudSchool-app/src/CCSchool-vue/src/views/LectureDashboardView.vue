@@ -13,13 +13,18 @@ import { LecturerCourseService } from '@/api/courses'
 
 //Functionality Start
 //fetching & setting const variables
-const lecturerId = localStorage.getItem('lecturerId') || '33'
+const storedLectId = localStorage.getItem('lecturerId')
+const lecturerId = storedLectId && !isNaN(Number(storedLectId)) ? parseInt(storedLectId, 10) : 2
+
+//setting var for announcements
 const announcements = ref([])
 
 //fetching dashboard data from backend
 onMounted(async () => {
   try {
-    const { success, courses, error } = await LecturerCourseService.getLecturerCourses(lecturerId)
+    const { success, courses, error } = await LecturerCourseService.getLecturerCourses(
+      lecturerId.toString(),
+    )
 
     if (success && courses?.length) {
       const firstCourse = courses[0]

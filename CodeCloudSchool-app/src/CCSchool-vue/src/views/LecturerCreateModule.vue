@@ -1,6 +1,8 @@
 <script setup>
 //importing from vue
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
 
 //import services
 import { LecturerModulesServices } from '@/api/modules'
@@ -11,9 +13,24 @@ import CreateModuleForm from '@/components/CreateModuleAssignmentForm.vue'
 
 //Functionality Start
 //fetching & setting const variables
-const lecturerId = localStorage.getItem('lectId') || '33'
+const storedLectId = localStorage.getItem('lecturerId')
+const lecturerId = storedLectId && !isNaN(Number(storedLectId)) ? parseInt(storedLectId, 10) : 2
 const courseId = ref('')
 const testId = 1
+
+const router = useRouter()
+const toast = useToast()
+
+//ref to trigger a reset of the form inputs
+const moduleFormRef = ref(null)
+
+//toasty
+toast.add({
+  severity: 'success',
+  summary: 'Success',
+  detail: 'Module created!',
+  life: 2000,
+})
 
 //fetching dashboard data from backend
 onMounted(async () => {
@@ -38,10 +55,17 @@ async function handleCreateModule(modulePayload) {
   const result = await LecturerModulesServices.createModule(courseId.value, modulePayload)
 
   if (typeof result === 'string') {
-    console.error('Module creation failed:', result)
+    toast.add({ severity: 'error', summary: 'Failed', detail: result, life: 3000 })
   } else {
-    console.log('Module created successfully:', result)
-    // optionally clear the form or show success feedback
+    toast.add({ severity: 'success', summary: 'Success', detail: 'Module created!', life: 2000 })
+
+    // Reset the form
+    moduleFormRef.value?.resetForm()
+
+    // Wait briefly before redirecting (so the toast is seen)
+    setTimeout(() => {
+      router.push({ name: 'lecturer-modules' })
+    }, 2000)
   }
 }
 
@@ -49,8 +73,9 @@ async function handleCreateModule(modulePayload) {
 </script>
 
 <template>
+  <Toast />
   <div class="create-module">
-    <CreateModuleForm variant="module" @submitModule="handleCreateModule" />
+    <CreateModuleForm ref="moduleFormRef" variant="module" @submitModule="handleCreateModule" />
   </div>
 </template>
 

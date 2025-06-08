@@ -29,6 +29,20 @@ function submitModuleForm() {
 
   emit('submitModule', payload)
 }
+
+defineExpose({
+  resetForm: () => {
+    moduleForm.value = {
+      title: '',
+      pageName: '',
+      description: '',
+      slides: '',
+      resources: '',
+      embedCode: '',
+    }
+  },
+})
+
 //MWAPE ADJUSTMENT END
 
 /* Assignment Form State */

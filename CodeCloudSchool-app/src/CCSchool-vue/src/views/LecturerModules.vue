@@ -2,10 +2,11 @@
 //importing from vue
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
 
 //importing api services
 import { LecturerCourseService } from '@/api/courses'
-import { LecturerModulesServices } from '@/api/modules'
+import { ModulesServices, LecturerModulesServices } from '@/api/modules'
 
 //importing components
 import AccordionCard from '@/components/AccordionCard.vue'
@@ -15,45 +16,75 @@ import { PlusCircleIcon, ArrowUpFromLine } from 'lucide-vue-next'
 
 //using routing for inpage navigation
 const router = useRouter()
+const toast = useToast()
 
 //setting variables
-const selectedOption = ref(null)
-const lecturerId = localStorage.getItem('lecturerId' || '33')
+const selectedOption = ref('All')
+
+//Get Lecturer ID else fallback
+const storedLectId = localStorage.getItem('lecturerId')
+const lecturerId = storedLectId && !isNaN(Number(storedLectId)) ? parseInt(storedLectId, 10) : 2
 
 const modules = ref([])
 
 //initial data fetch
-onMounted(async () => {
+onMounted(fetchModules)
+
+//simplifying onMounted
+async function fetchModules() {
   try {
     const { success, courses } = await LecturerCourseService.getLecturerCourses(lecturerId)
-
-    if ((success, courses?.length)) {
+    if (success && courses?.length) {
       const courseId = courses[0].id
-      const response = await LecturerModulesServices.fetchModulesByCourseID(courseId)
+      const response = await ModulesServices.fetchModulesByCourseID(courseId)
 
-      modules.value = response
-
-      console.log('Modules fetched successfully:', modules.value)
+      modules.value = response?.$values || []
     }
   } catch (err) {
-    console.error('There was an error fetching modules:', err)
+    console.error('Error fetching modules:', err)
   }
-})
+}
+
+//publish modules handeling
+async function handlePublishModule(courseId, moduleId) {
+  try {
+    const response = await LecturerModulesServices.publishModule(courseId, moduleId, true)
+
+    console.log('Module published:', response)
+
+    //toast notification
+    toast.add({ severity: 'success', summary: 'Success', detail: 'Module published successfully' })
+
+    await fetchModules() // Refresh the list after publishing
+  } catch (error) {
+    console.error('Failed to publish module:', error)
+    //error toast
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to publish module' })
+  }
+}
 
 //navs
 const goToCreateModule = () => {
   router.push({ name: 'lecturer-create-modules' })
 }
+
+function handleModuleClick(courseId) {
+  router.push({
+    name: 'studentModuleDetails',
+    params: { courseId },
+  })
+}
 </script>
 
 <template>
+  <Toast />
   <div class="modules-header">
     <div class="right-aligned">
       <CDropdown
         v-model="selectedOption"
         :options="['All', 'Published', 'Unpublished']"
         simple-options
-        placeholder="Select"
+        placeholder="Select an Option"
         type="primary"
         size="sm"
       />
@@ -72,12 +103,12 @@ const goToCreateModule = () => {
   </div>
 
   <div class="card-con">
-    <<template v-if="selectedOption === 'All'">
+    <template v-if="selectedOption === 'All'">
       <h1>All Modules</h1>
       <AccordionCard
         v-for="mod in modules"
-        :key="mod.id"
-        :header="mod.groupTitle + ': ' + mod.title"
+        :key="mod.moduleId"
+        :header="(mod.groupTitle || 'Untitled') + ': ' + (mod.title || 'No Title')"
         :items="[{ title: mod.description }]"
       />
     </template>
@@ -86,9 +117,10 @@ const goToCreateModule = () => {
       <h1>Published Modules</h1>
       <AccordionCard
         v-for="mod in modules.filter((m) => m.published)"
-        :key="mod.id"
-        :header="mod.groupTitle + ': ' + mod.title"
+        :key="mod.moduleId"
+        :header="(mod.groupTitle || 'Untitled') + ': ' + (mod.title || 'No Title')"
         :items="[{ title: mod.description }]"
+        @click="() => handleModuleClick(mod.courseId)"
       />
     </template>
 
@@ -97,13 +129,18 @@ const goToCreateModule = () => {
       <div
         class="accordion-container"
         v-for="mod in modules.filter((m) => !m.published)"
-        :key="mod.id"
+        :key="mod.moduleId"
       >
         <AccordionCard
-          :header="mod.groupTitle + ': ' + mod.title"
+          :header="(mod.groupTitle || 'Untitled') + ': ' + (mod.title || 'No Title')"
           :items="[{ title: mod.description }]"
         />
-        <CButtonIcon type="secondary" size="lg" btnIconLabel="Publish Module">
+        <CButtonIcon
+          type="secondary"
+          size="lg"
+          btnIconLabel="Publish Module"
+          @click="handlePublishModule(mod.courseId, mod.moduleId)"
+        >
           <template #icon>
             <ArrowUpFromLine />
           </template>

@@ -38,7 +38,7 @@ export const ModulesServices = {
 export const LecturerModulesServices = {
   async createModule(courseId: number, module: Modules): Promise<Modules | string> {
     try {
-      const response = await api.post(`/course/${courseId}`, module)
+      const response = await api.post(`/modules/course/${courseId}`, module)
       console.log('Module Created: ', response.data)
       return response.data
     } catch (error: any) {
@@ -53,7 +53,10 @@ export const LecturerModulesServices = {
     published: boolean,
   ): Promise<Modules | any> {
     try {
-      const response = await api.put(`course/${courseId}/module/${moduleId}/publish`, published)
+      const response = await api.put(
+        `modules/course/${courseId}/module/${moduleId}/publish`,
+        published,
+      )
 
       console.log('Module published successfully:', response.data)
 
