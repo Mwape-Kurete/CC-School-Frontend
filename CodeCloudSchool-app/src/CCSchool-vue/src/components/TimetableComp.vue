@@ -68,7 +68,7 @@ onMounted(async () => {
                     day: dayMap[slot.day],
                     startHour: startHour,
                     duration: endHour - startHour,
-                    dark: (startHour + endHour) % 2 === 1 //styling condition
+                    dark: (slot.timeSlotId) % 2 === 1 //styling condition
                 }
             });
         }
