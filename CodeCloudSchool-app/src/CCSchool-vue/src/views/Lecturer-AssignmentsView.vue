@@ -1,7 +1,11 @@
+
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { AssignmentService } from '@/api/assignments';
+import DOMPurify from 'dompurify';
+
+
 
 const router = useRouter();
 
@@ -10,7 +14,7 @@ const assignmentTitle = ref('');
 const attemptCount = ref(1);
 const unlimitedAttempts = ref(false);
 const dueDate = ref('');
-const submissionFormat = ref('');
+const submissionFormat = ref(''); 
 const assignmentDetailsHeader = ref('');
 const assignmentDetailsDescription = ref('');
 
@@ -82,6 +86,11 @@ function toggleUnlimitedAttempts() {
 }
 
 async function saveAssignment() {
+  if (!assignmentTitle.value.trim() || !assignmentDetailsDescription.value.trim()) {
+    alert('Title and description are required');
+    return;
+  }
+
   const assignmentData = {
     title: assignmentTitle.value,
     dueDate: dueDate.value,
@@ -93,35 +102,51 @@ async function saveAssignment() {
   };
 
   try {
-    saveToLocalStorage(assignmentData);
+    // Save to localStorage first for immediate feedback
+    const localStorageId = saveToLocalStorage(assignmentData);
     
-    const response = await AssignmentService.createAssignment({
+    // Then save to backend
+    const backendResponse = await AssignmentService.createAssignment({
       title: assignmentTitle.value,
       description: `${assignmentDetailsHeader.value}\n\n${assignmentDetailsDescription.value}`,
       dueDate: dueDate.value,
-      courseId: 1,
+      courseId: 1, // Replace with actual course ID
       submissionFormat: submissionFormat.value,
       maxAttempts: unlimitedAttempts.value ? null : attemptCount.value
     });
 
-    console.log('Assignment saved:', response);
+    // Update localStorage with backend ID if successful
+    if (typeof backendResponse !== 'string' && backendResponse.id) {
+      updateLocalStorageId(localStorageId, backendResponse.id);
+    }
+
     resetForm();
     router.push('/LecturerAssignOver');
   } catch (error) {
     console.error('Failed to save assignment:', error);
+    alert('Failed to save assignment. Please try again.');
   }
 }
 
-function saveToLocalStorage(assignmentData: any) {
+function saveToLocalStorage(assignmentData: any): number {
   const assignments = JSON.parse(localStorage.getItem('assignments') || '[]');
   const newAssignment = {
     ...assignmentData,
-    id: Date.now(),
-    dueDate: assignmentData.dueDate,
-    status: 'unpublished' 
+    id: Date.now(), // Temporary ID
+    createdAt: new Date().toISOString()
   };
   assignments.push(newAssignment);
   localStorage.setItem('assignments', JSON.stringify(assignments));
+  return newAssignment.id;
+}
+
+function updateLocalStorageId(tempId: number, backendId: number) {
+  const assignments = JSON.parse(localStorage.getItem('assignments') || '[]');
+  const assignmentIndex = assignments.findIndex((a: any) => a.id === tempId);
+  if (assignmentIndex !== -1) {
+    assignments[assignmentIndex].id = backendId;
+    localStorage.setItem('assignments', JSON.stringify(assignments));
+  }
 }
 
 function resetForm() {
@@ -276,7 +301,9 @@ function resetForm() {
                 @mouseup="checkActiveFormats"
                 @keyup="checkActiveFormats"
                 placeholder="Type assignment description here"
+                
               ></div>
+              
               <textarea 
                 v-model="assignmentDetailsDescription"
                 class="hidden-textarea"

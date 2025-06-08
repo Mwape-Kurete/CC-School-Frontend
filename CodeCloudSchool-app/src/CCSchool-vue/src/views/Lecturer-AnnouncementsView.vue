@@ -1,23 +1,60 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { AnnouncementService } from '@/api/announcements';
-import type { Announcement } from '@/api/announcements';
 import DOMPurify from 'dompurify';
+
+// Extend the Window interface to include SpeechRecognition types
+interface Window {
+  SpeechRecognition: typeof SpeechRecognition;
+  webkitSpeechRecognition: typeof SpeechRecognition;
+}
+
+// Declare SpeechRecognition type if not available globally
+declare var SpeechRecognition: {
+  new (): any;
+};
+declare var webkitSpeechRecognition: {
+  new (): any;
+};
+
+const recognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+const recognizer = recognition ? new recognition() : null;
+
+const startListening = () => {
+  if (!recognizer) {
+    errorMessage.value = 'Speech recognition not supported in this browser.';
+    return;
+  }
+
+  recognizer.continuous = false;
+  recognizer.lang = 'en-US';
+
+  recognizer.onresult = (event: any) => {
+    const transcript = event.results[0][0].transcript.toLowerCase();
+    handleVoiceCommand(transcript);
+  };
+
+  recognizer.onerror = (event: any) => {
+    errorMessage.value = `Speech recognition error: ${event.error}`;
+  };
+
+  recognizer.start();
+};
 
 const router = useRouter();
 const courseId = ref<number>(1);
-const lecturerId = ref<number>(1); // Get from auth/session in real app
+const lecturerId = ref<number>(1);
 
 const title = ref('');
 const body = ref('');
 const isLoading = ref(false);
 const errorMessage = ref('');
+const spokenText = ref('');
 const editableDiv = ref<HTMLElement | null>(null);
+const publishButton = ref<HTMLElement | null>(null);
 
-// Toolbar button configurations
 const toolbarButtons = [
   { cmd: 'bold', label: 'B', active: false },
   { cmd: 'italic', label: 'I', active: false },
@@ -26,9 +63,6 @@ const toolbarButtons = [
   { cmd: 'insertOrderedList', label: '1.', active: false }
 ];
 
-const announcements = ref<Announcement[]>([]);
-
-// Formatting functions
 const format = (cmd: string, value?: string) => {
   if (!editableDiv.value) return;
   editableDiv.value.focus();
@@ -47,63 +81,42 @@ const handlePaste = (e: ClipboardEvent) => {
   updateBody();
 };
 
-// Combined storage functions
-const saveAnnouncement = async (announcementData: Announcement) => {
-  // Save to backend
-  const backendResult = await AnnouncementService.postAnnouncement(courseId.value, announcementData);
-  
-  if (typeof backendResult === 'string') {
-    throw new Error(backendResult);
-  }
-
-  // Save to localStorage
-  const localStorageKey = `announcements_${courseId.value}_${lecturerId.value}`;
-  const storedAnnouncements = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
-  
-  const updatedAnnouncements = [
-    ...storedAnnouncements,
-    {
-      ...backendResult,
-      // Ensure we have all required fields
-      id: backendResult.id || Date.now().toString(),
-      date: backendResult.date || new Date().toISOString()
-    }
-  ];
-  
-  localStorage.setItem(localStorageKey, JSON.stringify(updatedAnnouncements));
-  
-  return backendResult;
-};
-
-const loadAnnouncements = async () => {
+const saveAnnouncement = async (announcementData: {
+  title: string;
+  body: string;
+}) => {
   try {
-    // Try to load from backend first
-    const backendAnnouncements = await AnnouncementService.getAnnouncementsByCourseId(courseId.value);
-    
-    if (typeof backendAnnouncements !== 'string') {
-      announcements.value = backendAnnouncements;
-      
-      // Update localStorage with fresh data from backend
-      const localStorageKey = `announcements_${courseId.value}_${lecturerId.value}`;
-      localStorage.setItem(localStorageKey, JSON.stringify(backendAnnouncements));
-    } else {
-      // Fallback to localStorage if backend fails
-      const localStorageKey = `announcements_${courseId.value}_${lecturerId.value}`;
-      const stored = localStorage.getItem(localStorageKey);
-      if (stored) {
-        announcements.value = JSON.parse(stored);
+    const backendResult = await AnnouncementService.postAnnouncement(
+      courseId.value, 
+      {
+        title: announcementData.title,
+        body: DOMPurify.sanitize(announcementData.body),
+        date: new Date().toISOString(),
+        lecturerId: lecturerId.value,
+        id: '',
+        createdAt: ''
       }
-      throw new Error(backendAnnouncements);
+    );
+    
+    if (typeof backendResult === 'string') {
+      throw new Error(backendResult);
     }
+
+    const key = `announcements_${courseId.value}_${lecturerId.value}`;
+    const stored = JSON.parse(localStorage.getItem(key) || '[]');
+    const updated = [...stored, backendResult];
+    localStorage.setItem(key, JSON.stringify(updated));
+    
+    return backendResult;
   } catch (error) {
-    console.error('Error loading announcements:', error);
+    console.error('Error saving announcement:', error);
+    throw error;
   }
 };
 
-// Main announcement sending function
 const sendAnnouncement = async () => {
   if (!title.value.trim() || !body.value.trim()) {
-    errorMessage.value = 'Please fill in both title and body.';
+    errorMessage.value = 'Title and content are required';
     return;
   }
 
@@ -111,80 +124,100 @@ const sendAnnouncement = async () => {
   errorMessage.value = '';
 
   try {
-    const announcementData: Announcement = {
+    await saveAnnouncement({
       title: title.value,
-      body: DOMPurify.sanitize(body.value),
-      date: new Date().toISOString(),
-      lecturerId: lecturerId.value,
-      id: Date.now().toString() // Temporary ID until backend responds
-    };
-
-    // Save to both storage locations
-    const result = await saveAnnouncement(announcementData);
+      body: body.value
+    });
     
-    // Reset form
     title.value = '';
     body.value = '';
-    if (editableDiv.value) {
-      editableDiv.value.innerHTML = '';
-    }
+    if (editableDiv.value) editableDiv.value.innerHTML = '';
     
-    // Refresh announcements
-    await loadAnnouncements();
     router.push('/LecturerAnnounceOver');
   } catch (error: unknown) {
     errorMessage.value = error instanceof Error ? error.message : 'Failed to create announcement';
-    console.error('Error:', error);
   } finally {
     isLoading.value = false;
   }
 };
 
-// Initial load
-onMounted(() => {
-  loadAnnouncements();
-  if (editableDiv.value) {
-    editableDiv.value.innerHTML = body.value;
-  }
-});
+// Voice command integration
+const handleVoiceCommand = async (command: string) => { 
+  spokenText.value = command;
+  
+  try {
+    if (command.includes('publish') || command.includes('submit') || 
+        command.includes('post') || command.includes('send')) {
+      if (publishButton.value) {
+        publishButton.value.click();
+       
+      }
+    } else if (command.includes('clear') || command.includes('reset')) {
+      title.value = '';
+      body.value = '';
+      if (editableDiv.value) editableDiv.value.innerHTML = '';      
+      errorMessage.value = '';
+    } else if (command.includes('cancel') || command.includes('back')) {
+        router.push('/LecturerAnnounceOver');
 
-// Date formatting helper
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date);
+      
+    } else {
+      errorMessage.value = "Command not recognized. Try 'publish', 'clear', or 'cancel'";
+    }
+  } catch (error) {
+    console.error('Error handling voice command:', error);
+    errorMessage.value = 'Its Chaai...! Please try again.';
+  }
 };
+
+onMounted(() => {
+  if (editableDiv.value) {
+    editableDiv.value.innerHTML = body.value; 
+  }
+  nextTick(() => {
+    if (publishButton.value) {
+      publishButton.value.focus();
+    }
+  });
+});
 </script>
 
 <template>
   <div class="announcement-container">
-    <h1 class="main-title">Create An Announcement</h1>
+    <h1 class="main-title">Create Announcement</h1>
     <div class="announcement-card">
-      <h2 class="card-title">Create an Announcement</h2>
+      <h2 class="card-title">New Announcement</h2>
+      
+      <button @click="startListening" class="voice-command-button">
+        🎙️ Speak Command
+      </button>
+      <p v-if="spokenText" class="voice-feedback">You said: "{{ spokenText }}"</p>
+      
       <div class="form-container">
         <div class="input-group">
-          <label class="input-label" for="announcement-title">Title</label>
+          <label for="announcement-title" class="input-label">Title</label>
           <InputText
             id="announcement-title"
             v-model="title"
-            placeholder="Title"
+            placeholder="Announcement title"
             class="custom-input"
+            aria-label="Announcement title input"
+            :disabled="isLoading"
           />
         </div>
+        
         <div class="input-group">
-          <label class="input-label">Body</label>
+          <label class="input-label">Content</label>
           <div class="toolbar">
             <button
               v-for="btn in toolbarButtons"
               :key="btn.cmd"
               @click.prevent="format(btn.cmd)"
-              :class="{ 'active-format': btn.active }"
+              @keydown.enter="format(btn.cmd)"
+              @keydown.space="format(btn.cmd)"
               :title="btn.cmd"
+              :aria-label="`Format ${btn.cmd}`"
+              :disabled="isLoading"
             >
               {{ btn.label }}
             </button>
@@ -196,22 +229,44 @@ const formatDate = (dateString: string) => {
             @paste="handlePaste"
             class="rich-textarea"
             placeholder="Type your announcement here..."
+            aria-label="Announcement content editor"
+            role="textbox"
+            :aria-disabled="isLoading"
           ></div>
         </div>
-        <Button
-          label="SEND ANNOUNCEMENT"
-          class="send-button"
-          @click="sendAnnouncement"
-          :loading="isLoading"
-        />
+        
+        <div class="button-group">
+          <button 
+            @click="router.push('/LecturerAnnounceOver')" 
+            class="cancel-button"
+            :disabled="isLoading"
+          >
+            Cancel
+          </button>
+          <button
+          ref="publishButton"
+            label="Publish Announcement"
+            class="send-button"
+            @click="sendAnnouncement"
+            @keydown.enter="sendAnnouncement"
+            @keydown.space="sendAnnouncement"
+            :loading="isLoading"
+            aria-label="Publish announcement button"
+            :disabled="isLoading"
+            v-bind="$attrs">
+            Publish Announcement
+          </button>
+        </div>
+        
         <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
       </div>
     </div>
   </div>
 </template>
 
+
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=Quicksand:wght@300..700&display=swap');
 
 .announcement-container {
   padding: 2rem;
@@ -241,6 +296,17 @@ const formatDate = (dateString: string) => {
   margin-bottom: 1.5rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid #e2e8f0;
+}
+
+.voice-command {
+  margin-bottom: 1rem;
+}
+
+.voice-feedback {
+  font-size: 0.9rem;
+  color: #4b5563;
+  margin-bottom: 1rem;
+  font-style: italic;
 }
 
 .form-container {
@@ -293,9 +359,8 @@ const formatDate = (dateString: string) => {
   background-color: #c0d0bd;
 }
 
-.toolbar button.active-format {
-  background-color: #aab7a7;
-  color: white;
+.toolbar button:focus {
+  outline: 3px solid #ff8c00;
 }
 
 .rich-textarea {
@@ -315,8 +380,13 @@ const formatDate = (dateString: string) => {
   pointer-events: none;
 }
 
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .send-button {
-  width: 70%;
   background-color: #D0DFCC;
   color: black;
   border: none;
@@ -326,13 +396,36 @@ const formatDate = (dateString: string) => {
   font-size: 0.875rem;
   text-transform: uppercase;
   margin-top: 0.5rem;
-  margin-left: auto;
-  margin-right: auto;
-  display: block;
+  font-family: "Lexend", sans-serif;
 }
 
 .send-button:hover {
   background-color: #aab7a7;
+}
+
+.send-button:focus {
+  outline: 3px solid #ff8c00;
+}
+
+.cancel-button {
+  background-color: #f0f0f0;
+  color: #181818;
+  border: 1px solid #cbd5e1;
+  border-radius: 50px;
+  padding: 0.625rem 1.25rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  margin-top: 0.5rem;
+  font-family: "Lexend", sans-serif;
+}
+
+.cancel-button:hover {
+  background-color: #e0e0e0;
+}
+
+.cancel-button:focus {
+  outline: 3px solid #ff8c00;
 }
 
 .error-message {
@@ -360,8 +453,28 @@ const formatDate = (dateString: string) => {
   padding-left: 1.5rem;
 }
 
+.voice-command-button {
+  background-color: #dbeafe;
+  border: 1px solid #60a5fa;
+  border-radius: 50px;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: "Lexend", sans-serif;
+  cursor: pointer;
+}
+
+.voice-command-button:hover {
+  background-color: #bfdbfe;
+}
+
+.voice-command-button:focus {
+  outline: 3px solid #ff8c00;
+}
+
 .rich-textarea ol {
   list-style-type: decimal;
   padding-left: 1.5rem;
 }
 </style>
+

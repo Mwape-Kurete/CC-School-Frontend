@@ -6,6 +6,9 @@ export interface Announcement {
   body: string;
   date: string;
   lecturerId: number;
+  createdAt: string;
+  moduleImg?: string;
+
 }
 
 export const AnnouncementService = {

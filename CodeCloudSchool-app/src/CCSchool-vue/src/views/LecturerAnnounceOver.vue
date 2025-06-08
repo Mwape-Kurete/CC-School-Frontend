@@ -3,24 +3,48 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import { AnnouncementService } from '@/api/announcements';
-import type { Announcement } from '@/api/announcements';
 
 const router = useRouter();
 const announcements = ref<Array<{
   id: string;
   title: string;
   body: string;
-  createdAt: string; 
+  createdAt: string;
   moduleImg?: string;
-}>>([]);
+}>>([]); 
 
-onMounted(() => {
-  const courseId = 1; // or dynamically get from route/store
-  const lecturerId = 1; // or dynamically get from user/session
-  const key = `announcements_${courseId}_${lecturerId}`;
-  const stored = localStorage.getItem(key);
-  if (stored) {
-    announcements.value = JSON.parse(stored);
+// Load announcements from backend with localStorage fallback
+onMounted(async () => {
+  const courseId = 1; // Should be dynamic in production
+  const lecturerId = 1; // Should be dynamic in production
+  
+  try { 
+    // Try backend first
+    const backendAnnouncements = await AnnouncementService.getAnnouncementsByLecturerId(lecturerId);
+    
+    if (Array.isArray(backendAnnouncements)) {
+      // Transform and validate announcements
+      announcements.value = backendAnnouncements.map(a => ({
+        id: a.id,
+        title: a.title,
+        body: a.body,
+        createdAt: a.date || a.createdAt || new Date().toISOString(),
+        moduleImg: a.moduleImg
+      }));
+      
+      // Update localStorage
+      const key = `announcements_${courseId}_${lecturerId}`;
+      localStorage.setItem(key, JSON.stringify(announcements.value));
+    } else {
+      // Fallback to localStorage
+      const key = `announcements_${courseId}_${lecturerId}`;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        announcements.value = JSON.parse(stored);
+      }
+    }
+  } catch (error) {
+    console.error('Error loading announcements:', error);
   }
 });
 
@@ -28,36 +52,44 @@ const searchQuery = ref('');
 const announcementType = ref<'all' | 'recent' | 'old'>('all');
 const sortBy = ref<'date' | 'lecture' | 'subject'>('date');
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date);
+// Robust date formatting with error handling
+const formatDate = (dateString: string | undefined | null): string => {
+  if (!dateString) return 'No date available';
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Invalid date';
+    
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  } catch {
+    return 'Invalid date';
+  }
 };
 
+// Filter and sort announcements
 const filteredAnnouncements = computed(() => {
   let filtered = [...announcements.value];
 
-  if (announcementType.value === 'recent') {
-    filtered = filtered.filter(a => {
-      const createdDate = new Date(a.createdAt);
-      const now = new Date();
-      const diffInDays = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
-      return diffInDays <= 7;
-    });
-  } else if (announcementType.value === 'old') {
-    filtered = filtered.filter(a => {
-      const createdDate = new Date(a.createdAt);
-      const now = new Date();
-      const diffInDays = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
-      return diffInDays > 7;
-    });
-  }
+  // Filter by time
+  const now = new Date();
+  filtered = filtered.filter(a => {
+    const createdDate = new Date(a.createdAt);
+    if (isNaN(createdDate.getTime())) return false;
+    
+    const diffInDays = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+    
+    if (announcementType.value === 'recent') return diffInDays <= 7;
+    if (announcementType.value === 'old') return diffInDays > 7;
+    return true;
+  });
 
+  // Search filter
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase();
     filtered = filtered.filter(a =>
@@ -66,13 +98,15 @@ const filteredAnnouncements = computed(() => {
     );
   }
 
-  if (sortBy.value === 'date') {
-    filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  } else if (sortBy.value === 'lecture') {
-    filtered.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
-  } else if (sortBy.value === 'subject') {
-    filtered.sort((a, b) => (a.body || '').localeCompare(b.body || ''));
-  }
+  // Sorting
+  filtered.sort((a, b) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    
+    if (sortBy.value === 'date') return dateB - dateA;
+    if (sortBy.value === 'lecture') return (a.title || '').localeCompare(b.title || '');
+    return (a.body || '').localeCompare(b.body || '');
+  });
 
   return filtered;
 });
@@ -91,20 +125,20 @@ const filteredAnnouncements = computed(() => {
       <div class="filters">
         <select v-model="announcementType" class="filter-select">
           <option value="all">All Announcements</option>
-          <option value="recent">Recent Announcements</option>
-          <option value="old">Old Announcements</option>
+          <option value="recent">Recent (≤7 days)</option>
+          <option value="old">Older (>7 days)</option>
         </select>
 
         <select v-model="sortBy" class="filter-select">
-          <option value="date">Date</option>
-          <option value="lecture">Lecture Name</option>
-          <option value="subject">Subject</option>
+          <option value="date">Sort by Date</option>
+          <option value="lecture">Sort by Lecture</option>
+          <option value="subject">Sort by Subject</option>
         </select>
       </div>
     </div>
 
     <div class="header">
-      <h1 class="title">Recent Announcements</h1>
+      <h1 class="title">Course Announcements</h1>
       <Button 
         label="Create Announcement" 
         @click="router.push('/LecturerAnnounce')"
@@ -131,18 +165,22 @@ const filteredAnnouncements = computed(() => {
         </div>
         <div class="announcement-time">
           <Button 
-            :label="`Posted On: ${formatDate(announcement.createdAt)}`" 
+            :label="`Posted: ${formatDate(announcement.createdAt)}`" 
             class="time-button p-button-rounded p-button-text" 
           />
         </div>
       </div>
 
       <div v-if="filteredAnnouncements.length === 0" class="empty-state">
-        No announcements match your criteria.
+        No announcements found. Create one to get started!
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Your existing styles remain unchanged */
+</style>
 
 <style scoped>
 .announcements-overview {
