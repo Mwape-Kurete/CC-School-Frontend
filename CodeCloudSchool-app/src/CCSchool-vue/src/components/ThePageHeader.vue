@@ -19,8 +19,11 @@ const props = defineProps({
 })
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 const selectedRange = ref(null)
 =======
+=======
+>>>>>>> Stashed changes
 // State refs
 const userId = ref('')
 const userRole = ref('')
