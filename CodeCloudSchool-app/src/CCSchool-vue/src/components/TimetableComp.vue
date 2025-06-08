@@ -1,38 +1,110 @@
-<script setup>
+<script setup lang="ts">
 import { MoveLeft, MoveRight } from 'lucide-vue-next';
+import { ref, onMounted } from 'vue';
+import { timetableServices } from '@/api/timetable';
+import type { TimeSlot } from '@/api/timetable';
+import { StudentService } from '@/api/student';
+
+const userId = ref<number | undefined>(undefined);
+const timetable = ref<TimeSlot[]>([]);
+const events = ref<any[]>([]);
+const error = ref<string | null>(null);
+
+
 
 const slotHeight = 80;
 
-const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-// Adjust because we want Monday to be the first day of the week
-const adjustedToday = (today === 0) ? 6 : today - 1;
+// Get today's date and day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+const today = new Date();
+const dayOfWeek = today.getDay();
 
+// Compute how many days to subtract to get to Monday (adjust for Sunday = 0)
+const diffToMonday = (dayOfWeek === 0) ? -6 : 1 - dayOfWeek;
 
-const days = [
-    { name: 'Mon', date: 26 },
-    { name: 'Tue', date: 27 },
-    { name: 'Wed', date: 28 },
-    { name: 'Thu', date: 29 },
-    { name: 'Fri', date: 30 },
-    { name: 'Sat', date: 31 },
-    { name: 'Sun', date: 1 },
-];
+// Start from Monday
+const monday = new Date(today);
+monday.setDate(today.getDate() + diffToMonday);
+
+// Build the days array dynamically
+const days = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + i);
+
+    return {
+        name: dayNames[i],
+        date: date.getDate()
+    };
+});
+
+// Adjusted today index (0 = Monday)
+const adjustedToday = (dayOfWeek === 0) ? 6 : dayOfWeek - 1;
+
 
 const hours = [
-    '9 am', '10 am', '11 am', '12 pm', '1 pm', '2 pm', '3 pm', '4 pm', '5 pm', '6 pm'
+    '8 am','9 am', '10 am', '11 am', '12 pm', '1 pm', '2 pm', '3 pm', '4 pm', '5 pm', '6 pm'
 ];
 
-const events = [
-    { title: 'CS 101', class: 'Class: H6', day: 0, startHour: 9, duration: 2, dark: true },
-    { title: 'CS 101', class: 'Class: H6', day: 1, startHour: 10, duration: 1, dark: false },
-    { title: 'CS 101', class: 'Class: H6', day: 1, startHour: 11, duration: 1, dark: true },
-    { title: 'CS 101', class: 'Class: H6', day: 1, startHour: 14, duration: 1, dark: true },
-    { title: 'CS 101', class: 'Class: H6', day: 1, startHour: 15, duration: 1, dark: false },
-    { title: 'CS 101', class: 'Class: H6', day: 2, startHour: 10, duration: 1, dark: true },
-    { title: 'CS 101', class: 'Class: H6', day: 3, startHour: 12, duration: 1, dark: false },
-    { title: 'CS 101', class: 'Class: H6', day: 4, startHour: 16, duration: 1, dark: true },
-];
+
+onMounted(async () => {
+    await fetchStudentDetails();
+
+    console.log("user id: ", userId.value)
+    if (userId.value !== undefined) {
+        const result = await timetableServices.fetchTimetableByStudentId(userId.value);
+        if (typeof result === 'string') {
+            error.value = result;
+        } else {
+            timetable.value = result;
+
+            // convert timeslot[] into events
+            events.value = result.map(slot => {
+                const startHour = timeToHour(slot.startTime);
+                const endHour = timeToHour(slot.endTime);
+                return {
+                    title: slot.className,
+                    class: `Class: ${slot.classDescription}`,
+                    day: dayMap[slot.day],
+                    startHour: startHour,
+                    duration: endHour - startHour,
+                    dark: (startHour + endHour) % 2 === 1 //styling condition
+                }
+            });
+        }
+    }
+
+});
+
+// functions 
+const fetchStudentDetails = async () => {
+    const studentNumber = localStorage.getItem('studentNumber');
+    if (studentNumber != null) {
+        const response = await StudentService.getStudentByStudentNumber(studentNumber);
+        if (typeof response !== 'string' && response.userId !== undefined) {
+            userId.value = response.userId;
+        } else {
+            error.value = typeof response === 'string' ? response : 'User not found';
+        }
+    }
+}
+
+// Helper: convert "13:00" to number 13
+const timeToHour = (time: string): number => {
+    return parseInt(time.split(':')[0], 10);
+};
+
+// Mapping of day strings to index (0 = Mon, 6 = Sun)
+const dayMap: Record<string, number> = {
+    'Monday': 0,
+    'Tuesday': 1,
+    'Wednesday': 2,
+    'Thursday': 3,
+    'Friday': 4,
+    'Saturday': 5,
+    'Sunday': 6
+};
+
 </script>
 
 
@@ -40,8 +112,8 @@ const events = [
     <div class="calendar-container">
         <h1 class="calendar-title">
             May 2025 / W4
-            <MoveLeft class="cursor-pointer" size="36" />
-            <MoveRight class="cursor-pointer" size="36" />
+            <MoveLeft class="cursor-pointer" :size="36" />
+            <MoveRight class="cursor-pointer" :size="36" />
         </h1>
         <div class="calendar-header">
             <div class="time-column-header"></div>
@@ -70,11 +142,11 @@ const events = [
                     <!-- Events -->
                     <div v-for="(event, eventIndex) in events.filter(e => e.day === dayIndex)" :key="eventIndex"
                         class="event" :class="{ dark: event.dark }" :style="{
-                            top: `${(event.startHour - 9) * slotHeight}px`,
+                            top: `${(event.startHour - 8) * slotHeight}px`,
                             height: `${event.duration * slotHeight}px`,
                         }">
                         <strong>{{ event.title }}</strong><br />
-                        {{ event.class }}
+                        <!-- {{ event.class }} -->
                     </div>
                 </div>
             </div>
@@ -94,11 +166,11 @@ const events = [
     margin-top: -2%;
     font-size: 48px;
     font-weight: 400;
-    margin-bottom: 1%;   
-    display: inline-block; 
+    margin-bottom: 1%;
+    display: inline-block;
 }
 
-.cursor-pointer{
+.cursor-pointer {
     cursor: pointer;
     margin-left: 2%;
     margin-right: 1%;
