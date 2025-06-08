@@ -199,6 +199,16 @@ const router = createRouter({
       component: () => import('@/views/admin/SystemSettings.vue'),
       meta: { allowedRoles: ['admin'] }
     },
+    {
+      path: '/admin/dashboard',
+      name: 'admin-dash',
+      component: () => import('@/views/admin/AdminDashboard.vue'),
+      meta:{
+        layout: 'ThreeCol',
+        allowedRoles: ['admin'],
+        page: 'admin-dash'
+      }
+    },
 
     {
       path: '/layout-sandbox',

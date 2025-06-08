@@ -91,7 +91,7 @@ const login = async () => {
 
 
             const user = response;
-
+            console.log(user.role)
 
             // store user role in local storage
             localStorage.setItem('userRole', user.role);
@@ -105,9 +105,10 @@ const login = async () => {
             } else if (user.role === 'Lecturer') {
                 localStorage.setItem('lectId', user.lecturerId);
                 router.push({ name: 'lecturer-dash' });
-            } else {
-                console.warn('Unknown user role:', user.role);
+            } else if (user.role === 'admin') {
+                // admin
                 localStorage.setItem('adminId', user.AdminId);
+                router.push({ name: 'admin-dash' });
             }
         }
     } catch (error) {
