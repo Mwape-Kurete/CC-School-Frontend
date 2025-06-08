@@ -1,6 +1,6 @@
 <script setup>
 import { useRoute } from 'vue-router'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 import CSearch from './ui/CSearch.vue'
 import CButtonIcon from './ui/CButton-icon.vue'
@@ -11,27 +11,26 @@ import { BellRing } from 'lucide-vue-next'
 import { lecturerService } from '@/api/lecturer'
 import { StudentService } from '@/api/student'
 
+/*
 const route = useRoute()
-const courseId = route.params.courseId
 
+const courseId = route.params.courseId
+*/
 const props = defineProps({
   page: String,
 })
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-const selectedRange = ref(null)
-=======
-=======
->>>>>>> Stashed changes
+/*
 // State refs
 const userId = ref('')
 const userRole = ref('')
 const userName = ref('')
-
+*/
 // Fetch user data from local storage and API
 
 // Get and fetch user details
+
+/*
 onMounted(async () => {
   userRole.value = localStorage.getItem('userRole') || ''
 
@@ -63,7 +62,8 @@ onMounted(async () => {
     userName.value = 'Error loading name'
   }
 })
->>>>>>> Stashed changes
+
+*/
 </script>
 
 <template>
@@ -131,7 +131,7 @@ onMounted(async () => {
             type="primary"
             size="sm"
             :disabled="true"
-            :btnIconLabel="userName || 'Guest User'"
+            btnIconLabel="userName || 'Guest User'"
           >
             <template #icon>
               <GraduationCap />
@@ -149,7 +149,7 @@ onMounted(async () => {
             type="primary"
             size="sm"
             :disabled="true"
-            :btnIconLabel="userName || 'Guest User'"
+            btnIconLabel="userName || 'Guest User'"
           >
             <template #icon>
               <GraduationCap />

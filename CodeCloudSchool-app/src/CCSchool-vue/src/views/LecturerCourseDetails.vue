@@ -1,6 +1,7 @@
 <script setup>
 //import api
 import { CourseService, LecturerCourseService } from '@/api/courses'
+import { lecturerService } from '@/api/lecturer'
 import { AnnouncementService } from '@/api/announcements'
 
 //importing vue features
@@ -26,10 +27,15 @@ import CButtonIcon from '@/components/ui/Cbutton-icon.vue'
 //FUNCTIONALITY IMPLEMENTATION STARTS HERE
 
 // 2. CONSTANTS
-const lecturerId = localStorage.getItem('lectId') || '' // Get lecturer ID from local storage
+// Get lecturer ID from local storage
+const storedLectId = localStorage.getItem('lecturerId')
+const lecturerId = storedLectId && !isNaN(Number(storedLectId)) ? parseInt(storedLectId, 10) : 2
+
+console.log(lecturerId, 'from local storage')
 
 // 3. REACTIVE STATE
 const courseId = ref(null)
+const announcements = ref([])
 
 // Form fields
 const googleSlideurl = ref('')
@@ -125,9 +131,12 @@ const loadInitialData = async () => {
 
 const fetchLecturerDetails = async () => {
   try {
-    const response = await LecturerCourseService.getLecturerById(lecturerId)
+    const response = await lecturerService.getLecturerByID(lecturerId)
     if (response?.courses?.$values?.length > 0) {
       courseId.value = response.courses.$values[0].id // Assumes the first course
+
+      console.log('Lecturer courses:', response.courses.$values)
+      console.log('Selected course ID:', courseId.value)
     } else {
       console.warn('No courses found for this lecturer.')
     }
@@ -147,7 +156,7 @@ const fetchCourseDetails = async () => {
       courseData.courseSlides = response.courseSlides || ''
       courseData.courseWeekBreakdown = response.courseWeekBreakdown?.$values || []
 
-      // ✅ FIXED: Deep unwrap nested items in mark breakdown
+      // Deep unwrap nested items in mark breakdown
       courseData.courseMarkBreakdown =
         response.courseMarkBreakdown?.$values.map((section) => ({
           ...section,

@@ -1,10 +1,46 @@
 <script setup lang="ts">
+//importing from vue
+import { ref, onMounted } from 'vue'
+
+//importing comopponents and icons
 import LecturerKnob from '@/components/LecturerKnob.vue'
 import ToDoComp from '@/components/ToDoComp.vue'
 import CardComp from '@/components/CardComp.vue'
 import CreateModuleAssignmentForm from '@/components/CreateModuleAssignmentForm.vue'
 import CButtonIcon from '@/components/ui/CButton-icon.vue'
 import { PlusCircleIcon } from 'lucide-vue-next'
+import { LecturerCourseService } from '@/api/courses'
+
+//Functionality Start
+//fetching & setting const variables
+const lecturerId = localStorage.getItem('lecturerId') || '33'
+const announcements = ref([])
+
+//fetching dashboard data from backend
+onMounted(async () => {
+  try {
+    const { success, courses, error } = await LecturerCourseService.getLecturerCourses(lecturerId)
+
+    if (success && courses?.length) {
+      const firstCourse = courses[0]
+      localStorage.setItem('courseId', firstCourse.id.toString())
+
+      if (firstCourse.courseName) {
+        localStorage.setItem('courseName', firstCourse.courseName)
+      }
+
+      if (firstCourse.courseCode) {
+        localStorage.setItem('courseCode', firstCourse.courseCode.toString())
+      }
+
+      console.log('Lecturer courses fetched successfully:', courses)
+    } else {
+      console.error('Error fetching lecturer courses:', error)
+    }
+  } catch (err) {
+    console.error('Failed loading announcemnts:', err)
+  }
+})
 </script>
 
 <template>

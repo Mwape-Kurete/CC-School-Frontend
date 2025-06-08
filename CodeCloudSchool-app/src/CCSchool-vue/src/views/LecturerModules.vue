@@ -1,11 +1,49 @@
 <script setup>
-import { ref } from 'vue'
+//importing from vue
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+//importing api services
+import { LecturerCourseService } from '@/api/courses'
+import { LecturerModulesServices } from '@/api/modules'
+
+//importing components
 import AccordionCard from '@/components/AccordionCard.vue'
 import CDropdown from '@/components/ui/CDropdown.vue'
 import CButtonIcon from '@/components/ui/CButton-icon.vue'
 import { PlusCircleIcon, ArrowUpFromLine } from 'lucide-vue-next'
 
+//using routing for inpage navigation
+const router = useRouter()
+
+//setting variables
 const selectedOption = ref(null)
+const lecturerId = localStorage.getItem('lecturerId' || '33')
+
+const modules = ref([])
+
+//initial data fetch
+onMounted(async () => {
+  try {
+    const { success, courses } = await LecturerCourseService.getLecturerCourses(lecturerId)
+
+    if ((success, courses?.length)) {
+      const courseId = courses[0].id
+      const response = await LecturerModulesServices.fetchModulesByCourseID(courseId)
+
+      modules.value = response
+
+      console.log('Modules fetched successfully:', modules.value)
+    }
+  } catch (err) {
+    console.error('There was an error fetching modules:', err)
+  }
+})
+
+//navs
+const goToCreateModule = () => {
+  router.push({ name: 'lecturer-create-modules' })
+}
 </script>
 
 <template>
@@ -23,8 +61,8 @@ const selectedOption = ref(null)
         class="btn-icon-custom"
         type="primary"
         size="sm"
-        :disabled="true"
         btnIconLabel="Create New Module"
+        @click="goToCreateModule"
       >
         <template #icon>
           <PlusCircleIcon />
@@ -34,159 +72,44 @@ const selectedOption = ref(null)
   </div>
 
   <div class="card-con">
-    <div v-if="selectedOption === 'All'">
-      <h1 class="header-modules-lect">All Modules</h1>
-      <div class="published">
-        <AccordionCard header="OVERVIEW" />
-        <AccordionCard
-          header="Week 1: Introduction and Briefing"
-          :items="[{ title: 'Week 1: Theory' }, { title: 'Week 1: Practical' }]"
-        />
-        <AccordionCard
-          header="Week 2: Introduction to C# and Dotnet"
-          :items="[{ title: 'Week 2: Theory' }, { title: 'Week 2: Practical' }]"
-        />
-        <AccordionCard
-          header="Week 3: Design Architecture and Patterns"
-          :items="[
-            { title: 'Week 3: Theory' },
-            { title: 'Week 3: Practical' },
-            { title: 'Progress Assesment 1' },
-          ]"
-        />
-        <AccordionCard
-          header="Week 4: Database Integration"
-          :items="[{ title: 'Week 4: Theory' }, { title: 'Week 4: Practical' }]"
-        />
-      </div>
-      <hr />
-      <div class="unpublished">
-        <h1 class="inner-header">Unpublished Modules</h1>
-        <div class="accordion-container">
-          <AccordionCard
-            header="Week 5: Database management post integration
-            +"
-            :items="[{ title: 'Week 6: Theory' }, { title: 'Week 6: Practical' }]"
-          />
-          <CButtonIcon type="secondary" size="lg" :disabled="true" btnIconLabel="Publish Module">
-            <template #icon>
-              <ArrowUpFromLine />
-            </template>
-          </CButtonIcon>
-        </div>
-        <div class="accordion-container">
-          <AccordionCard
-            header="Week 6: Introduction CI/CD"
-            :items="[{ title: 'Week 6: Theory' }, { title: 'Week 6: Practical' }]"
-          />
-          <CButtonIcon type="secondary" size="lg" :disabled="true" btnIconLabel="Publish Module">
-            <template #icon>
-              <ArrowUpFromLine />
-            </template>
-          </CButtonIcon>
-        </div>
-        <div class="accordion-container">
-          <AccordionCard
-            header="Week 7: CI/CD Deep Dive"
-            :items="[{ title: 'Week 7: Theory' }, { title: 'Week 7: Practical' }]"
-          />
-          <CButtonIcon type="secondary" size="lg" :disabled="true" btnIconLabel="Publish Module">
-            <template #icon>
-              <ArrowUpFromLine />
-            </template>
-          </CButtonIcon>
-        </div>
-        <div class="accordion-container">
-          <AccordionCard
-            header="Week 8: Final Submission"
-            :items="[{ title: 'Week 8: Theory' }, { title: 'Week 8: Practical' }]"
-          />
-          <CButtonIcon type="secondary" size="lg" :disabled="true" btnIconLabel="Publish Module">
-            <template #icon>
-              <ArrowUpFromLine />
-            </template>
-          </CButtonIcon>
-        </div>
-      </div>
-    </div>
+    <<template v-if="selectedOption === 'All'">
+      <h1>All Modules</h1>
+      <AccordionCard
+        v-for="mod in modules"
+        :key="mod.id"
+        :header="mod.groupTitle + ': ' + mod.title"
+        :items="[{ title: mod.description }]"
+      />
+    </template>
 
-    <div v-else-if="selectedOption === 'Published'">
-      <h1 class="header-modules-lect">Published Modules</h1>
-      <div class="published">
-        <AccordionCard header="OVERVIEW" />
-        <AccordionCard
-          header="Week 1: Introduction and Briefing"
-          :items="[{ title: 'Week 1: Theory' }, { title: 'Week 1: Practical' }]"
-        />
-        <AccordionCard
-          header="Week 2: Introduction to C# and Dotnet"
-          :items="[{ title: 'Week 2: Theory' }, { title: 'Week 2: Practical' }]"
-        />
-        <AccordionCard
-          header="Week 3: Design Architecture and Patterns"
-          :items="[
-            { title: 'Week 3: Theory' },
-            { title: 'Week 3: Practical' },
-            { title: 'Progress Assesment 1' },
-          ]"
-        />
-        <AccordionCard
-          header="Week 4: Database Integration"
-          :items="[{ title: 'Week 4: Theory' }, { title: 'Week 4: Practical' }]"
-        />
-      </div>
-    </div>
+    <template v-else-if="selectedOption === 'Published'">
+      <h1>Published Modules</h1>
+      <AccordionCard
+        v-for="mod in modules.filter((m) => m.published)"
+        :key="mod.id"
+        :header="mod.groupTitle + ': ' + mod.title"
+        :items="[{ title: mod.description }]"
+      />
+    </template>
 
-    <div v-else-if="selectedOption === 'Unpublished'">
-      <h1 class="header-modules-lect">Unpublished Modules</h1>
-      <div class="unpublished">
-        <div class="accordion-container">
-          <AccordionCard
-            header="Week 5: Database management post integration
-            +"
-            :items="[{ title: 'Week 6: Theory' }, { title: 'Week 6: Practical' }]"
-          />
-          <CButtonIcon type="secondary" size="lg" :disabled="true" btnIconLabel="Publish Module">
-            <template #icon>
-              <ArrowUpFromLine />
-            </template>
-          </CButtonIcon>
-        </div>
-        <div class="accordion-container">
-          <AccordionCard
-            header="Week 6: Introduction CI/CD"
-            :items="[{ title: 'Week 6: Theory' }, { title: 'Week 6: Practical' }]"
-          />
-          <CButtonIcon type="secondary" size="lg" :disabled="true" btnIconLabel="Publish Module">
-            <template #icon>
-              <ArrowUpFromLine />
-            </template>
-          </CButtonIcon>
-        </div>
-        <div class="accordion-container">
-          <AccordionCard
-            header="Week 7: CI/CD Deep Dive"
-            :items="[{ title: 'Week 7: Theory' }, { title: 'Week 7: Practical' }]"
-          />
-          <CButtonIcon type="secondary" size="lg" :disabled="true" btnIconLabel="Publish Module">
-            <template #icon>
-              <ArrowUpFromLine />
-            </template>
-          </CButtonIcon>
-        </div>
-        <div class="accordion-container">
-          <AccordionCard
-            header="Week 8: Final Submission"
-            :items="[{ title: 'Week 8: Theory' }, { title: 'Week 8: Practical' }]"
-          />
-          <CButtonIcon type="secondary" size="lg" :disabled="true" btnIconLabel="Publish Module">
-            <template #icon>
-              <ArrowUpFromLine />
-            </template>
-          </CButtonIcon>
-        </div>
+    <template v-else-if="selectedOption === 'Unpublished'">
+      <h1>Unpublished Modules</h1>
+      <div
+        class="accordion-container"
+        v-for="mod in modules.filter((m) => !m.published)"
+        :key="mod.id"
+      >
+        <AccordionCard
+          :header="mod.groupTitle + ': ' + mod.title"
+          :items="[{ title: mod.description }]"
+        />
+        <CButtonIcon type="secondary" size="lg" btnIconLabel="Publish Module">
+          <template #icon>
+            <ArrowUpFromLine />
+          </template>
+        </CButtonIcon>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
