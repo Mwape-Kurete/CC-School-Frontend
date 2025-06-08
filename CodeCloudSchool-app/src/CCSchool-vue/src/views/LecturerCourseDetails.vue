@@ -26,9 +26,11 @@ import CButtonIcon from '@/components/ui/Cbutton-icon.vue'
 //FUNCTIONALITY IMPLEMENTATION STARTS HERE
 
 // 2. CONSTANTS
-const courseId = 1 // Consider making this a prop if it can vary
+const lecturerId = localStorage.getItem('lectId') || '' // Get lecturer ID from local storage
 
 // 3. REACTIVE STATE
+const courseId = ref(null)
+
 // Form fields
 const googleSlideurl = ref('')
 const courseBio = ref('')
@@ -107,7 +109,12 @@ onMounted(async () => {
 const loadInitialData = async () => {
   isLoading.value = true
   try {
-    await Promise.all([fetchCourseDetails(), fetchAnnouncements()])
+    await fetchLecturerDetails()
+    if (courseId.value) {
+      await Promise.all([fetchCourseDetails(), fetchAnnouncements()])
+    } else {
+      throw new Error('Course ID not set')
+    }
   } catch (err) {
     error.value = 'Failed to load initial data'
     console.error('Initialization error:', err)
@@ -116,9 +123,23 @@ const loadInitialData = async () => {
   }
 }
 
+const fetchLecturerDetails = async () => {
+  try {
+    const response = await LecturerCourseService.getLecturerById(lecturerId)
+    if (response?.courses?.$values?.length > 0) {
+      courseId.value = response.courses.$values[0].id // Assumes the first course
+    } else {
+      console.warn('No courses found for this lecturer.')
+    }
+  } catch (err) {
+    console.error('Failed to fetch lecturer details:', err)
+    throw err // Let loadInitialData handle it
+  }
+}
+
 const fetchCourseDetails = async () => {
   try {
-    const response = await CourseService.getCourseDetails(courseId)
+    const response = await CourseService.getCourseDetails(courseId.value)
     if (response) {
       // Transform API response
       courseData.courseName = response.courseFullCode || ''
@@ -151,7 +172,7 @@ const fetchCourseDetails = async () => {
 
 const fetchAnnouncements = async () => {
   try {
-    const response = await AnnouncementService.getAnnouncementsByCourseId(courseId)
+    const response = await AnnouncementService.getAnnouncementsByCourseId(courseId.value)
     if (typeof response === 'string') {
       console.error('Error:', response)
     } else {
@@ -229,7 +250,7 @@ const saveCourseDetails = async (isFullUpdate = false) => {
     }
 
     if (Object.keys(partialPayload).length > 0) {
-      await LecturerCourseService.partialUpdateCourseDetails(courseId, partialPayload)
+      await LecturerCourseService.partialUpdateCourseDetails(courseId.value, partialPayload)
     }
 
     await fetchCourseDetails()
@@ -338,7 +359,7 @@ const resetNewSection = () => {
 const clearContent = async () => {
   try {
     isLoading.value = true
-    const clearedCourse = await LecturerCourseService.updateCourseDetails(courseId, {
+    const clearedCourse = await LecturerCourseService.updateCourseDetails(courseId.value, {
       courseDescription: '',
       courseWeekBreakdown: [],
       courseSlides: '',
