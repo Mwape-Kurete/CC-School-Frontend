@@ -5,214 +5,179 @@ import { CourseService } from '@/api/courses';
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
-interface Course {
-  id: number;
-  // Add other course properties here
+interface CourseDetails {
+  courseFullCode: string;
+  courseAbout: string;
+  courseSlides: string;
+  courseWeekBreakdown: {
+    $values: Array<{
+      header: string;
+      description: string;
+    }>;
+  };
+  courseMarkBreakdown: {
+    $values: Array<{
+      title: string;
+      mark: string;
+      items: Array<{
+        description: string;
+        mark: string;
+      }>;
+    }>;
+  };
+  courseSemDescriptions: {
+    $values: Array<{
+      description: string;
+    }>;
+  };
 }
 
 const route = useRoute();
-const course = ref<Course | null>(null);
+const courseDetails = ref<CourseDetails | null>(null);
+const isLoading = ref(false);
+const error = ref<string | null>(null);
 const showDropdown = ref(false);
-const courseId = route.params.courseId;
+const courseId = ref(route.params.courseId);
 
-const googleSlidesEmbed = `<iframe src="https://docs.google.com/presentation/d/e/2PACX-1vTE8fgAcfSDp0L7UmSpXZlyHcFNFIXRGRaDj5UgdRDCXSWSmsISk69qHNT-SZ6NMyEwXtluxhZXeYtH/pubembed?start=false&loop=false&delayms=3000" 
-frameborder="0" 
-width="960" 
-height="569" 
-allowfullscreen="true" 
-mozallowfullscreen="true" 
-webkitallowfullscreen="true"></iframe>`;
+const getEmbeddedSlideUrl = (url: string) => {
+  if (!url) return '';
+  return url.replace(/\/(edit|view|preview).*/, '/embed');
+};
 
-// Sample announcements data
-const announcements = ref([
-  {
-    id: 1,
-    title: 'COMPUTER SCIENCE WORKSHOP WITH JACOB ANDERSON',
-    body: 'Lorem Ipsum Dolor Sit Amet, Consectetur Adipiscing Elit...',
-    date: '2 Apr 2025, 11:36'
-  },
-  {
-    id: 2,
-    title: 'IMPORTANT: SYSTEM MAINTENANCE',
-    body: 'The platform will be undergoing maintenance this weekend...',
-    date: '5 Apr 2025, 14:20'
-  }
-]);
-
-// Semester overview data
-const weeks = ref([
-  { week: 1, title: 'Course Introduction & Briefing' },
-  { week: 2, title: 'Type-Sensitive Programming' },
-  { week: 3, title: 'Basic Software Architecture' },
-  { week: 4, title: 'Database Integration' },
-  { week: 5, title: 'Database Integration' },
-  { week: 6, title: 'Security & Authentication' },
-  { week: 7, title: 'Containerisation' },
-  { week: 8, title: 'Cross-Platform Development Introduction' }
-]);
-
+// Fetch course details
 onMounted(async () => {
-  const courseIdParam = route.params.courseId;
-  const courseId = Array.isArray(courseIdParam) ? Number(courseIdParam[0]) : Number(courseIdParam);
   try {
-    const result = await CourseService.getCoursebyId(courseId);
-    if (typeof result === 'string') {
-      console.error('Failed to fetch course:', result);
-      course.value = null;
-    } else {
-      console.log('Course fetched:', result);
-      course.value = result;
-      console.log('Course fetched successfully:', course.value);
+    isLoading.value = true;
+    const response = await CourseService.getCourseDetails(Number(courseId.value));
+    
+    if (response && typeof response === 'object' && 'courseFullCode' in response) {
+      courseDetails.value = {
+        courseFullCode: (response as any).courseFullCode || '',
+        courseAbout: (response as any).courseAbout || '',
+        courseSlides: (response as any).courseSlides || '',
+        courseWeekBreakdown: {
+          $values: (response as any).courseWeekBreakdown?.$values || []
+        },
+        courseMarkBreakdown: {
+          $values: (response as any).courseMarkBreakdown?.$values?.map((section: any) => ({
+            ...section,
+            items: section.items?.$values || []
+          })) || []
+        },
+        courseSemDescriptions: {
+          $values: (response as any).courseSemDescriptions?.$values || []
+        }
+      };
     }
-  } catch (error) {
-    console.error('Failed to fetch course:', error);
+  } catch (err) {
+    error.value = 'Failed to load course details';
+    console.error('Error fetching course details:', err);
+  } finally {
+    isLoading.value = false;
   }
 });
-
-const toggleDropdown = () => {
-  showDropdown.value = !showDropdown.value;
-};
 </script>
+
 <template>
   <div class="course-home">
-    <div class="Course-header"> <!-- Header -->
-      <div class="header-content">
-        <h1 class="title">Course Overview </h1>   
-        <div class="controls-container">
-          <div class="tabs-container">
-            <div class="dropdown-container">
-              <button class="tab active" @click="toggleDropdown">
-                Today
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </button>
-              <div v-if="showDropdown" class="dropdown-menu">
-                <div class="dropdown-item">This Week</div>
-                <div class="dropdown-item">This Month</div>
-                <div class="dropdown-item">Custom Range</div>
-              </div>
-            </div>
-            <button class="tab">
-              <GraduationCap :size="16" class="icon" />
-              Grade Overview
-            </button>
-          </div>
-          <div class="icon-buttons">
-            <button class="icon-button">
-              <div class="icon-circle">
-                <BellRing :size="16" />
-              </div>
-            </button>
-            <button class="icon-button">
-              <div class="icon-circle">
-                <EllipsisVertical :size="16" />
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="divider"></div>
-    </div>
-
-    <!-- Main content section -->
-    <div class="course-content">
+    <!-- Loading state -->
+    <div v-if="isLoading" class="loading">Loading course details...</div>
+    
+    <!-- Error state -->
+    <div v-else-if="error" class="error">{{ error }}</div>
+    
+    <!-- Content -->
+    <div v-else-if="courseDetails" class="course-content">
       <h2 class="day-heading">Recent Announcements</h2>
       
+      <!-- Announcements would go here - you might want to fetch these separately -->
       <div class="announcements-container">
-        <CardComp
-          v-for="announcement in announcements"
-          :key="announcement.id"
-          cardType="announcement"
-          :announcementTitle="announcement.title"
-          :announcementBody="announcement.body"
-          :announcementDate="announcement.date"
-        />
+        <!-- You would map through announcements here -->
       </div>
 
-      <div class="banner-heading"><h1>Computer science 101 | Semester 1</h1></div>
+      <div class="banner-heading"><h1>{{ courseDetails.courseFullCode }} | Semester 1</h1></div>
       <div class="course-banner"></div>
 
+      <!-- What You Will Learn Section -->
       <div class="course-text">
         <h2>WHAT YOU WILL LEARN</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</p>
-        <p>Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</p>
+        <p v-if="courseDetails.courseAbout">{{ courseDetails.courseAbout }}</p>
+        <p v-else class="no-content">No course description available.</p>
       </div>
 
       <!-- Semester Overview Section -->
       <div class="semester-overview">
         <h2>SEMESTER OVERVIEW</h2>
         <div class="week-items">
-          <div v-for="(week, index) in weeks" :key="week.week" class="week-item">
+          <div v-for="(week, index) in courseDetails.courseWeekBreakdown.$values" :key="index" class="week-item">
             <div class="week-header">
-              <span class="week-number">Week {{ week.week }}</span>
-              <span class="week-title">{{ week.title }}</span>
+              <span class="week-number">{{ week.header }}</span>
+              <span class="week-title">{{ week.description }}</span>
             </div>
-            <div v-if="index !== weeks.length - 1" class="week-divider"></div>
+            <div v-if="index !== courseDetails.courseWeekBreakdown.$values.length - 1" class="week-divider"></div>
+          </div>
+          <div v-if="courseDetails.courseWeekBreakdown.$values.length === 0" class="no-content">
+            No weekly breakdown available.
           </div>
         </div>
       </div>
 
       <!-- Semester Brief Section -->
-       <div class="semester-overview">
-          <h2>SEMESTER BRIEF</h2>
-          <!-- google slides here -->
-          <div v-html="googleSlidesEmbed" class="google-slides-embed"></div>
-       </div>
+      <div class="semester-overview">
+        <h2>SEMESTER BRIEF</h2>
+        <div v-if="courseDetails.courseSlides" class="google-slides-embed">
+          <iframe
+            :src="getEmbeddedSlideUrl(courseDetails.courseSlides)"
+            frameborder="0"
+            width="960"
+            height="569"
+            allowfullscreen="true"
+            mozallowfullscreen="true"
+            webkitallowfullscreen="true"
+          ></iframe>
+        </div>
+        <div v-else class="no-content">
+          No slides available.
+        </div>
+      </div>
 
       <!-- Mark Breakdown Section -->
       <div class="semester-overview">
         <h2>MARK BREAKDOWN</h2>
-        
         <div class="week-items">
-          <h3>PROJECT WEIGHTS</h3>
-          
-          <div class="week-item">
+          <div v-for="(section, sectionIndex) in courseDetails.courseMarkBreakdown.$values" :key="sectionIndex" class="week-item">
             <div class="week-header">
-              <span class="week-title"><strong>Theory Assessments</strong></span>
+              <span class="week-title"><strong>{{ section.title }}</strong> ({{ section.mark }})</span>
             </div>
             <div class="week-divider"></div>
-            <p>Theme 1: Project Proposal Document: 50%</p>
-            <p>Theme 2: Project Report & Demonstration: 50%</p>
+            <div v-for="(item, itemIndex) in section.items" :key="itemIndex">
+              <p>{{ item.description }}: {{ item.mark }}</p>
+              <div v-if="itemIndex !== section.items.length - 1" class="week-divider"></div>
+            </div>
           </div>
-          
-          <div class="week-item">
-            <div class="week-header">
-              <span class="week-title"><strong>Formative Assessments</strong></span>
-            </div>
-            <div class="week-divider"></div>
-            <p>Theme 1: Progress Feedback: 25%</p>
-            <p>Theme 1: Code Review: 25%</p>
-            <p>Theme 2: Progress Feedback: 25%</p>
-            <p>Theme 2: Code Review: 25%</p>
-          </div>
-          
-          <div class="week-item">
-            <div class="week-header">
-              <span class="week-title"><strong>Summative Assessments</strong></span>
-            </div>
-            <div class="week-divider"></div>
-            <p>Repository Administration: 15%</p>
-            <p>Functional Management System: 70%</p>
-            <p>Individual Contribution: 15%</p>
+          <div v-if="courseDetails.courseMarkBreakdown.$values.length === 0" class="no-content">
+            No mark breakdown available.
           </div>
         </div>
       </div>
 
       <!-- Year Breakdown Section -->
-       <div class="semester-overview">
-          <h2>YEAR BREAKDOWN</h2>
-
+      <div class="semester-overview">
+        <h2>YEAR BREAKDOWN</h2>
         <div class="course-text">
           <h3>SEMESTER 1</h3>
-          <p>Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</p>
+          <p v-if="courseDetails.courseSemDescriptions.$values[0]?.description">
+            {{ courseDetails.courseSemDescriptions.$values[0].description }}
+          </p>
+          <p v-else class="no-content">No semester 1 description available.</p>
           
           <h3>SEMESTER 2</h3>
-          <p>Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</p>
-        
+          <p v-if="courseDetails.courseSemDescriptions.$values[1]?.description">
+            {{ courseDetails.courseSemDescriptions.$values[1].description }}
+          </p>
+          <p v-else class="no-content">No semester 2 description available.</p>
         </div>
-       </div>
-      
+      </div>
 
       <!-- Lecturer Section -->
       <div class="lecturer-section">
@@ -228,11 +193,9 @@ const toggleDropdown = () => {
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </template>
-
 <style scoped>
 /* ---------------------------- */
 /* courses MAIN CONTENT */

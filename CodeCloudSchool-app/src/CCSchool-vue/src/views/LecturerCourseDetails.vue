@@ -1,3 +1,5 @@
+//LecturerCourseDetails.vue
+
 <script setup>
 //import api
 import { CourseService, LecturerCourseService } from '@/api/courses'
