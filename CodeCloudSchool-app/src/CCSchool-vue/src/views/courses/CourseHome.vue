@@ -322,14 +322,14 @@ const fetchAnnouncements = async (): Promise<void> => {
 .course-text h3{
    font-family: "Quicksand", sans-serif;
    font-weight: 600;
-   background-color: #e9e9e9;
+   background-color: #F0F1A5;
    width: 300px;
    height: 50px;
    text-align: center;
    padding-top: 10px;
    border-radius: 25px;
    margin-bottom:20px ;
-   color: #9A9A9A;
+   color: #212121;
 }
 .slides-container iframe {
   border-radius: 40px;
@@ -347,7 +347,8 @@ const fetchAnnouncements = async (): Promise<void> => {
 }
 
 .course-banner {
-  background-color: #e9e9e9;
+  background-image: url('https://images.pexels.com/photos/7988742/pexels-photo-7988742.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2');
+
   width: 100%;
   height: 200px;
   background-size: cover;
@@ -575,5 +576,15 @@ const fetchAnnouncements = async (): Promise<void> => {
   position: absolute;
   left: 0;
   bottom: 0;
+}
+
+.text-gray-500{
+  width: 100%;
+  background-color: #D8DFE9;
+  height: 50px;
+  border-radius: 20px;
+  padding-left: 20px;
+  padding-top: 10px;
+  margin-top: 10px;
 }
 </style>
