@@ -105,8 +105,8 @@ const login = async () => {
             } else if (user.role === 'Lecturer') {
                 localStorage.setItem('lectId', user.lecturerId);
                 router.push({ name: 'lecturer-dash' });
-            } else if (user.role === 'admin') {
-                // admin
+            } else if (user.role === 'Admin') {
+                console.log("login admin")
                 localStorage.setItem('adminId', user.AdminId);
                 router.push({ name: 'admin-dash' });
             }
