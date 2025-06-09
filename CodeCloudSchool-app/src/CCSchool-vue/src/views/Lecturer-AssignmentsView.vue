@@ -161,6 +161,8 @@ function resetForm() {
     editorRef.value.innerHTML = '';
   }
 }
+
+
 </script>
 
 <template>

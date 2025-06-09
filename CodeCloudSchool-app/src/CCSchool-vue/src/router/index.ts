@@ -239,6 +239,19 @@ const router = createRouter({
         page: 'student-announcement-details'
       },
     },
+
+    {
+  path: '/assignments/:assignmentId/grade',
+  name: 'LecturerGrading',
+  component: () => import('@/views/LecturerGradingView.vue'),
+  meta: { requiresAuth: true, requiresLecturer: true }
+},
+{
+  path: '/grades',
+  name: 'StudentGrades',
+  component: () => import('@/views/StudentGradesView.vue'),
+  meta: { requiresAuth: true, requiresStudent: true }
+},
     //lecturer pages
 
     {
