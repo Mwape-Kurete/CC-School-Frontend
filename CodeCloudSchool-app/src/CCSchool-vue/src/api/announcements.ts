@@ -14,8 +14,9 @@ export interface Announcement {
 export const AnnouncementService = {
   async getAnnouncementsByCourseId(courseId: number): Promise<Announcement[] | string> {
     try {
-      const response = await api.get(`/announce/course/${courseId}`);
-      return response.data;
+      const response = await api.get(`/announce/by-course/${courseId}`);
+      console.log("Announcement Data Fetched: ", response.data.$values)
+      return response.data.$values;
     } catch (error: any) {
       console.error('Error fetching announcements:', error);
       return error.response?.data || 'Failed to fetch announcements';
