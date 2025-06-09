@@ -14,8 +14,49 @@ interface User {
   role: string;
 }
 
+export interface Student {
+  userId: number;
+  name: string;
+  email: string;
+  lastName: string;
+  status: string;
+  phoneNumber: string;
+  studentNumber: string;
+  yearLevel: string;
+  role: string;
+}
+
 
 export const StudentService = {
+  async getAllStudents(): Promise<Student []| string>{
+    try {
+      const response = await api.get('/student');
+      console.log('Users Fetched: ', response);
+      return response.data.$values;
+    } catch (error: any){
+      console.error('Full error object:', error);
+      if (error.response && error.response.data) {
+        return error.response.data;
+      }
+      return 'An unknown error occurred';
+    }
+  },
+
+  async updateStudentStatus(studentNumber: string, status: string): Promise<string> {
+    try {
+      const response = await api.put(`/student/${studentNumber}/status`, { status });  // Pass the status here
+      console.log('User status response: ', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Full error object:', error);
+      if (error.response && error.response.data) {
+        return error.response.data;
+      }
+      return 'An unknown error occurred';
+    }
+  },
+
+  
   async getStudentByStudentNumber(studentNumber: string): Promise<User | string> {
     try {
       const response = await api.get(`/student/${studentNumber}`);

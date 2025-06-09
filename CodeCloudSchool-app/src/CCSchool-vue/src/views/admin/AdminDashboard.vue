@@ -20,23 +20,15 @@ import { PlusCircleIcon } from 'lucide-vue-next'
 const storedAdminId = localStorage.getItem('adminId')
 const adminId = storedAdminId && !isNaN(Number(storedAdminId)) ? parseInt(storedAdminId, 10) : 2
 
-const userId = ref('')
-
-//setting var for announcements
-const announcements = ref([])
 
 //fetching dashboard data from backend
 onMounted(async () => {
-// fetch all classes 
-// fetch unapproved students
-// when approving students add them to classes
-// fetch unassigned lecturers
-// 
+
     
     
 })
 
-// fetch adminID if needed
+
 
 </script>
 

@@ -209,7 +209,15 @@ const router = createRouter({
         page: 'admin-dash'
       }
     },
-
+    {
+      path:'/admin/usermanagement',
+      name: 'admin-manage',
+      component: () => import('@/views/admin/UserManagement.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'admin-manage'
+      }
+    },
     {
       path: '/layout-sandbox',
       name: 'layout-sandbox',
