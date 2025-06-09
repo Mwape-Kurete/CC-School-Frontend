@@ -29,6 +29,11 @@ export interface CourseDetails {
   }>;
 } //The nullified fields are there to match what my backeend service expects
 
+type CourseFetchResult = {
+  success: boolean
+  courses?: Course[]
+  error?: string
+} //this type is used to handle the response from the lecturer courses endpoint
 
 export const CourseService = {
     async getCourses() : Promise<Course[] | string> {
@@ -217,5 +222,23 @@ export const LecturerCourseService = {
       }
       throw new Error('Network error occurred while adding course details'); //better exception handeling -> this is for debugging
     }
+  },
+
+  async getLecturerCourses(lecturerId: string): Promise<CourseFetchResult> {
+  try {
+    const response = await api.get(`/lecturerreg/${lecturerId}`);
+    const courses = response.data.courses?.$values || [];
+    return {
+      success: true,
+      courses,
+    };
+  } catch (error: any) {
+    console.error('Full error object:', error);
+    const errorMsg = error.response?.data || 'An unknown error occurred';
+    return {
+      success: false,
+      error: errorMsg,
+    };
   }
+}
 }

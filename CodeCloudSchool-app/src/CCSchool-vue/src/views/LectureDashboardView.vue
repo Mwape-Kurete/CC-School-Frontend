@@ -1,10 +1,80 @@
 <script setup lang="ts">
+//importing from vue
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+
+//import services
+import { LecturerCourseService } from '@/api/courses'
+import { lecturerService } from '@/api/lecturer'
+
+//importing comopponents and icons
 import LecturerKnob from '@/components/LecturerKnob.vue'
 import ToDoComp from '@/components/ToDoComp.vue'
 import CardComp from '@/components/CardComp.vue'
 import CreateModuleAssignmentForm from '@/components/CreateModuleAssignmentForm.vue'
 import CButtonIcon from '@/components/ui/CButton-icon.vue'
 import { PlusCircleIcon } from 'lucide-vue-next'
+
+//Functionality Start
+//fetching & setting const variables
+const storedLectId = localStorage.getItem('lecturerId')
+const lecturerId = storedLectId && !isNaN(Number(storedLectId)) ? parseInt(storedLectId, 10) : 2
+
+const userId = ref('')
+
+//setting var for announcements
+const announcements = ref([])
+
+//fetching dashboard data from backend
+onMounted(async () => {
+  try {
+    const { success, courses, error } = await LecturerCourseService.getLecturerCourses(
+      lecturerId.toString(),
+    )
+    fetchLecturerUserID()
+    if (success && courses?.length) {
+      const firstCourse = courses[0]
+      localStorage.setItem('courseId', firstCourse.id.toString())
+
+      if (firstCourse.courseName) {
+        localStorage.setItem('courseName', firstCourse.courseName)
+      }
+
+      if (firstCourse.courseCode) {
+        localStorage.setItem('courseCode', firstCourse.courseCode.toString())
+      }
+
+      console.log('Lecturer courses fetched successfully:', courses)
+    } else {
+      console.error('Error fetching lecturer courses:', error)
+    }
+  } catch (err) {
+    console.error('Failed loading announcemnts:', err)
+  }
+})
+
+const fetchLecturerUserID = async () => {
+  try {
+    const lecturer = await lecturerService.getLecturerByID(lecturerId)
+
+    if (typeof lecturer === 'string') {
+      console.error('Error from service:', lecturer)
+      return
+    }
+
+    // Store both lecturerId and userId
+    localStorage.setItem('lecturerId', lecturer.lecturerId.toString())
+    localStorage.setItem('userId', lecturer.userId?.toString() || '')
+
+    console.log('Lecturer IDs stored:', {
+      lecturerId: lecturer.lecturerId,
+      userId: lecturer.userId,
+    })
+  } catch (err) {
+    console.error('Failed to fetch lecturer details:', err)
+    throw err
+  }
+}
 </script>
 
 <template>
