@@ -2,6 +2,7 @@
 import { GraduationCap, BellRing, EllipsisVertical } from 'lucide-vue-next';
 import CardComp from '@/components/CardComp.vue';
 import { CourseService } from '@/api/courses';
+import { AnnouncementService } from '@/api/announcements';
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -32,10 +33,22 @@ interface CourseDetails {
   };
 }
 
+interface Announcement {
+  announcementId: number;
+  title: string;
+  description: string;
+  date: string;
+  lecturerId: number;
+  courseId: number;
+}
+
 const route = useRoute();
 const courseDetails = ref<CourseDetails | null>(null);
+const announcements = ref<Announcement[]>([]);
 const isLoading = ref(false);
+const announcementsLoading = ref(false);
 const error = ref<string | null>(null);
+const announcementsError = ref<string | null>(null);
 const showDropdown = ref(false);
 const courseId = ref(route.params.courseId);
 
@@ -76,6 +89,33 @@ onMounted(async () => {
     isLoading.value = false;
   }
 });
+
+// Fetch announcements for current course
+const fetchAnnouncements = async (): Promise<void> => {
+  announcementsError.value = null;
+  announcementsLoading.value = true;
+  try {
+    const response = await AnnouncementService.getAnnouncementsByCourseId(Number(courseId.value));
+
+    if (typeof response === 'string') {
+      announcementsError.value = response;
+      announcements.value = [];
+    } else if (Array.isArray(response)) {
+      // Sort by date (newest first) and take first 2 announcements
+      announcements.value = response
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 2);
+    } else {
+      announcementsError.value = 'Unexpected data format';
+      announcements.value = [];
+    }
+  } catch (err) {
+    announcementsError.value = 'Failed to load announcements';
+    announcements.value = [];
+  } finally {
+    announcementsLoading.value = false;
+  }
+};
 </script>
 
 <template>
@@ -90,9 +130,26 @@ onMounted(async () => {
     <div v-else-if="courseDetails" class="course-content">
       <h2 class="day-heading">Recent Announcements</h2>
       
-      <!-- Announcements would go here - you might want to fetch these separately -->
+      <!-- Announcements would go here -->
       <div class="announcements-container">
-        <!-- You would map through announcements here -->
+        <div v-if="announcementsLoading">Loading announcements...</div>
+        <div v-else-if="announcementsError" class="text-red-500">{{ announcementsError }}</div>
+        <template v-else>
+          <div class="card-container">
+            <CardComp
+              v-for="announcement in announcements"
+              :key="announcement.announcementId"
+              cardType="announcement"
+              :announcementTitle="announcement.title"
+              :announcementBody="announcement.description"
+              :announcementDate="AnnouncementService.formatAnnouncementDate(announcement.date)"
+              moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
+            />
+            <div v-if="!announcements.length" class="text-gray-500">
+              No announcements available
+            </div>
+          </div>
+        </template>
       </div>
 
       <div class="banner-heading"><h1>{{ courseDetails.courseFullCode }} | Semester 1</h1></div>
