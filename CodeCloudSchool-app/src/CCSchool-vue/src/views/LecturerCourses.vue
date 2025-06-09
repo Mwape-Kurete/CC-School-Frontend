@@ -36,15 +36,81 @@
 </template>
 
 <script setup lang="ts">
-import { BellRing } from 'lucide-vue-next';
-import { ref } from 'vue';
+//importing from vue
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { reactive } from 'vue'
+
+//importing services
+import { LecturerCourseService } from '@/api/courses'
+import { lecturerService } from '@/api/lecturer'
+
+//importing componets
+import { BellRing } from 'lucide-vue-next'
+
+//initialising constants
+const storedLectId = localStorage.getItem('lecturerId')
+const lecturerId = storedLectId && !isNaN(Number(storedLectId)) ? parseInt(storedLectId, 10) : 2
+
+//functions
+//initial fetch
+// fetch courses and announcements
+onMounted(async () => {
+  try {
+    const { success, courses, error } = await LecturerCourseService.getLecturerCourses(
+      lecturerId.toString(),
+    )
+
+    await fetchLecturerUserID()
+
+    if (success && courses?.length) {
+      const firstCourse = courses[0]
+      localStorage.setItem('courseId', firstCourse.id.toString())
+
+      if (firstCourse.courseName) {
+        localStorage.setItem('courseName', firstCourse.courseName)
+      }
+
+      if (firstCourse.courseCode) {
+        localStorage.setItem('courseCode', firstCourse.courseCode.toString())
+      }
+
+      console.log('Lecturer courses fetched successfully:', courses)
+    } else {
+      console.error('Error fetching lecturer courses:', error)
+    }
+  } catch (err) {
+    console.error('Failed loading dashboard:', err)
+  }
+})
+//fetching lecturer user Id to get the
+const fetchLecturerUserID = async () => {
+  try {
+    const lecturer = await lecturerService.getLecturerByID(lecturerId)
+
+    if (typeof lecturer === 'string') {
+      console.error('Error from service:', lecturer)
+      return
+    }
+
+    localStorage.setItem('lecturerId', lecturer.lecturerId.toString())
+    const userId = localStorage.setItem('userId', lecturer.userId?.toString() || '')
+
+    console.log('Lecturer IDs stored:', {
+      lecturerId: lecturer.lecturerId,
+      userId: lecturer.userId,
+    })
+  } catch (err) {
+    console.error('Failed to fetch lecturer details:', err)
+  }
+}
 
 // Mock data - replace with your API calls
 const courses = ref([
   { id: 1, name: 'Computer Science 101', code: 'CS101', studentCount: 45, moduleCount: 8 },
   { id: 2, name: 'Advanced Programming', code: 'CS201', studentCount: 32, moduleCount: 10 },
   { id: 3, name: 'Database Systems', code: 'CS301', studentCount: 28, moduleCount: 6 },
-]);
+])
 </script>
 
 <style scoped>
