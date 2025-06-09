@@ -87,7 +87,8 @@ import {
   FileText,
   Megaphone,
   PlusSquare,
-  Users
+  Users,
+  LucideHome
 } from 'lucide-vue-next';
 
 const rawRole = (localStorage.getItem('userRole') || 'student').toLowerCase();
@@ -151,7 +152,8 @@ const sharedNavItems = [
     icon: Gauge,
     route: {
       student: '/',
-      lecturer: '/lecturer-dash'
+      lecturer: '/lecturer-dash',
+      admin: '/admin/dashboard'
     }
   },
   { 
@@ -187,6 +189,7 @@ const sharedNavItems = [
 
 // Admin-specific items
 const adminNavItems = [
+  {label: 'Dashboard', icon: LucideHome, route:'/admin/dashboard'},
   { label: 'Admin Console', icon: Shield, route: '/admin' },
   { label: 'Manage Users', icon: Users, route: '/admin/users' },
   { label: 'System Settings', icon: Settings, route: '/admin/settings' },

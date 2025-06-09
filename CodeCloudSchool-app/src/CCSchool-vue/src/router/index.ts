@@ -204,7 +204,7 @@ const router = createRouter({
       name: 'admin-dash',
       component: () => import('@/views/admin/AdminDashboard.vue'),
       meta:{
-        layout: 'ThreeCol',
+        layout: 'TwoCol',
         allowedRoles: ['admin'],
         page: 'admin-dash'
       }

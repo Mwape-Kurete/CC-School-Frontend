@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { computed, watchEffect, ref, defineAsyncComponent } from 'vue'
 
 //defining layout components async
@@ -11,9 +11,10 @@ const layouts = {
 
 //fetching the current route
 const route = useRoute()
-
+const router = useRouter();
 //reactive layout component ref
 const layoutComponent = ref(layouts.TwoCol)
+router.push({ name: 'Login' });
 
 //watching for route.meta.layout changes and updating layouyComponent
 
@@ -29,6 +30,7 @@ watchEffect(() => {
       <!-- Main content area (right side) -->
       <main class="main-content">
         <RouterView />
+        
       </main>
     </div>
   </component>
