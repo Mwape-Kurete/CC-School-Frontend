@@ -115,39 +115,8 @@ const formatDate = (iso: string): string => {
 }
 
 //announcemnets
-
-const fetchAnnouncements = async () => {
-  try {
-    const response = await AnnouncementService.getAllAnnouncments() // <-- FIXED CALL
-
-    if (typeof response === 'string') {
-      console.error('Error:', response)
-      return
-    }
-
-    const allAnnouncements = response.$values || []
-    const lecturerAnnouncements = allAnnouncements.filter((a: any) => a.lecturerId === lecturerId)
-
-    if (!lecturerAnnouncements.length) {
-      console.warn('No announcements found for this lecturer.')
-      console.log('no announcments for this lecturer')
-
-      return
-    }
-
-    announcements.value = lecturerAnnouncements
-
-    const latest = lecturerAnnouncements[0]
-    announcementData.title = latest.title
-    announcementData.description = latest.description
-    announcementData.date = formatDate(latest.date)
-    announcementData.lecturerId = latest.lecturerId.toString()
-
-    console.log('Lecturer announcements:', lecturerAnnouncements)
-  } catch (err) {
-    console.error('Failed to fetch announcements:', err)
-  }
-}
+//TODO: implement function below
+const fetchAnnouncements = async () => {}
 
 //classes
 const fetchLecturerClasses = async () => {

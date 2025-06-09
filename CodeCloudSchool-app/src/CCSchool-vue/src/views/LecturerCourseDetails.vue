@@ -182,21 +182,9 @@ const fetchCourseDetails = async () => {
   }
 }
 
-const fetchAnnouncements = async () => {
-  try {
-    const response = await AnnouncementService.getAnnouncementsByLecturerId(lecturerId)
-    if (typeof response === 'string') {
-      console.error('Error:', response)
-    } else {
-      announcements.value = response
-      announcementData.title = response.title
-      announcementData.description = response.description
-      announcementData.date = response.formatAnnouncementDate(announcement.date)
-    }
-  } catch (err) {
-    throw err // Let loadInitialData handle it
-  }
-}
+//announcemnets
+//TODO: implement function below
+const fetchAnnouncements = async () => {}
 
 //fixed this
 const getEmbeddedSlideUrl = (url) => {
