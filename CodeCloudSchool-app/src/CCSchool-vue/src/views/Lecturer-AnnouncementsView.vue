@@ -150,7 +150,6 @@ const handleVoiceCommand = async (command: string) => {
         command.includes('post') || command.includes('send')) {
       if (publishButton.value) {
         publishButton.value.click();
-       
       }
     } else if (command.includes('clear') || command.includes('reset')) {
       title.value = '';
@@ -159,8 +158,6 @@ const handleVoiceCommand = async (command: string) => {
       errorMessage.value = '';
     } else if (command.includes('cancel') || command.includes('back')) {
         router.push('/LecturerAnnounceOver');
-
-      
     } else {
       errorMessage.value = "Command not recognized. Try 'publish', 'clear', or 'cancel'";
     }
@@ -188,8 +185,10 @@ onMounted(() => {
     <div class="announcement-card">
       <h2 class="card-title">New Announcement</h2>
       
+      <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-thin-straight/css/uicons-thin-straight.css'>
+      
       <button @click="startListening" class="voice-command-button">
-        🎙️ Speak Command
+        <i class="fi fi-ts-ear-sound"></i> 
       </button>
       <p v-if="spokenText" class="voice-feedback">You said: "{{ spokenText }}"</p>
       
@@ -207,7 +206,7 @@ onMounted(() => {
         </div>
         
         <div class="input-group">
-          <label class="input-label">Content</label>
+          <label class="input-label">Announcement Body </label>
           <div class="toolbar">
             <button
               v-for="btn in toolbarButtons"
@@ -267,6 +266,7 @@ onMounted(() => {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=Quicksand:wght@300..700&display=swap');
+@import url('https://cdn-uicons.flaticon.com/3.0.0/uicons-thin-straight/css/uicons-thin-straight.css');
 
 .announcement-container {
   padding: 2rem;
@@ -396,7 +396,7 @@ onMounted(() => {
   font-size: 0.875rem;
   text-transform: uppercase;
   margin-top: 0.5rem;
-  font-family: "Lexend", sans-serif;
+  font-family: "Quicksand", sans-serif;
 }
 
 .send-button:hover {
@@ -417,7 +417,7 @@ onMounted(() => {
   font-size: 0.875rem;
   text-transform: uppercase;
   margin-top: 0.5rem;
-  font-family: "Lexend", sans-serif;
+  font-family: "Quicksand", sans-serif;
 }
 
 .cancel-button:hover {
@@ -454,6 +454,9 @@ onMounted(() => {
 }
 
 .voice-command-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   background-color: #dbeafe;
   border: 1px solid #60a5fa;
   border-radius: 50px;
@@ -472,9 +475,12 @@ onMounted(() => {
   outline: 3px solid #ff8c00;
 }
 
+.voice-command-button i {
+  font-size: 1rem;
+}
+
 .rich-textarea ol {
   list-style-type: decimal;
   padding-left: 1.5rem;
 }
 </style>
-

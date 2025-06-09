@@ -10,7 +10,7 @@ interface Assignment {
   title: string;
   description: string;
   dueDate: string; 
-  status: 'upcoming' | 'past' | 'unpublished';
+  status: 'upcoming' | 'past' | 'unpublished' | 'published';
   header?: string; 
   format?: string;
   attempts?: number | string;
@@ -30,7 +30,7 @@ async function fetchAssignments() {
     const localAssignments = JSON.parse(localStorage.getItem('assignments') || '[]');
     
     // Then fetch from backend
-    const backendResponse = await AssignmentService.getAssignmentsByLecturerId(1); 
+    const backendResponse = await AssignmentService.getAssignmentsByCourseId(1); 
     
     // Process backend assignments
     let backendAssignments: Assignment[] = [];
@@ -146,6 +146,47 @@ onMounted(() => {
               <p class="assignment-description">{{ assignment.description }}</p>
               <p class="due-date">Due: {{ new Date(assignment.dueDate).toLocaleDateString() }}</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Add this inside the appropriate v-for loop for assignments with status 'published' -->
+      <!-- Example: Add to the upcoming or past assignments section as needed -->
+      
+      <!-- For demonstration, here's how you might add it to the upcoming assignments section: -->
+      <section class="assignment-section">
+        <div class="assignment-controls">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search assignments..."
+            class="search-input"
+          />
+          <select v-model="sortOption" class="sort-select">
+            <option value="recent">Most Recent</option>
+            <option value="oldest">Oldest</option>
+          </select>
+        </div>
+        <h2 class="section-title">Upcoming Assignments</h2>
+        <div class="assignment-list">
+          <div 
+            v-for="assignment in getAssignmentsByStatus('upcoming')" 
+            :key="assignment.id"
+            class="assignment-card upcoming"
+          >
+            <div class="assignment-image-holder"></div>
+            <div class="assignment-details">
+              <h3 class="assignment-title">{{ assignment.title }}</h3>
+              <p class="assignment-description">{{ assignment.description }}</p>
+              <p class="due-date">Due: {{ new Date(assignment.dueDate).toLocaleDateString() }}</p>
+            </div>
+            <router-link 
+              v-if="assignment.status === 'published'"
+              :to="`/assignments/${assignment.id}/grade`"
+              class="grade-button"
+            >
+              Grade Submissions
+            </router-link>
           </div>
         </div>
       </section>

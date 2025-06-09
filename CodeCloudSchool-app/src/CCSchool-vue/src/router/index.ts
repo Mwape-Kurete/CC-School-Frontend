@@ -241,7 +241,7 @@ const router = createRouter({
     },
 
     {
-  path: '/assignments/:assignmentId/grade',
+  path: '/lecturer-grading',
   name: 'LecturerGrading',
   component: () => import('@/views/LecturerGradingView.vue'),
   meta: { requiresAuth: true, requiresLecturer: true }

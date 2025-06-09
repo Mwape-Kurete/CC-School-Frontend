@@ -7,17 +7,17 @@ import { StudentService } from '@/api/student';
 
 const route = useRoute();
 const assignmentId = ref(Number(route.params.assignmentId));
-const lecturerId = ref(0); // Will be set from auth or session
+const lecturerId = ref(0);
 const submissions = ref<AssignmentSubmission[]>([]);
 const selectedSubmission = ref<AssignmentSubmission | null>(null);
 const grade = ref(0);
 const feedback = ref('');
 const isLoading = ref(false);
 const errorMessage = ref('');
+const useLocalStorage = ref(false); // Toggle between local storage and backend
 
-// Fetch lecturer ID (you might get this from auth/session in a real app)
+// Fetch lecturer ID
 onMounted(async () => {
-  // This is just an example - in reality you'd get this from auth
   const lecturer = await lecturerService.getLecturerByID(1); // Replace with actual lecturer ID
   if (typeof lecturer !== 'string') {
     lecturerId.value = lecturer.lecturerId;
@@ -30,20 +30,76 @@ async function loadSubmissions() {
   isLoading.value = true;
   errorMessage.value = '';
   
-  const result = await GradingService.getSubmissionsForAssignment(assignmentId.value);
-  if (typeof result !== 'string') {
-    submissions.value = result;
-  } else {
-    errorMessage.value = result;
+  try {
+    // Try backend first
+    const backendResult = await GradingService.getSubmissionsForAssignment(assignmentId.value);
+    
+    if (typeof backendResult !== 'string') {
+      submissions.value = backendResult;
+      useLocalStorage.value = false;
+    } else {
+      // If backend fails, try local storage
+      loadFromLocalStorage();
+    }
+  } catch (error) {
+    // If any error occurs, fall back to local storage
+    loadFromLocalStorage();
   }
   
   isLoading.value = false;
 }
 
+function loadFromLocalStorage() {
+  const storedAssignments = JSON.parse(localStorage.getItem('assignments') || '[]');
+  const assignment = storedAssignments.find((a: any) => a.id === assignmentId.value);
+  
+  if (assignment) {
+    useLocalStorage.value = true;
+    
+    // Get submissions from localStorage (you might need to adjust this based on your storage structure)
+    const storedSubmissions = JSON.parse(localStorage.getItem('assignmentSubmissions') || '[]');
+    submissions.value = storedSubmissions.filter((s: any) => s.assignmentId === assignmentId.value);
+    
+    // If no submissions exist in localStorage, create some mock data for demonstration
+    if (submissions.value.length === 0) {
+      submissions.value = [
+        {
+          id: Date.now(),
+          assignmentId: assignmentId.value,
+          studentId: 12345, // Mock student ID
+          submissionContent: 'This is a submission from local storage',
+          submittedAt: new Date().toISOString()
+        }
+      ];
+      localStorage.setItem('assignmentSubmissions', JSON.stringify(submissions.value));
+    }
+  } else {
+    errorMessage.value = 'Assignment not found in local storage or backend';
+  }
+}
+
 function selectSubmission(submission: AssignmentSubmission) {
   selectedSubmission.value = submission;
-  grade.value = 0;
-  feedback.value = '';
+  
+  // Try to load existing grade if available
+  if (useLocalStorage.value) {
+    const storedGrades = JSON.parse(localStorage.getItem('assignmentGrades') || '[]');
+    const existingGrade = storedGrades.find((g: any) => 
+      g.assignmentId === assignmentId.value && 
+      g.studentId === submission.studentId
+    );
+    
+    if (existingGrade) {
+      grade.value = existingGrade.grade;
+      feedback.value = existingGrade.feedback;
+    } else {
+      grade.value = 0;
+      feedback.value = '';
+    }
+  } else {
+    grade.value = 0;
+    feedback.value = '';
+  }
 }
 
 async function submitGrade() {
@@ -52,21 +108,47 @@ async function submitGrade() {
   isLoading.value = true;
   errorMessage.value = '';
   
-  const result = await GradingService.submitGrade(
-    assignmentId.value,
-    selectedSubmission.value.studentId,
-    lecturerId.value,
-    grade.value,
-    feedback.value
-  );
-  
-  if (typeof result !== 'string') {
-    // Grade submitted successfully
-    alert('Grade submitted successfully!');
+  if (useLocalStorage.value) {
+    // Save to local storage
+    const storedGrades = JSON.parse(localStorage.getItem('assignmentGrades') || '[]');
+    
+    // Remove existing grade if it exists
+    const updatedGrades = storedGrades.filter((g: any) => 
+      !(g.assignmentId === assignmentId.value && g.studentId === selectedSubmission.value?.studentId)
+    );
+    
+    // Add new grade
+    updatedGrades.push({
+      assignmentId: assignmentId.value,
+      studentId: selectedSubmission.value.studentId,
+      lecturerId: lecturerId.value,
+      grade: grade.value,
+      feedback: feedback.value,
+      gradedAt: new Date().toISOString()
+    });
+    
+    localStorage.setItem('assignmentGrades', JSON.stringify(updatedGrades));
+    
+    alert('Grade saved to local storage successfully!');
     selectedSubmission.value = null;
     loadSubmissions();
   } else {
-    errorMessage.value = result;
+    // Save to backend
+    const result = await GradingService.submitGrade(
+      assignmentId.value,
+      selectedSubmission.value.studentId,
+      lecturerId.value,
+      grade.value,
+      feedback.value
+    );
+    
+    if (typeof result !== 'string') {
+      alert('Grade submitted successfully!');
+      selectedSubmission.value = null;
+      loadSubmissions();
+    } else {
+      errorMessage.value = result;
+    }
   }
   
   isLoading.value = false;
@@ -79,6 +161,10 @@ async function submitGrade() {
     
     <div v-if="errorMessage" class="error-message">
       {{ errorMessage }}
+    </div>
+    
+    <div v-if="useLocalStorage" class="storage-warning">
+      <strong>Note:</strong> Using locally stored data (offline mode)
     </div>
     
     <div class="submissions-list">
@@ -125,7 +211,7 @@ async function submitGrade() {
         :disabled="isLoading"
         class="submit-button"
       >
-        {{ isLoading ? 'Submitting...' : 'Submit Grade' }}
+        {{ isLoading ? 'Submitting...' : useLocalStorage ? 'Save Grade Locally' : 'Submit Grade' }}
       </button>
     </div>
   </div>
@@ -141,6 +227,15 @@ async function submitGrade() {
 .error-message {
   color: red;
   margin-bottom: 1rem;
+}
+
+.storage-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ffeeba;
+  border-radius: 0.25rem;
 }
 
 .submissions-list ul {
