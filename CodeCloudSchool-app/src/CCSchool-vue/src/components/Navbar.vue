@@ -9,10 +9,13 @@
 
     <!-- Navigation menu links section -->
     <div class="nav-links py-4">
-      <!-- Loop through each navigation item -->
-      <div v-for="item in navItems" :key="item.label">
-        <!-- Main nav item -->
-        <RouterLink :to="item.route">
+      <!-- Show lecturer-specific navigation if user is lecturer -->
+      <template v-if="currentUser?.role === 'lecturer'">
+        <RouterLink 
+          v-for="item in lecturerNavItems" 
+          :key="item.label" 
+          :to="item.route"
+        >
           <div
             class="nav-item pl-6 pr-3 py-3 flex items-center transition-colors mx-4 hover:bg-white/50 hover:text-gray-700"
             :class="{ 'active-nav-item': route.path === item.route }">
@@ -20,32 +23,47 @@
             <span class="font-medium">{{ item.label }}</span>
           </div>
         </RouterLink>
-
-        <!-- Course Pages Navigation (shown when on a course page) -->
-        <div 
-          v-if="item.label === 'Courses' && (($route.path.includes('/courses/') && currentUser?.role === 'student') || ($route.path.includes('/lecturer-courses/') && currentUser?.role === 'lecturer'))"
-          class="course-nav ml-8"
-        >
-          <!-- Back to All Courses link -->
-          <RouterLink
-            :to="currentUser?.role === 'student' ? { name: 'courses' } : { name: 'lecturer-courses' }"
-            class="course-nav-item font-semibold"
-          >
-            ← All Courses
+      </template>
+      
+      <!-- Show combined student/admin navigation for other roles -->
+      <template v-else>
+        <div v-for="item in navItems" :key="item.label">
+          <!-- Main nav item -->
+          <RouterLink :to="item.route">
+            <div
+              class="nav-item pl-6 pr-3 py-3 flex items-center transition-colors mx-4 hover:bg-white/50 hover:text-gray-700"
+              :class="{ 'active-nav-item': route.path === item.route }">
+              <component :is="item.icon" class="h-5 mr-3" />
+              <span class="font-medium">{{ item.label }}</span>
+            </div>
           </RouterLink>
 
-          <!-- Dynamic course section links -->
-          <RouterLink
-            v-for="page in coursePages"
-            :key="page.routeName"
-            :to="getCourseRoute(page.routeName)"
-            class="course-nav-item"
-            active-class="active-course-item"
+          <!-- Course Pages Navigation (shown when on a course page) -->
+          <div 
+            v-if="item.label === 'Courses' && (($route.path.includes('/courses/') && currentUser?.role === 'student') || ($route.path.includes('/lecturer-courses/') && currentUser?.role === 'lecturer'))"
+            class="course-nav ml-8"
           >
-            {{ page.name }}
-          </RouterLink>
+            <!-- Back to All Courses link -->
+            <RouterLink
+              :to="currentUser?.role === 'student' ? { name: 'courses' } : { name: 'lecturer-courses' }"
+              class="course-nav-item font-semibold"
+            >
+              ← All Courses
+            </RouterLink>
+
+            <!-- Dynamic course section links -->
+            <RouterLink
+              v-for="page in coursePages"
+              :key="page.routeName"
+              :to="getCourseRoute(page.routeName)"
+              class="course-nav-item"
+              active-class="active-course-item"
+            >
+              {{ page.name }}
+            </RouterLink>
+          </div>
         </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
@@ -62,23 +80,69 @@ const route = useRoute();
 import {
   Gauge,
   BookOpen,
-  Users,
   Calendar,
   User,
   Settings,
   Shield,
-
+  FileText,
+  Megaphone,
+  PlusSquare,
+  Users
 } from 'lucide-vue-next';
-
 
 const rawRole = (localStorage.getItem('userRole') || 'student').toLowerCase();
 const currentUser = ref({
   role: ['student', 'lecturer', 'admin'].includes(rawRole) ? rawRole : 'student'
 });
-console.log('Raw userRole from localStorage:', localStorage.getItem('userRole'));
 
-
-console.log(currentUser)
+// Lecturer-specific navigation items
+const lecturerNavItems = [
+  { 
+    label: 'Dashboard',
+    icon: Gauge,
+    route: '/lecturer-dash'
+  },
+  { 
+    label: 'My Course', 
+    icon: BookOpen, 
+    route: '/lecturer-courses' 
+  },
+  { 
+    label: 'Modules', 
+    icon: FileText, 
+    route: '/lecturer-modules' 
+  },
+  { 
+    label: 'Create Module', 
+    icon: PlusSquare, 
+    route: '/lecturer-create-modules' 
+  },
+  { 
+    label: 'Assignments', 
+    icon: FileText, 
+    route: '/LecturerAssign' 
+  },
+  { 
+    label: 'Announcements', 
+    icon: Megaphone, 
+    route: '/LecturerAnnounce' 
+  },
+  { 
+    label: 'Timetable', 
+    icon: Calendar, 
+    route: '/timetable' 
+  },
+  { 
+    label: 'User Account', 
+    icon: User, 
+    route: '/account' 
+  },
+  { 
+    label: 'Settings', 
+    icon: Settings, 
+    route: '/settings' 
+  },
+];
 
 // Shared nav items (students + lecturers)
 const sharedNavItems = [
@@ -87,7 +151,7 @@ const sharedNavItems = [
     icon: Gauge,
     route: {
       student: '/',
-      lecturer: '/lecturer-dash' // Changed to match your file
+      lecturer: '/lecturer-dash'
     }
   },
   { 
@@ -186,6 +250,8 @@ const getCourseRoute = (routeName: string) => {
 // State management
 const isCollapsed = ref(false);
 </script>
+
+
 <style scoped>
 /* Main sidebar styling */
 
