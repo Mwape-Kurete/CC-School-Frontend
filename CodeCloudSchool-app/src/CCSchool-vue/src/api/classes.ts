@@ -33,7 +33,7 @@ export interface Class {
   };
   moduleImg: any;
   Classroom: string;
-  
+
 }
 
 export const ClassesService = {
@@ -48,7 +48,7 @@ export const ClassesService = {
 
     console.log("Classes Retrieved: ", response)
     return response.data.$values || [];
-  }, 
+  },
 
 
 }
