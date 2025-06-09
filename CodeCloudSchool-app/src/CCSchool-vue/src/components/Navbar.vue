@@ -21,21 +21,27 @@
           </div>
         </RouterLink>
 
-
-        <!-- Course Pages Navigation (only shown when on a course page) -->
-        <div v-if="item.label === 'Courses' && $route.path.includes('/courses/') && !isCollapsed"
-          class="course-nav ml-8">
-          <!-- Back to All Courses link - appears at the top of the course navigation -->
-          <RouterLink :to="{ name: 'courses' }" class="course-nav-item font-semibold">
-
+        <!-- Course Pages Navigation (shown when on a course page) -->
+        <div 
+          v-if="item.label === 'Courses' && (($route.path.includes('/courses/') && currentUser?.role === 'student') || ($route.path.includes('/lecturer-courses/') && currentUser?.role === 'lecturer'))"
+          class="course-nav ml-8"
+        >
+          <!-- Back to All Courses link -->
+          <RouterLink
+            :to="currentUser?.role === 'student' ? { name: 'courses' } : { name: 'lecturer-courses' }"
+            class="course-nav-item font-semibold"
+          >
             ← All Courses
           </RouterLink>
 
-          <!-- Dynamic course section links - generated for each page in coursePages array -->
-          <RouterLink v-for="page in coursePages" :key="page.routeName" :to="{
-            name: page.routeName,
-            params: { courseId: $route.params.courseId }
-          }" class="course-nav-item" active-class="active-course-item">
+          <!-- Dynamic course section links -->
+          <RouterLink
+            v-for="page in coursePages"
+            :key="page.routeName"
+            :to="getCourseRoute(page.routeName)"
+            class="course-nav-item"
+            active-class="active-course-item"
+          >
             {{ page.name }}
           </RouterLink>
         </div>
@@ -44,12 +50,12 @@
   </div>
 </template>
 
-
 <script setup lang="ts">
-// Import Vue Router functionality
 import { RouterLink, useRoute } from 'vue-router';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
+// Get user role from local storage
+const userRole = ref(localStorage.getItem('userRole')).value;
 const route = useRoute();
 
 // Import Lucide icons for the navigation
@@ -63,7 +69,6 @@ import {
   Shield,
 
 } from 'lucide-vue-next';
-import { computed } from 'vue'
 
 
 const rawRole = (localStorage.getItem('userRole') || 'student').toLowerCase();
@@ -85,11 +90,35 @@ const sharedNavItems = [
       lecturer: '/lecturer-dash' // Changed to match your file
     }
   },
-  { label: 'Courses', icon: BookOpen, route: '/courses' },
-  { label: 'Groups', icon: Users, route: '/groups' },
-  { label: 'Timetable', icon: Calendar, route: '/timetable' },
-  { label: 'User Account', icon: User, route: '/account' },
-  { label: 'Settings', icon: Settings, route: '/settings' },
+  { 
+    label: 'Courses', 
+    icon: BookOpen, 
+    route: { 
+      student: '/courses', 
+      lecturer: '/lecturer-courses',
+      admin: '/admin/courses'
+    } 
+  },
+  { 
+    label: 'Groups', 
+    icon: Users, 
+    route: '/groups' 
+  },
+  { 
+    label: 'Timetable', 
+    icon: Calendar, 
+    route: '/timetable' 
+  },
+  { 
+    label: 'User Account', 
+    icon: User, 
+    route: '/account' 
+  },
+  { 
+    label: 'Settings', 
+    icon: Settings, 
+    route: '/settings' 
+  },
 ];
 
 // Admin-specific items
@@ -99,43 +128,64 @@ const adminNavItems = [
   { label: 'System Settings', icon: Settings, route: '/admin/settings' },
 ];
 
-// Resolve nav items
-type UserRole = 'student' | 'lecturer' | 'admin';
-
+// Resolve nav items based on user role
 const navItems = computed(() => {
-  const role = (currentUser.value?.role || 'student') as UserRole;
-
-  // fallback for unknown roles
-  if (!['student', 'lecturer', 'admin'].includes(role)) return [];
-
-  return role === 'admin'
-    ? adminNavItems
-    : sharedNavItems.map(item => ({
-        ...item,
-        route: typeof item.route === 'object' ? item.route[role as 'student' | 'lecturer'] : item.route
-      }));
+  const role = currentUser.value?.role as 'student' | 'lecturer' | 'admin';
+  
+  if (role === 'admin') {
+    return adminNavItems;
+  }
+  
+  return sharedNavItems.map(item => ({
+    ...item,
+    route: typeof item.route === 'object' ? item.route[role] : item.route
+  }));
 });
 
-console.log('Resolved navItems:', navItems.value);
+// Course pages with route names for both student and lecturer views
+const coursePages = computed(() => {
+  const baseRoutes = [
+    { name: 'Home', routeName: 'CourseHome' },
+    { name: 'Announcements', routeName: 'CourseAnnouncements' },
+    { name: 'Modules', routeName: 'CourseModules' },
+    { name: 'Assignments', routeName: 'CourseAssignments' },
+    { name: 'Grades', routeName: 'CourseGrades' }
+  ];
 
+  if (currentUser.value?.role === 'lecturer') {
+    return [
+      { name: 'Home', routeName: 'LecturerCourseHome' },
+      { name: 'Announcements', routeName: 'LecturerAnnounce' },
+      { name: 'Modules', routeName: 'lecturer-modules' },
+      { name: 'Assignments', routeName: 'LecturerAssign' },
+      { name: 'Grades', routeName: 'LecturerGrades' }
+    ];
+  }
 
+  return baseRoutes;
+});
+
+// Helper function to generate correct course route based on user role
+const getCourseRoute = (routeName: string) => {
+  const role = currentUser.value?.role;
+  const courseId = route.params.courseId;
+  
+  if (role === 'lecturer') {
+    return {
+      name: routeName,
+      params: { courseId }
+    };
+  }
+  
+  return {
+    name: routeName,
+    params: { courseId }
+  };
+};
 
 // State management
-const isCollapsed = ref(false)
-
-
-
-// Course pages with route names matching your router
-const coursePages = ref([
-  { name: 'Home', routeName: 'CourseHome' },
-  { name: 'Announcements', routeName: 'CourseAnnouncements' },
-  { name: 'Modules', routeName: 'CourseModules' },
-  { name: 'Assignments', routeName: 'CourseAssignments' },
-  { name: 'Grades', routeName: 'CourseGrades' }
-]);
-
+const isCollapsed = ref(false);
 </script>
-
 <style scoped>
 /* Main sidebar styling */
 
