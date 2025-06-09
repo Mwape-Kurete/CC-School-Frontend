@@ -104,7 +104,7 @@ async function loadGrades() {
 
 .graded-at {
   font-size: 0.9rem;
-  color: #666;
+  color: #515151;
   text-align: right;
 }
 </style>
