@@ -271,6 +271,9 @@ onMounted(() => {
 .announcement-container {
   padding: 2rem;
   font-family: "Quicksand", sans-serif;
+  background-image: url(../assets/CCVector.svg);
+  background-size: cover;
+ 
 }
 
 .main-title {
@@ -360,7 +363,7 @@ onMounted(() => {
 }
 
 .toolbar button:focus {
-  outline: 3px solid #ff8c00;
+  outline: 3px solid #828d7f;
 }
 
 .rich-textarea {
@@ -404,7 +407,7 @@ onMounted(() => {
 }
 
 .send-button:focus {
-  outline: 3px solid #ff8c00;
+  outline: 3px solid #828d7f;
 }
 
 .cancel-button {
@@ -425,7 +428,7 @@ onMounted(() => {
 }
 
 .cancel-button:focus {
-  outline: 3px solid #ff8c00;
+  outline: 3px solid #828d7f;
 }
 
 .error-message {
@@ -458,7 +461,7 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   background-color: #dbeafe;
-  border: 1px solid #60a5fa;
+  border: 1px solid #9da99a;
   border-radius: 50px;
   padding: 0.625rem 1.25rem;
   font-size: 0.875rem;
@@ -468,11 +471,11 @@ onMounted(() => {
 }
 
 .voice-command-button:hover {
-  background-color: #bfdbfe;
+  background-color: #b7c6b3;
 }
 
 .voice-command-button:focus {
-  outline: 3px solid #ff8c00;
+  outline: 3px solid #828d7f;
 }
 
 .voice-command-button i {

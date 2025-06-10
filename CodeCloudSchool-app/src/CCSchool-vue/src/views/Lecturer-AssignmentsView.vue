@@ -447,7 +447,7 @@ function resetForm() {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background-color: #3b82f6;
+  background-color: #D0DFCC;
   color: white;
   border: none;
   display: flex;
@@ -459,12 +459,12 @@ function resetForm() {
 }
 
 .voice-trigger-button:hover {
-  background-color: #2563eb;
+  background-color: #9da99a;
   transform: scale(1.05);
 }
 
 .voice-trigger-button:active { 
-  background-color: #1d4ed8;
+  background-color: #7a8577;
   transform: scale(0.95);
 }
 
@@ -686,6 +686,6 @@ function resetForm() {
 }
 
 .voice-command-button:focus {
-  outline: 3px solid #ff8c00;
+  outline: 3px solid #788176;
 }
 </style>
