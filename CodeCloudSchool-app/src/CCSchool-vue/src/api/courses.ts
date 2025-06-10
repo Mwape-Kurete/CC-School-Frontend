@@ -243,3 +243,8 @@ export const LecturerCourseService = {
   }
 }
 }
+
+
+export const AdminCourseServices = {
+    createCourse: (data: any) => api.post('/courses/create-course', data).then(res => res.data),
+}

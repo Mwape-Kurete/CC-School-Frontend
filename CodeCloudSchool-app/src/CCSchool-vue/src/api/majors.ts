@@ -67,3 +67,7 @@ export const StudentMajorServices = {
         }
     }
 }
+
+export const AdminMajorServices = {
+    createMajor: (data: any) => api.post('/majors', data).then(res => res.data),
+}

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { CourseService } from '@/api/courses';
+import { AdminCourseServices, CourseService } from '@/api/courses';
 import type { Course } from '@/api/courses';
 import { ClassesService, type Class } from '@/api/classes';
-import { MajorServices, type major } from '@/api/majors';
+import { AdminMajorServices, MajorServices, type major } from '@/api/majors';
 import { AdminClassesService, type CreateClass } from '@/api/classes';
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
@@ -55,12 +55,63 @@ const createClass = async () => {
     }
 };
 
+const newMajor = ref({
+    majorName: '',
+    majorCode: '',
+    majorDescription: '',
+    creditsRequired: null,
+});
+
+const createMajor = async () => {
+    try {
+        const response = await AdminMajorServices.createMajor(newMajor.value);
+        console.log("Major created:", response);
+        await getAllMajors(); // refresh list
+        newMajor.value = {
+            majorName: '',
+            majorCode: '',
+            majorDescription: '',
+            creditsRequired: null,
+        };
+    } catch (error) {
+        console.error("Error creating major:", error);
+    }
+};
+
+
+const newCourse = ref({
+    courseName: '',
+    courseCode: null,
+    coursePresentationLink: '',
+    courseDescription: '',
+});
+
+const createCourse = async () => {
+    try {
+        const response = await AdminCourseServices.createCourse(newCourse.value);
+        console.log("Course created:", response);
+        await getAllCourses(); // refresh list
+        newCourse.value = {
+            courseName: '',
+            courseCode: null,
+            coursePresentationLink: '',
+            courseDescription: '',
+        };
+    } catch (error) {
+        console.error("Error creating course:", error);
+    }
+};
+
+
+
 const selectedClassIdInput = ref<string>('');
 const selectedClassId = ref<number | null>(null);
 const selectedStudentIdInput = ref<string>('');
 const selectedStudentId = ref<number | null>(null);
 const selectedLecturerIdInput = ref<string>('');
 const selectedLecturerId = ref<number | null>(null);
+
+
 const addStudentToClass = async () => {
     selectedStudentId.value = selectedStudentIdInput.value ? Number(selectedStudentIdInput.value) : null;
     if (!selectedClassId.value || !selectedStudentId.value) return;
@@ -240,6 +291,52 @@ const getAllClasses = async () => {
                 <InputText v-model="selectedLecturerIdInput" class="w-full" placeholder="Enter Lecturer ID" />
                 <Button label="Add Lecturer" icon="pi pi-user-edit" class="w-full" @click="addLecturerToClass" />
             </div>
+        </div>
+    </section>
+
+    <section class="mt-10">
+        <h2 class="text-xl font-semibold mb-4">Create New Major</h2>
+        <div class="p-4 rounded shadow-md max-w-xl space-y-4">
+            <div>
+                <label class="block mb-1 font-medium">Major Name</label>
+                <InputText v-model="newMajor.majorName" class="w-full" />
+            </div>
+            <div>
+                <label class="block mb-1 font-medium">Major Code</label>
+                <InputText v-model="newMajor.majorCode" class="w-full" />
+            </div>
+            <div>
+                <label class="block mb-1 font-medium">Description</label>
+                <InputText v-model="newMajor.majorDescription" class="w-full" />
+            </div>
+            <div>
+                <label class="block mb-1 font-medium">Credits Required</label>
+                <InputText v-model.number="newMajor.creditsRequired" type="number" class="w-full" />
+            </div>
+            <Button label="Create Major" icon="pi pi-plus" class="w-full" @click="createMajor" />
+        </div>
+    </section>
+
+    <section class="mt-10">
+        <h2 class="text-xl font-semibold mb-4">Create New Course</h2>
+        <div class="p-4 rounded shadow-md max-w-xl space-y-4">
+            <div>
+                <label class="block mb-1 font-medium">Course Name</label>
+                <InputText v-model="newCourse.courseName" class="w-full" />
+            </div>
+            <div>
+                <label class="block mb-1 font-medium">Course Code</label>
+                <InputText v-model.number="newCourse.courseCode" type="number" class="w-full" />
+            </div>
+            <div>
+                <label class="block mb-1 font-medium">Presentation Link</label>
+                <InputText v-model="newCourse.coursePresentationLink" class="w-full" />
+            </div>
+            <div>
+                <label class="block mb-1 font-medium">Description</label>
+                <InputText v-model="newCourse.courseDescription" class="w-full" />
+            </div>
+            <Button label="Create Course" icon="pi pi-plus" class="w-full" @click="createCourse" />
         </div>
     </section>
 
