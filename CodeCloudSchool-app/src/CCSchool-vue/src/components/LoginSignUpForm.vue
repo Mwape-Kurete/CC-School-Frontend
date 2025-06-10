@@ -94,20 +94,20 @@ const login = async () => {
             console.log(user.role)
 
             // store user role in local storage
-            localStorage.setItem('userRole', user.role);
-            if (user.role === 'Student') {
+            localStorage.setItem('userRole', response.role);
+            if (response.role === 'Student') {
                 // user obj only has email, not studentNumber => get the student number out the email
-                user.studentNumber = user.email.split('@')[0];
-                console.log('Student number:', user.studentNumber);
+                response.studentNumber = response.email.split('@')[0];
+                console.log('Student number:', response.studentNumber);
 
-                localStorage.setItem('studentNumber', user.studentNumber);
+                localStorage.setItem('studentNumber', response.studentNumber);
                 router.push({ name: 'dashboard' });
-            } else if (user.role === 'Lecturer') {
-                localStorage.setItem('lectId', user.lecturerId);
+            } else if (response.role === 'Lecturer') {
+                localStorage.setItem('lectId', response.lecturerId);
                 router.push({ name: 'lecturer-dash' });
             } else if (user.role === 'Admin') {
                 console.log("login admin")
-                localStorage.setItem('adminId', user.AdminId);
+                localStorage.setItem('adminId', response.AdminId);
                 router.push({ name: 'admin-dash' });
             }
         }
