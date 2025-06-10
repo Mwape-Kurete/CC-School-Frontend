@@ -115,8 +115,35 @@ const formatDate = (iso: string): string => {
 }
 
 //announcemnets
-//TODO: implement function below
-const fetchAnnouncements = async () => {}
+const fetchAnnouncements = async () => {
+  try {
+    const response = await AnnouncementService.getAllAnnouncments()
+
+    if (response && response.$values) {
+      announcements.value = response.$values.map((item) => ({
+        announcementId: item.id,
+        title: item.title,
+        description: item.body, // ✅ corrected
+        date: new Date(item.date).toLocaleDateString(),
+        lecturerId: item.lecturerId,
+        moduleImg: item.moduleImg,
+      }))
+
+      // Optional: set first announcement details if needed
+      if (announcements.value.length > 0) {
+        const first = announcements.value[0]
+        announcementData.title = first.title
+        announcementData.description = first.description
+        announcementData.date = first.date
+        announcementData.lecturerId = first.lecturerId
+      }
+    } else {
+      console.warn('No announcements found.')
+    }
+  } catch (error) {
+    console.error('Error fetching announcements:', error)
+  }
+}
 
 //classes
 const fetchLecturerClasses = async () => {
@@ -173,18 +200,31 @@ function getImageOrGradient(img: string | null | undefined) {
         </CButtonIcon>
       </div>
       <div class="card-container">
+        <!-- Display up to 3 announcements -->
         <CardComp
+          v-for="(item, index) in announcements.slice(0, 3)"
+          :key="item.announcementId || index"
           cardType="announcement"
-          :announcementTitle="announcementData.title"
-          :announcementBody="announcementData.description"
-          :announcementDate="announcementData.date"
-          moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
+          :announcementTitle="item.title"
+          :announcementBody="item.description"
+          :announcementDate="item.date"
+          :moduleImg="
+            item.moduleImg || 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?...'
+          "
         />
 
         <div class="divider-card"></div>
 
-        <div v-if="!announcementData.title" class="text-gray-500">
+        <!-- Empty state -->
+        <div v-if="announcements.length === 0" class="text-gray-500">
           You have not posted an announcement
+        </div>
+
+        <!-- Link to full announcement page -->
+        <div v-if="announcements.length > 3" class="mt-4 text-right">
+          <RouterLink to="/LecturerAnnounce" class="text-gray-500 hover:underline text-sm">
+            Go to announcements page →
+          </RouterLink>
         </div>
       </div>
 
@@ -204,18 +244,16 @@ function getImageOrGradient(img: string | null | undefined) {
         :moduleImg="getImageOrGradient(cls.moduleImg)"
       />
     </div>
-    <!-- Right Side Panel -->
+    <!-- Right Side Panel
     <aside class="side-panel">
       <div class="panel-content">
         <h3 class="text-center">Class Analytics</h3>
-        <!-- Additional panel components can go here -->
         <div class="panel-section">
-          <!-- Activity content -->
-          <LecturerKnob />
           <ToDoComp />
         </div>
       </div>
     </aside>
+    -->
   </div>
 </template>
 
@@ -269,7 +307,7 @@ function getImageOrGradient(img: string | null | undefined) {
 }
 .side-panel {
   border-left: 1px solid #e5e7eb;
-  padding-left: 2rem;
+  padding-left: 0rem;
 }
 
 .panel-content {

@@ -1,5 +1,3 @@
-//LecturerCourseDetails.vue
-
 <script setup>
 //import api
 import { CourseService, LecturerCourseService } from '@/api/courses'
@@ -8,6 +6,7 @@ import { AnnouncementService } from '@/api/announcements'
 
 //importing vue features
 import { ref, reactive, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 
 //importing icons and primevue components
 import { PencilLine, Maximize2, Ban, Save, CircleFadingArrowUp, RotateCcw } from 'lucide-vue-next'
@@ -31,13 +30,24 @@ import placeholderImg from '@/components/placeholderImg.vue'
 
 // 2. CONSTANTS
 // Get lecturer ID from local storage
-const storedLectId = localStorage.getItem('lecturerId')
-const lecturerId = storedLectId && !isNaN(Number(storedLectId)) ? parseInt(storedLectId, 10) : 2
+const storedLectId = localStorage.getItem('lectId')
 
-console.log(lecturerId, 'from local storage')
+const checkId = (storedLectId) => {
+  console.log('running id checks')
+
+  if (!storedLectId || storedLectId == null || isNaN(Number(storedLectId))) {
+    console.warn('Invalid lecturer ID in local storage, defaulting to 2')
+    return '2'
+  }
+  return storedLectId
+}
+
+const route = useRoute()
+const courseId = route.params.id
+
+console.log(storedLectId, 'from local storage')
 
 // 3. REACTIVE STATE
-const courseId = ref(null)
 const announcements = ref([])
 
 // Form fields
@@ -111,6 +121,9 @@ const newItem = reactive({
 
 // 4. LIFECYCLE HOOKS
 onMounted(async () => {
+  console.log('fetching...')
+
+  checkId(storedLectId)
   await loadInitialData()
 })
 
@@ -119,7 +132,7 @@ const loadInitialData = async () => {
   isLoading.value = true
   try {
     await fetchLecturerDetails()
-    if (courseId.value) {
+    if (courseId) {
       await Promise.all([fetchCourseDetails(), fetchAnnouncements()])
     } else {
       throw new Error('Course ID not set')
@@ -134,12 +147,12 @@ const loadInitialData = async () => {
 
 const fetchLecturerDetails = async () => {
   try {
-    const response = await lecturerService.getLecturerByID(lecturerId)
+    const response = await lecturerService.getLecturerByID(storedLectId)
     if (response?.courses?.$values?.length > 0) {
-      courseId.value = response.courses.$values[0].id // Assumes the first course
-
       console.log('Lecturer courses:', response.courses.$values)
       console.log('Selected course ID:', courseId.value)
+
+      const fallbackCourseId = response.courses.$values[0].id
     } else {
       console.warn('No courses found for this lecturer.')
     }
@@ -151,7 +164,7 @@ const fetchLecturerDetails = async () => {
 
 const fetchCourseDetails = async () => {
   try {
-    const response = await CourseService.getCourseDetails(courseId.value)
+    const response = await CourseService.getCourseDetails(courseId)
     if (response) {
       // Transform API response
       courseData.courseName = response.courseFullCode || ''
@@ -183,8 +196,35 @@ const fetchCourseDetails = async () => {
 }
 
 //announcemnets
-//TODO: implement function below
-const fetchAnnouncements = async () => {}
+const fetchAnnouncements = async () => {
+  try {
+    const response = await AnnouncementService.getAllAnnouncments()
+
+    if (response && response.$values) {
+      announcements.value = response.$values.map((item) => ({
+        announcementId: item.id,
+        title: item.title,
+        description: item.body, // ✅ corrected
+        date: new Date(item.date).toLocaleDateString(),
+        lecturerId: item.lecturerId,
+        moduleImg: item.moduleImg,
+      }))
+
+      // Optional: set first announcement details if needed
+      if (announcements.value.length > 0) {
+        const first = announcements.value[0]
+        announcementData.title = first.title
+        announcementData.description = first.description
+        announcementData.date = first.date
+        announcementData.lecturerId = first.lecturerId
+      }
+    } else {
+      console.warn('No announcements found.')
+    }
+  } catch (error) {
+    console.error('Error fetching announcements:', error)
+  }
+}
 
 //fixed this
 const getEmbeddedSlideUrl = (url) => {
@@ -250,7 +290,7 @@ const saveCourseDetails = async (isFullUpdate = false) => {
     }
 
     if (Object.keys(partialPayload).length > 0) {
-      await LecturerCourseService.partialUpdateCourseDetails(courseId.value, partialPayload)
+      await LecturerCourseService.partialUpdateCourseDetails(courseId, partialPayload)
     }
 
     await fetchCourseDetails()
@@ -359,7 +399,7 @@ const resetNewSection = () => {
 const clearContent = async () => {
   try {
     isLoading.value = true
-    const clearedCourse = await LecturerCourseService.updateCourseDetails(courseId.value, {
+    const clearedCourse = await LecturerCourseService.updateCourseDetails(courseId, {
       courseDescription: '',
       courseWeekBreakdown: [],
       courseSlides: '',
@@ -481,18 +521,31 @@ const handleAddSection = async () => {
         </div>
       </div>
       <div class="card-container">
+        <!-- Display up to 3 announcements -->
         <CardComp
+          v-for="(item, index) in announcements.slice(0, 3)"
+          :key="item.announcementId || index"
           cardType="announcement"
-          :announcementTitle="announcementData.title"
-          :announcementBody="announcementData.description"
-          :announcementDate="announcementData.date"
-          moduleImg="https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?..."
+          :announcementTitle="item.title"
+          :announcementBody="item.description"
+          :announcementDate="item.date"
+          :moduleImg="
+            item.moduleImg || 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?...'
+          "
         />
 
         <div class="divider-card"></div>
 
-        <div v-if="!announcementData.length" class="text-gray-500">
+        <!-- Empty state -->
+        <div v-if="announcements.length === 0" class="text-gray-500">
           You have not posted an announcement
+        </div>
+
+        <!-- Link to full announcement page -->
+        <div v-if="announcements.length > 3" class="mt-4 text-right">
+          <RouterLink to="/LecturerAnnounce" class="text-gray-500 hover:underline text-sm">
+            Go to announcements page →
+          </RouterLink>
         </div>
       </div>
     </div>
@@ -1053,14 +1106,6 @@ const handleAddSection = async () => {
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="lecturer-contact-card-section">
-      <LecturerCard
-        img="https://picsum.photos/id/237/200/300"
-        name="Dr. Jane Doe"
-        email="jane.doe@example.com"
-      />
     </div>
   </div>
 </template>
