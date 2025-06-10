@@ -200,7 +200,7 @@ onMounted(() => {
             v-model="title"
             placeholder="Announcement title"
             class="custom-input"
-            aria-label="Announcement title input"
+            aria-label="Announcement title input" 
             :disabled="isLoading"
           />
         </div>

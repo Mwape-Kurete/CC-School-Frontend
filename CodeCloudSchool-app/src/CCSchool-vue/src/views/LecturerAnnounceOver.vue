@@ -23,7 +23,7 @@ onMounted(async () => {
     const backendAnnouncements = await AnnouncementService.getAnnouncementsByLecturerId(lecturerId);
     
     if (Array.isArray(backendAnnouncements)) {
-      // Transform and validate announcements
+      // Transform and validate announcements 
       announcements.value = backendAnnouncements.map(a => ({
         id: a.id,
         title: a.title,

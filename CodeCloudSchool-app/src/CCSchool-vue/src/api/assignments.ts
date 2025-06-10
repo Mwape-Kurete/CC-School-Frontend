@@ -27,7 +27,7 @@ export const AssignmentService = {
         } catch (error: any) {
             console.error('Error fetching assignments:', error);
             if (error.response?.data) {
-                return error.response.data;
+                return error.response.data; 
             }
             return 'Failed to fetch assignments';
         }

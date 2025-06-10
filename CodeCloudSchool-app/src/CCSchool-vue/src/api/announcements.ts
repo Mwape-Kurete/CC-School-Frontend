@@ -7,7 +7,7 @@ export interface Announcement {
   date: string;
   lecturerId: number;
   createdAt: string;
-  moduleImg?: string;
+  moduleImg?: string; 
 
 }
 

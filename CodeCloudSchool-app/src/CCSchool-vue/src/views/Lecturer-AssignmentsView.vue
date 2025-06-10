@@ -463,7 +463,7 @@ function resetForm() {
   transform: scale(1.05);
 }
 
-.voice-trigger-button:active {
+.voice-trigger-button:active { 
   background-color: #1d4ed8;
   transform: scale(0.95);
 }

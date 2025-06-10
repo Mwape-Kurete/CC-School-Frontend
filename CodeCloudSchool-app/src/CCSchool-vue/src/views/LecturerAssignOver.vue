@@ -34,7 +34,7 @@ async function fetchAssignments() {
     
     // Process backend assignments
     let backendAssignments: Assignment[] = [];
-    if (typeof backendResponse !== 'string') {
+    if (typeof backendResponse !== 'string') { 
       backendAssignments = backendResponse.map((a: any) => ({
         id: a.id,
         title: a.title,
