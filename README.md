@@ -3,7 +3,8 @@
 <h4 align="center"> A cross-platform desktop school management system</h4>
 
 --- 
-<h1>Code & Cloud School</h1>
+<h1 align="center">Code & Cloud School</h1>
+<h4 align="center">Backend Repo</h4>
 <details>
 <summary>📑 <strong>Table of Contents</strong> (Click to expand)</summary>
 
