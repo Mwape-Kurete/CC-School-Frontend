@@ -63,3 +63,22 @@ export const ClassesService = {
 
 
 }
+
+export const AdminClassesService = {
+  getClasses: () => api.get('/classes').then(res => res.data),
+  createClass: (data: any) => api.post('/classes', data).then(res => res.data),
+  addStudentToClass: (classId: number, studentId: number) =>
+    api.post(`/classes/addStudentToClass/${classId}/${studentId}`),
+  addLecturerToClass: (classId: number, lecturerId: number) =>
+    api.post(`/classes/addLecturerToClass/${classId}/${lecturerId}`),
+};
+
+export type CreateClass = {
+  classID: number;
+  className: string;
+  classDescription: string;
+  classroom: string;
+  courseId: number;
+  courses?: any;
+  timeSlot?: any;
+};

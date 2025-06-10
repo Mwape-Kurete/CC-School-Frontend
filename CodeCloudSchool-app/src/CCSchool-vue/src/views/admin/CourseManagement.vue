@@ -4,18 +4,88 @@ import { CourseService } from '@/api/courses';
 import type { Course } from '@/api/courses';
 import { ClassesService, type Class } from '@/api/classes';
 import { MajorServices, type major } from '@/api/majors';
+import { AdminClassesService, type CreateClass } from '@/api/classes';
 import Card from 'primevue/card';
+import InputText from 'primevue/inputtext';
+import Dropdown from 'primevue/dropdown';
+import Button from 'primevue/button';
+
+import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
+const toast = useToast();
 
 
-const courses = ref < Course[] > ([])
-const majors = ref < major[] > ([]);
-const classes = ref < Class[] > ([]);
+
+const courses = ref<Course[]>([])
+const majors = ref<major[]>([]);
+const classes = ref<Class[]>([]);
 
 onMounted(async () => {
     await getAllCourses();
     await getAllMajors();
     await getAllClasses();
 });
+
+
+// Define new class model
+const newClass = ref({
+    className: '',
+    classDescription: '',
+    classroom: '',
+    courseId: null
+});
+
+// Create class function
+const createClass = async () => {
+    try {
+        const response = await AdminClassesService.createClass(newClass.value);
+        console.log("Class created:", response);
+        await getAllClasses(); // refresh list
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Class created', life: 3000 });
+
+        // Reset form
+        newClass.value = {
+            className: '',
+            classDescription: '',
+            classroom: '',
+            courseId: null
+        };
+    } catch (error) {
+        console.error("Error creating class:", error);
+    }
+};
+
+const selectedClassIdInput = ref<string>('');
+const selectedClassId = ref<number | null>(null);
+const selectedStudentIdInput = ref<string>('');
+const selectedStudentId = ref<number | null>(null);
+const selectedLecturerIdInput = ref<string>('');
+const selectedLecturerId = ref<number | null>(null);
+const addStudentToClass = async () => {
+    selectedStudentId.value = selectedStudentIdInput.value ? Number(selectedStudentIdInput.value) : null;
+    if (!selectedClassId.value || !selectedStudentId.value) return;
+    try {
+        await AdminClassesService.addStudentToClass(selectedClassId.value, selectedStudentId.value);
+        console.log("Student added to class");
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Class created', life: 3000 });
+
+    } catch (error) {
+        console.error("Error adding student:", error);
+    }
+};
+
+const addLecturerToClass = async () => {
+    selectedLecturerId.value = selectedLecturerIdInput.value ? Number(selectedLecturerIdInput.value) : null;
+    if (!selectedClassId.value || !selectedLecturerId.value) return;
+    try {
+        await AdminClassesService.addLecturerToClass(selectedClassId.value, selectedLecturerId.value);
+        console.log("Lecturer added to class");
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Class created', life: 3000 });
+
+    } catch (error) {
+        console.error("Error adding lecturer:", error);
+    }
+};
 
 
 
@@ -68,58 +138,119 @@ const getAllClasses = async () => {
 </script>
 
 <template>
-  <div class="course-management p-4">
-    <h1 class="text-2xl font-bold mb-6">Course Management</h1>
+    <div class="course-management p-4">
+        <h1 class="text-2xl font-bold mb-6">Course Management</h1>
 
-    <!-- Courses -->
-    <section>
-      <h2 class="text-xl font-semibold mb-4">Courses</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <Card class="card" v-for="course in courses" :key="course.id">
-          <template #title>{{ course.courseName }}</template>
-          <template #content>
-            <p><strong>Code:</strong> {{ course.courseCode }}</p>
-           
-          </template>
-        </Card>
-      </div>
+        <!-- Courses -->
+        <section>
+            <h2 class="text-xl font-semibold mb-4">Courses</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <Card class="card" v-for="course in courses" :key="course.id">
+                    <template #title>{{ course.courseName }}</template>
+                    <template #content>
+                        <p><strong>Code:</strong> {{ course.courseCode }}</p>
+
+                    </template>
+                </Card>
+            </div>
+        </section>
+
+        <!-- Majors -->
+        <section class="mt-10">
+            <h2 class="text-xl font-semibold  mt-4 mb-4">Majors</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <Card class="card" v-for="major in majors" :key="major.id">
+                    <template #title>{{ major.majorName }}</template>
+                    <template #content>
+                        <p><strong>Code:</strong> {{ major.majorCode }}</p>
+                    </template>
+                </Card>
+            </div>
+        </section>
+
+        <!-- Classes -->
+        <section class="mt-10">
+            <h2 class="text-xl font-semibold mt-4 mb-4">Classes</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <Card class="card" v-for="cls in classes" :key="cls.classID">
+                    <template #title>{{ cls.className }}</template>
+                    <template #content>
+                        <p><strong>Day:</strong> {{ cls.timeSlot?.day }}</p>
+                        <p><strong>Class ID:</strong> {{ cls.classID }}</p>
+                    </template>
+                </Card>
+            </div>
+        </section>
+    </div>
+
+    <Toast />
+
+
+    <!-- Add Class Form -->
+    <section class="mt-10 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Create New Class</h2>
+        <div class="p-6 rounded-xl shadow-lg max-w-xl space-y-4 bg-white">
+            <div class="space-y-2">
+                <label class="block font-medium">Class Name</label>
+                <InputText v-model="newClass.className" class="w-full" placeholder="e.g. Intro to Programming" />
+            </div>
+            <div class="space-y-2">
+                <label class="block font-medium">Description</label>
+                <InputText v-model="newClass.classDescription" class="w-full"
+                    placeholder="Short description of the class" />
+            </div>
+            <div class="space-y-2">
+                <label class="block font-medium">Classroom</label>
+                <InputText v-model="newClass.classroom" class="w-full" placeholder="e.g. Room B202" />
+            </div>
+            <div class="space-y-2">
+                <label class="block font-medium">Course</label>
+                <Dropdown v-model="newClass.courseId" :options="courses" optionLabel="courseName" optionValue="id"
+                    placeholder="Select a course" class="w-full" />
+            </div>
+            <Button label="Create Class" icon="pi pi-plus" class="w-full mt-2" @click="createClass" />
+        </div>
     </section>
 
-    <!-- Majors -->
-    <section class="mt-10">
-      <h2 class="text-xl font-semibold  mt-4 mb-4">Majors</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <Card class="card" v-for="major in majors" :key="major.id">
-          <template #title>{{ major.majorName }}</template>
-          <template #content>
-            <p><strong>Code:</strong> {{ major.majorCode }}</p>
-          </template>
-        </Card>
-      </div>
+
+
+
+    <!-- Assign Student / Lecturer -->
+    <section class="mt-10 max-w-3xl">
+        <h2 class="text-xl font-semibold mb-4">Assign Student or Lecturer to Class</h2>
+        <div class="p-6 rounded-xl shadow-lg bg-white space-y-6">
+            <!-- Class ID -->
+            <div class="space-y-2">
+                <label class="block font-medium">Class ID</label>
+                <InputText v-model="selectedClassIdInput"
+                    @input="selectedClassId = selectedClassIdInput ? Number(selectedClassIdInput) : null" class="w-full"
+                    placeholder="Enter Class ID" />
+            </div>
+
+            <!-- Student Assignment -->
+            <div class="space-y-2">
+                <label class="block font-medium">Student ID</label>
+                <InputText v-model="selectedStudentIdInput" class="w-full" placeholder="Enter Student ID" />
+                <Button label="Add Student" icon="pi pi-user-plus" class="w-full" @click="addStudentToClass" />
+            </div>
+
+            <!-- Lecturer Assignment -->
+            <div class="space-y-2">
+                <label class="block font-medium">Lecturer ID</label>
+                <InputText v-model="selectedLecturerIdInput" class="w-full" placeholder="Enter Lecturer ID" />
+                <Button label="Add Lecturer" icon="pi pi-user-edit" class="w-full" @click="addLecturerToClass" />
+            </div>
+        </div>
     </section>
 
-    <!-- Classes -->
-    <section class="mt-10">
-      <h2 class="text-xl font-semibold mt-4 mb-4">Classes</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <Card class="card" v-for="cls in classes" :key="cls.classID">
-          <template #title>{{ cls.className }}</template>
-          <template #content>
-            <p><strong>Day:</strong> {{ cls.timeSlot?.day }}</p>
-            <p><strong>Start:</strong> {{ cls.timeSlot?.startTime }}</p>
-            <p><strong>End:</strong> {{ cls.timeSlot?.endTime }}</p>
-          </template>
-        </Card>
-      </div>
-    </section>
-  </div>
+
+
+
 </template>
 
 
 <style scoped>
-
-.card{
+.card {
     border-radius: 15px;
 }
-
 </style>
