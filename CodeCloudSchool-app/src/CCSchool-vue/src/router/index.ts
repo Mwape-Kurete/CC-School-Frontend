@@ -206,7 +206,24 @@ const router = createRouter({
         page: 'admin-dash',
       },
     },
-
+    {
+      path:'/admin/usermanagement',
+      name: 'admin-manage',
+      component: () => import('@/views/admin/UserManagement.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'admin-manage'
+      }
+    },
+    {
+      path: '/admin/console',
+      name: 'admin-console',
+      component: () => import('@/views/admin/CourseManagement.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'admin-console'
+      }
+    },
     {
       path: '/layout-sandbox',
       name: 'layout-sandbox',

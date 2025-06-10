@@ -13,7 +13,7 @@ export const MajorServices = {
         try {
             const response = await api.get('/majors');
             console.log('Majors fetched:', response);
-            return response.data; // e.g. array of majors
+            return response.data.$values; // e.g. array of majors
         } catch (error: any) {
             console.error('Full error object:', error);
             if (error.response && error.response.data) {
@@ -66,4 +66,8 @@ export const StudentMajorServices = {
             return 'An unknown error occurred';
         }
     }
+}
+
+export const AdminMajorServices = {
+    createMajor: (data: any) => api.post('/majors', data).then(res => res.data),
 }

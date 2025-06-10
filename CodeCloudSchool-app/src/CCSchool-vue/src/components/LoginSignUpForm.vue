@@ -153,18 +153,20 @@ const signUp = async () => {
 
 
             console.log(response.includes('Verification email sent. Please check your inbox.'));
-            if (!response.includes('Verification email sent. Please check your inbox.')) {
-                // sign up failed, show message
-                errorMessage.value = response;
-            } else {
+            if (response.includes('Verification email sent. Please check your inbox.')) {
                 // sign up successful and email sent, response is a string
                 console.log('sign up successful:', response);
                 // redirect user 2fa screen
                 localStorage.setItem('userRole', role.value);
-                localStorage.setItem('studentNumber', user.studentNumber);
+                localStorage.setItem('studentNumber', response.studentNumber);
                 router.push({ name: '2FAView' });
+            } else {
+
+                // sign up failed, show message
+                errorMessage.value = response;
             }
         } catch (error) {
+            console.log(error)
             errorMessage.value = 'Sign Up failed. Please check your credentials.'
         } finally {
             loading.value = false
@@ -187,12 +189,12 @@ const signUp = async () => {
             });
 
             console.log('Sign up response:', response);
-
+            console.log(response.includes('Verification email sent. Please check your inbox.'));
             if (typeof response === 'string' && response.includes('Verification email sent')) {
                 // success case
                 console.log('Sign up successful');
                 localStorage.setItem('userRole', role.value);
-                localStorage.setItem('lectId', user.lecturerId);
+                localStorage.setItem('lectId', response.lecturerId);
                 router.push({ name: '2FAView' });
             } else {
                 // failure case
@@ -219,13 +221,13 @@ const signUp = async () => {
             });
 
             console.log('Admin sign-up response:', response);
-
+            console.log(response.includes('Verification email sent. Please check your inbox.'));
             if (!response.includes('Verification email sent. Please check your inbox.')) {
                 errorMessage.value = response;
             } else {
                 console.log('Sign up successful:', response);
                 localStorage.setItem('userRole', role.value);
-                localStorage.setItem('adminId', user.AdminId);
+                localStorage.setItem('adminId', response.AdminId);
                 router.push({ name: '2FAView' });
             }
         } catch (error) {

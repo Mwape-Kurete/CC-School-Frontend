@@ -1,7 +1,9 @@
 import api from './api'
 
 export interface Announcement {
+  announcementId: number;
   id: string;
+  description: string;
   title: string;
   body: string;
   date: string;

@@ -190,8 +190,8 @@ const sharedNavItems = [
 // Admin-specific items
 const adminNavItems = [
   {label: 'Dashboard', icon: LucideHome, route:'/admin/dashboard'},
-  { label: 'Admin Console', icon: Shield, route: '/admin' },
-  { label: 'Manage Users', icon: Users, route: '/admin/users' },
+  { label: 'Admin Console', icon: Shield, route: '/admin/console' },
+  { label: 'Manage Users', icon: Users, route: '/admin/usermanagement' },
   { label: 'System Settings', icon: Settings, route: '/admin/settings' },
 ];
 
