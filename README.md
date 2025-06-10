@@ -4,7 +4,7 @@
 
 --- 
 <h1 align="center">Code & Cloud School</h1>
-<h4 align="center">Backend Repo</h4>
+<h4 align="center">Frontend Repo • <a href="https://github.com/KurtSchwimmbacher/CC_School_Backend">Backend Repo</a></h4>
 <details>
 <summary>📑 <strong>Table of Contents</strong> (Click to expand)</summary>
 
@@ -60,13 +60,152 @@ By unifying these features, the system reduces manual overhead, minimises errors
 
 ## Getting Started
 ### 2.1 Prerequisites
+
+Ensure you have the following installed before running the app:
+
+- ![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=nodedotjs&logoColor=white) (v18 or higher)
+- ![Vue-3](https://img.shields.io/badge/Vue-3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)
+- ![Electron](https://img.shields.io/badge/Electron-47848F?style=flat-square&logo=electron&logoColor=white)
+
+> 💡 Recommended: Use a Node version manager like [nvm](https://github.com/nvm-sh/nvm) for managing Node versions across projects.
+
+---
 ### 2.2 How to Install 
+1. Clone the repository:
+   ```
+   git clone https://github.com/Mwape-Kurete/CC-School-Frontend.git
+   cd CC-School-Frontend
+   ```
+2. Install dependencies:
+   ```
+   npm install
+   ```
+4. Run the app:
+   ```
+   npm run dev    # Dev server (Vite)
+   npm run electron  # Launch desktop app
+   ```
+---
+## **API Integration**  
+### **Key API Endpoints**  
+All API calls are handled through a centralised `api.js` file and their relevant service files. 
+
+| Feature          | Endpoint                                      | Method | 
+|------------------|-----------------------------------------------|--------|
+| **Authentication** | `/${role}/login`                              | POST   | 
+|                  | `/${role}/register`                           | POST   | 
+| **Announcements** | `/courses/${courseId}/announcements`          | POST   | 
+| **Assignments**   | `/assignments`                                | POST   | 
+|                  | `/assignments/${assignmentId}/publish`        | PATCH  | 
+| **Students**      | `/student/${studentNumber}/enroll`            | PUT    | 
+| **Majors**        | `/majors/getMajorsByStudentId/${studentId}`   | GET    | 
+
+---
 ## Features & Usage
+### **🚀 Core Features by Role**  
+
+#### **👨‍💼 Administrators**  
+- **📅 Timetable Management**  
+  - Generate conflict-free class timetables and exam schedules.  
+  - Automatically resolve room/lecturer clashes.  
+- **👩‍🏫 Lecturer Management**  
+  - Create and assign lecturers to courses.  
+- **🎓 Enrollment Oversight**  
+  - Verify/approve student enrollments.  
+
+---
+
+#### **👩‍🏫 Lecturers**  
+- **🏫 Class Management**  
+  - Upload course materials (PDFs, videos, links).  
+- **📝 Assignments & Grading**  
+  - Create assignments with deadlines.   
+- **📢 Announcements**  
+  - Post updates to entire classes or specific students.  
+
+---
+
+#### **🎓 Students**  
+- **📚 Enrollment Portal**  
+  - Select majors during registration.  
+- **🗓️ Schedule Access**  
+  - View personalised class timetable.  
+- **📤 Assignment Submissions**  
+  - Upload files (PDF, DOCX, ZIP).  
+
+---
+
+### **🎨 Usage Highlights**  
+- **Timetable**: Avoids overlaps in rooms/lecturers during generation.  
+- **Live Edit**: Lecturers can visualise, update, and upload course content with ease  
+
+---
+
 ## Demonstration
+link to our Demo video -> 
 ## Architecture / System Design
 ## Unit Testing & User Testing
+### ✅ Unit Testing
+
+> Unit testing is currently under development. We plan to use [Vitest](https://vitest.dev/) with [Vue Test Utils](https://test-utils.vuejs.org/) to ensure component-level reliability across the Vue 3 frontend.
+
+Once implemented, unit tests will validate:
+- Form interactions (e.g. login, course submission)
+- Role-based rendering (admin/lecturer/student)
+- API service calls and error handling
+
+### 👥 User Testing
+
+We conducted user feedback rounds using [Google Forms](https://www.google.com/forms/about/), targeting:
+- **Students**: to evaluate assignment workflows and timetable usability
+- **Lecturers**: for course material management assignment generation, and announcement management
+- **Administrators**: for enrollment verification and timetable generation
 ## Highlights & Challenges
 ## Roadmap & Future Implementations
+
+### **🌐 Integration Enhancements**  
+- **Video Conferencing**: Integrate Google Meet/Zoom for virtual classrooms.  
+- **Calendar Sync**: Sync with Google Calendar/iCal for deadline reminders.  
+
+### **👨‍💼 Administrators**  
+- **Analytics Dashboard**:  
+  - Real-time insights on student performance, course popularity, and resource utilisation.  
+- **Automated Teaching Assignments**:  
+  - Algorithm-based distribution of teaching loads based on lecturer availability/expertise.  
+
+### **👩‍🏫 Lecturers**  
+- **Resource Library**:  
+  - Centralised repository for lecture recordings, slides, and reading materials.  
+- **Automated Grading**:  
+  - AI-assisted grading for quizzes/MCQs (e.g., regex-based answer matching).  
+- **Attendance Automation**:  
+  - Facial recognition/QR codes for automated attendance marking.  
+
+### **🎓 Students**  
+- **Course Recommendations**:  
+  - ML-driven suggestions based on past performance/interests.  
+- **Smart Planner**:  
+  - Unified view of timetables, deadlines, and personal events (with notifications).  
+- **Quiz Hosting**:  
+  - In-app quiz creation/submission with instant feedback.  
+
+---
+
 ## Contributing & Licenses
+This project is an assigned brief as part of our university curriculum; therefore, at this time, we will not be accepting any contributors.
+
 ## Authors & Contact Info
+Built with ❤️ by:
+- **Brilu Hlongwane**
+- **Kurt Schwimmbacher**
+- **Mwape Kurete**
+- **Ngozi Ojukwu**
+
+  
 ## Acknowledgements 
+Special thanks to:
+- **Vue.js** and the open-source community for powerful tools and documentation
+- **Microsoft .NET Team** for backend scalability support
+- **Code & Cloud Academy** lecturers and students for real-world testing and feedback
+- Contributors of [Electron](https://www.electronjs.org/) for enabling seamless cross-platform desktop apps
+- [Google Forms](https://forms.google.com) for collecting valuable user insights
