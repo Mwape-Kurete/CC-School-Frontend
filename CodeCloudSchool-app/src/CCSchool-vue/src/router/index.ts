@@ -219,6 +219,15 @@ const router = createRouter({
       }
     },
     {
+      path: '/admin/console',
+      name: 'admin-console',
+      component: () => import('@/views/admin/CourseManagement.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'admin-console'
+      }
+    },
+    {
       path: '/layout-sandbox',
       name: 'layout-sandbox',
       component: () => import('@/views/LayoutSandbox.vue'),

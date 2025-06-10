@@ -39,7 +39,7 @@ export const CourseService = {
     async getCourses() : Promise<Course[] | string> {
         try {
             const response = await api.get('/courses');
-            return response.data; // should return an array of courses
+            return response.data.$values; // should return an array of courses
         } catch (error: any) {
             console.error('Full error object:', error);
             if (error.response && error.response.data) {

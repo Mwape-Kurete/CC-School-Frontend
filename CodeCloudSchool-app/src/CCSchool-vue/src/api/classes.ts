@@ -38,6 +38,17 @@ export interface Class {
 
 export const ClassesService = {
 
+  async getClasses():Promise<Class[]> {
+    const response = await api.get(`classes/`);
+
+    if(response.status !== 200) {
+      throw new Error(`Failed to fetch classes : ${response.statusText}`);
+    }
+
+    console.log("Classes Retrieved: ", response)
+    return response.data.$values || [];
+  },
+
   async getClassesByStudentId(studentId: number): Promise<Class[]> {
     const response = await api.get(`classes/bystudent/${studentId}`);
 
