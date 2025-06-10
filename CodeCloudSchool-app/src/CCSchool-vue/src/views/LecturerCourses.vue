@@ -5,13 +5,7 @@
       <div class="header-content">
         <h1 class="title">My Courses</h1>
         <div class="controls-container">
-          <div class="icon-buttons">
-            <button class="icon-button">
-              <div class="icon-circle">
-                <BellRing :size="16" />
-              </div>
-            </button>
-          </div>
+          <div class="icon-buttons"></div>
         </div>
       </div>
       <div class="divider"></div>
@@ -20,10 +14,10 @@
     <!-- Course List -->
     <div class="course-list">
       <div v-for="course in courses" :key="course.id" class="course-card">
-        <RouterLink :to="`/lecturer-courses/${course.id}`">
+        <RouterLink :to="`/lecturer-course-details/${course.id}`">
           <div class="course-card-content">
-            <h3>{{ course.name }}</h3>
-            <p>{{ course.code }}</p>
+            <h3>{{ course.courseName }}</h3>
+            <p>{{ course.courseCode }}</p>
             <div class="course-meta">
               <span>{{ course.studentCount }} students</span>
               <span>{{ course.moduleCount }} modules</span>
@@ -36,15 +30,86 @@
 </template>
 
 <script setup lang="ts">
-import { BellRing } from 'lucide-vue-next';
-import { ref } from 'vue';
+//importing from vue
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { reactive } from 'vue'
+
+//importing services
+import { LecturerCourseService } from '@/api/courses'
+import { lecturerService } from '@/api/lecturer'
+
+//import utils
+import { generateCourseSummary } from '@/utils/courseUtils'
+
+//importing componets
+import { BellRing } from 'lucide-vue-next'
+
+//initialising constants
+const storedLectId = localStorage.getItem('lecturerId')
+const lecturerId = storedLectId && !isNaN(Number(storedLectId)) ? parseInt(storedLectId, 10) : 2
+
+//functions
+//initial fetch
+// fetch courses
+onMounted(async () => {
+  try {
+    const {
+      success,
+      courses: fetchedCourses,
+      error,
+    } = await LecturerCourseService.getLecturerCourses(lecturerId.toString())
+
+    await fetchLecturerUserID()
+
+    if (success && fetchedCourses?.length) {
+      // 🔧 Map and transform each course with utility
+      courses.value = fetchedCourses.map(generateCourseSummary)
+
+      const firstCourse = fetchedCourses[0]
+      localStorage.setItem('courseId', firstCourse.id.toString())
+
+      if (firstCourse.courseName) {
+        localStorage.setItem('courseName', firstCourse.courseName)
+      }
+
+      if (firstCourse.courseCode) {
+        localStorage.setItem('courseCode', firstCourse.courseCode.toString())
+      }
+
+      console.log('Lecturer courses fetched successfully:', courses.value)
+    } else {
+      console.error('Error fetching lecturer courses:', error)
+    }
+  } catch (err) {
+    console.error('Failed loading dashboard:', err)
+  }
+})
+
+//fetching lecturer user Id to get the
+const fetchLecturerUserID = async () => {
+  try {
+    const lecturer = await lecturerService.getLecturerByID(lecturerId)
+
+    if (typeof lecturer === 'string') {
+      console.error('Error from service:', lecturer)
+      return
+    }
+
+    localStorage.setItem('lecturerId', lecturer.lecturerId.toString())
+    const userId = localStorage.setItem('userId', lecturer.userId?.toString() || '')
+
+    console.log('Lecturer IDs stored:', {
+      lecturerId: lecturer.lecturerId,
+      userId: lecturer.userId,
+    })
+  } catch (err) {
+    console.error('Failed to fetch lecturer details:', err)
+  }
+}
 
 // Mock data - replace with your API calls
-const courses = ref([
-  { id: 1, name: 'Computer Science 101', code: 'CS101', studentCount: 45, moduleCount: 8 },
-  { id: 2, name: 'Advanced Programming', code: 'CS201', studentCount: 32, moduleCount: 10 },
-  { id: 3, name: 'Database Systems', code: 'CS301', studentCount: 28, moduleCount: 6 },
-]);
+const courses = ref<any[]>([])
 </script>
 
 <style scoped>

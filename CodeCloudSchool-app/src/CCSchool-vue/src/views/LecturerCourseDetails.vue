@@ -25,6 +25,7 @@ import CButton from '@/components/ui/CButton.vue'
 import CMarkBreakdown from '@/components/CMarkBreakdown.vue'
 import LecturerCard from '@/components/LecturerCard.vue'
 import CButtonIcon from '@/components/ui/Cbutton-icon.vue'
+import placeholderImg from '@/components/placeholderImg.vue'
 
 //FUNCTIONALITY IMPLEMENTATION STARTS HERE
 
@@ -181,21 +182,9 @@ const fetchCourseDetails = async () => {
   }
 }
 
-const fetchAnnouncements = async () => {
-  try {
-    const response = await AnnouncementService.getAnnouncementsByCourseId(courseId.value)
-    if (typeof response === 'string') {
-      console.error('Error:', response)
-    } else {
-      announcements.value = response
-      announcementData.title = response.title
-      announcementData.description = response.description
-      announcementData.date = response.formatAnnouncementDate(announcement.date)
-    }
-  } catch (err) {
-    throw err // Let loadInitialData handle it
-  }
-}
+//announcemnets
+//TODO: implement function below
+const fetchAnnouncements = async () => {}
 
 //fixed this
 const getEmbeddedSlideUrl = (url) => {
@@ -583,7 +572,7 @@ const handleAddSection = async () => {
       </div>
 
       <div class="course-cover-img">
-        <img src="https://picsum.photos/seed/picsum/1200/1600" alt="course cover img" />
+        <placeholderImg />
       </div>
 
       <div class="bio-section">
