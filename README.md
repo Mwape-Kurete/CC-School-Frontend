@@ -1,4 +1,4 @@
-![GitHub-CC-Banner](https://github.com/user-attachments/assets/f3b589cc-dfa7-4d3b-aa70-1e265facb24c)
+![GitHub-CC-Banner-frontend](https://github.com/user-attachments/assets/bef07f6e-db73-48d5-8368-57846617eec9)
 ---
 <h4 align="center"> A cross-platform desktop school management system</h4>
 
@@ -143,7 +143,12 @@ All API calls are handled through a centralised `api.js` file and their relevant
 
 ## Demonstration
 link to our Demo video -> 
+
 ## Architecture / System Design
+### System Design Diagram (the layered approach) 
+![WhatsApp Image 2025-06-10 at 21 52 58_2b984a57](https://github.com/user-attachments/assets/4105bef9-5f3c-4983-b45a-4f46e27e50b6)
+
+
 ## Unit Testing & User Testing
 ### ✅ Unit Testing
 
