@@ -250,7 +250,7 @@ export default {
 
           <!-- Empty State -->
           <div v-if="!files.length" class="empty-state">
-            <div class="empty-icon"><img src="./assets/CC Blk logo.png" alt=""></div>
+            <div class="empty-icon"><img src="../assets/logoshort.png" alt=""></div>
             <p>Drag and drop files here or click to browse</p>
           </div>
         </div>

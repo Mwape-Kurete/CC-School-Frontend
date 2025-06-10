@@ -3,19 +3,31 @@
   "version": "1.0.0",
   "main": "src/main.js",
   "scripts": {
-    "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "electron-forge start",
+    "vue-start": "cd src/vue-project/ && npm run dev",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "author": "EQ",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@electron-forge/cli": "^7.8.1",
+    "@electron-forge/maker-deb": "^7.8.1",
+    "@electron-forge/maker-rpm": "^7.8.1",
+    "@electron-forge/maker-squirrel": "^7.8.1",
+    "@electron-forge/maker-zip": "^7.8.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.8.1",
+    "@electron-forge/plugin-fuses": "^7.8.1",
+    "@electron/fuses": "^1.8.0",
     "autoprefixer": "^10.4.17",
     "electron": "^35.1.4",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1"
   },
   "dependencies": {
+    "electron-squirrel-startup": "^1.0.1",
     "primeicons": "^7.0.0",
     "primevue": "^4.3.4"
   }

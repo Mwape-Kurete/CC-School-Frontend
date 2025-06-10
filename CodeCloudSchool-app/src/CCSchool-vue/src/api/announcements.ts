@@ -25,7 +25,7 @@ export const AnnouncementService = {
     }
   },
 
-  async getAnnouncementById(id: string): Promise<Announcement | string> {
+  async getAnnouncementById(id: number): Promise<Announcement | string> {
     try {
       const response = await api.get(`/announce/${id}`)
 

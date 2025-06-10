@@ -15,7 +15,7 @@ interface Assignment {
 export const AssignmentService = {
     async getAssignmentsByCourseId(courseId: number): Promise<Assignment[] | string> {
         try {
-            const response = await api.get(`/courses/${courseId}/assignments`);
+            const response = await api.get(`/assignment/course/${courseId}`);
             return response.data.map((a: any) => ({
                 id: a.id,
                 title: a.title,

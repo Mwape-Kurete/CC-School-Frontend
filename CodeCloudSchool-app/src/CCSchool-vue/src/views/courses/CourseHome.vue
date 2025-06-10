@@ -5,7 +5,9 @@ import { CourseService } from '@/api/courses';
 import { AnnouncementService } from '@/api/announcements';
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
+import type { Announcement } from '@/api/announcements';
 
+// TypeScript interface for course details
 interface CourseDetails {
   courseFullCode: string;
   courseAbout: string;
@@ -33,14 +35,7 @@ interface CourseDetails {
   };
 }
 
-interface Announcement {
-  announcementId: number;
-  title: string;
-  description: string;
-  date: string;
-  lecturerId: number;
-  courseId: number;
-}
+
 
 const route = useRoute();
 const courseDetails = ref<CourseDetails | null>(null);

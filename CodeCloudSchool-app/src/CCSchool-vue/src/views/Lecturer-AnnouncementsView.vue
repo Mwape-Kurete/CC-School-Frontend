@@ -89,7 +89,9 @@ const saveAnnouncement = async (announcementData: {
     const backendResult = await AnnouncementService.postAnnouncement(
       courseId.value, 
       {
+        announcementId: 0, // or generate a unique id if required
         title: announcementData.title,
+        description: '', // provide a description or use announcementData.title/body if appropriate
         body: DOMPurify.sanitize(announcementData.body),
         date: new Date().toISOString(),
         lecturerId: lecturerId.value,

@@ -88,7 +88,8 @@ import {
   Megaphone,
   PlusSquare,
   Users,
-  LucideHome
+  LucideHome,
+  LucideLogOut,
 } from 'lucide-vue-next';
 
 const rawRole = (localStorage.getItem('userRole') || 'student').toLowerCase();
@@ -184,6 +185,11 @@ const sharedNavItems = [
     label: 'Settings', 
     icon: Settings, 
     route: '/settings' 
+  },
+  {
+    lable: 'Log Out',
+    icon: LucideLogOut,
+    route: '/login'
   },
 ];
 

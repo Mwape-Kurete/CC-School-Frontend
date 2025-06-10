@@ -9,7 +9,7 @@ export function generateCourseSummary(course: any) {
   if (words.length === 1) {
     prefix = words[0].substring(0, 3).toUpperCase()
   } else {
-    prefix = words.map((w) => w[0][0].toUpperCase()).join('')
+    prefix = words.map((w:string) => w[0][0].toUpperCase()).join('')
   }
 
   return {
