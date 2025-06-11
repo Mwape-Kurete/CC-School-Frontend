@@ -142,7 +142,7 @@ All API calls are handled through a centralised `api.js` file and their relevant
 ---
 
 ## Demonstration
-link to our Demo video -> 
+link to our Demo video -> ![Demo Video](https://drive.google.com/file/d/10KLjwpqMqiMYzO_2HIpNvMB4rxMOCKAp/view?usp=sharing)
 
 ## Architecture / System Design
 ### System Design Diagram (the layered approach) 
@@ -170,9 +170,28 @@ Once implemented, unit tests will validate:
 
 We conducted user feedback rounds using [Google Forms](https://www.google.com/forms/about/), targeting:
 - **Students**: to evaluate assignment workflows and timetable usability
-- **Lecturers**: for course material management assignment generation, and announcement management
+- **Lecturers**: for course material management, assignment generation, and announcement management
 - **Administrators**: for enrollment verification and timetable generation
 ## Highlights & Challenges
+Throughout the development of the CC School Management System 
+
+### Highlights 
+| Feature            | Highlights                                   | 
+|--------------------|----------------------------------------------|
+| **Authentication** | 2 Factor Authentication                      |
+| **Assignments**    | Accessibility Feature, Rich Text Editor      | 
+| **Timetable**      | Visual Representation | 
+| **User**           | extending user types           |
+| **Avatar Api**     |            |
+
+### Challenges 
+| Feature            | Challenges                                   | 
+|--------------------|----------------------------------------------|
+| **2 Factor Authentication**    | Email Services                   |
+| **Live Course Edit**    | Partial Patching                 |
+| **Accessibility Feature**    | Webkit Recognition                |
+| **Assignment Course Relationship**    | Fetching the relevent relationship details      |
+
 ## Roadmap & Future Implementations
 
 ### **🌐 Integration Enhancements**  
