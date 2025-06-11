@@ -11,11 +11,7 @@
     <div class="nav-links py-4">
       <!-- Show lecturer-specific navigation if user is lecturer -->
       <template v-if="currentUser?.role === 'lecturer'">
-        <RouterLink 
-          v-for="item in lecturerNavItems" 
-          :key="item.label" 
-          :to="item.route"
-        >
+        <RouterLink v-for="item in lecturerNavItems" :key="item.label" :to="item.route">
           <div
             class="nav-item pl-6 pr-3 py-3 flex items-center transition-colors mx-4 hover:bg-white/50 hover:text-gray-700"
             :class="{ 'active-nav-item': route.path === item.route }">
@@ -24,7 +20,7 @@
           </div>
         </RouterLink>
       </template>
-      
+
       <!-- Show combined student/admin navigation for other roles -->
       <template v-else>
         <div v-for="item in navItems" :key="item.label">
@@ -39,26 +35,18 @@
           </RouterLink>
 
           <!-- Course Pages Navigation (shown when on a course page) -->
-          <div 
+          <div
             v-if="item.label === 'Courses' && (($route.path.includes('/courses/') && currentUser?.role === 'student') || ($route.path.includes('/lecturer-courses/') && currentUser?.role === 'lecturer'))"
-            class="course-nav ml-8"
-          >
+            class="course-nav ml-8">
             <!-- Back to All Courses link -->
-            <RouterLink
-              :to="currentUser?.role === 'student' ? { name: 'courses' } : { name: 'lecturer-courses' }"
-              class="course-nav-item font-semibold"
-            >
+            <RouterLink :to="currentUser?.role === 'student' ? { name: 'courses' } : { name: 'lecturer-courses' }"
+              class="course-nav-item font-semibold">
               ← All Courses
             </RouterLink>
 
             <!-- Dynamic course section links -->
-            <RouterLink
-              v-for="page in coursePages"
-              :key="page.routeName"
-              :to="getCourseRoute(page.routeName)"
-              class="course-nav-item"
-              active-class="active-course-item"
-            >
+            <RouterLink v-for="page in coursePages" :key="page.routeName" :to="getCourseRoute(page.routeName)"
+              class="course-nav-item" active-class="active-course-item">
               {{ page.name }}
             </RouterLink>
           </div>
@@ -99,50 +87,50 @@ const currentUser = ref({
 
 // Lecturer-specific navigation items
 const lecturerNavItems = [
-  { 
+  {
     label: 'Dashboard',
     icon: Gauge,
     route: '/lecturer-dash'
   },
-  { 
-    label: 'My Course', 
-    icon: BookOpen, 
-    route: '/lecturer-courses' 
+  {
+    label: 'My Course',
+    icon: BookOpen,
+    route: '/lecturer-courses'
   },
-  { 
-    label: 'Modules', 
-    icon: FileText, 
-    route: '/lecturer-modules' 
+  {
+    label: 'Modules',
+    icon: FileText,
+    route: '/lecturer-modules'
   },
-  { 
-    label: 'Create Module', 
-    icon: PlusSquare, 
-    route: '/lecturer-create-modules' 
+  {
+    label: 'Create Module',
+    icon: PlusSquare,
+    route: '/lecturer-create-modules'
   },
-  { 
-    label: 'Assignments', 
-    icon: FileText, 
-    route: '/LecturerAssign' 
+  {
+    label: 'Assignments',
+    icon: FileText,
+    route: '/LecturerAssign'
   },
-  { 
-    label: 'Announcements', 
-    icon: Megaphone, 
-    route: '/LecturerAnnounce' 
+  {
+    label: 'Announcements',
+    icon: Megaphone,
+    route: '/LecturerAnnounce'
   },
-  { 
-    label: 'Timetable', 
-    icon: Calendar, 
-    route: '/timetable' 
+  {
+    label: 'Timetable',
+    icon: Calendar,
+    route: '/timetable'
   },
-  { 
-    label: 'User Account', 
-    icon: User, 
-    route: '/account' 
+  {
+    label: 'Settings',
+    icon: Settings,
+    route: '/settings'
   },
-  { 
-    label: 'Settings', 
-    icon: Settings, 
-    route: '/settings' 
+  {
+    lable: 'Log Out',
+    icon: LucideLogOut,
+    route: '/login'
   },
 ];
 
@@ -157,34 +145,34 @@ const sharedNavItems = [
       admin: '/admin/dashboard'
     }
   },
-  { 
-    label: 'Courses', 
-    icon: BookOpen, 
-    route: { 
-      student: '/courses', 
+  {
+    label: 'Courses',
+    icon: BookOpen,
+    route: {
+      student: '/courses',
       lecturer: '/lecturer-courses',
       admin: '/admin/courses'
-    } 
+    }
   },
-  { 
-    label: 'Groups', 
-    icon: Users, 
-    route: '/groups' 
+  {
+    label: 'Groups',
+    icon: Users,
+    route: '/groups'
   },
-  { 
-    label: 'Timetable', 
-    icon: Calendar, 
-    route: '/timetable' 
+  {
+    label: 'Timetable',
+    icon: Calendar,
+    route: '/timetable'
   },
-  { 
-    label: 'User Account', 
-    icon: User, 
-    route: '/account' 
+  {
+    label: 'User Account',
+    icon: User,
+    route: '/account'
   },
-  { 
-    label: 'Settings', 
-    icon: Settings, 
-    route: '/settings' 
+  {
+    label: 'Settings',
+    icon: Settings,
+    route: '/settings'
   },
   {
     lable: 'Log Out',
@@ -195,20 +183,24 @@ const sharedNavItems = [
 
 // Admin-specific items
 const adminNavItems = [
-  {label: 'Dashboard', icon: LucideHome, route:'/admin/dashboard'},
+  { label: 'Dashboard', icon: LucideHome, route: '/admin/dashboard' },
   { label: 'Admin Console', icon: Shield, route: '/admin/console' },
   { label: 'Manage Users', icon: Users, route: '/admin/usermanagement' },
-  { label: 'System Settings', icon: Settings, route: '/admin/settings' },
+  { label: 'System Settings', icon: Settings, route: '/admin/settings' }, {
+    lable: 'Log Out',
+    icon: LucideLogOut,
+    route: '/login'
+  },
 ];
 
 // Resolve nav items based on user role
 const navItems = computed(() => {
   const role = currentUser.value?.role as 'student' | 'lecturer' | 'admin';
-  
+
   if (role === 'admin') {
     return adminNavItems;
   }
-  
+
   return sharedNavItems.map(item => ({
     ...item,
     route: typeof item.route === 'object' ? item.route[role] : item.route
@@ -242,14 +234,14 @@ const coursePages = computed(() => {
 const getCourseRoute = (routeName: string) => {
   const role = currentUser.value?.role;
   const courseId = route.params.courseId;
-  
+
   if (role === 'lecturer') {
     return {
       name: routeName,
       params: { courseId }
     };
   }
-  
+
   return {
     name: routeName,
     params: { courseId }

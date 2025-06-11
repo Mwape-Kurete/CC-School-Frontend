@@ -119,11 +119,11 @@ const fetchAnnouncements = async () => {
   try {
     const response = await AnnouncementService.getAllAnnouncments()
 
-    if (response && response.$values) {
-      announcements.value = response.$values.map((item) => ({
+    if (Array.isArray(response)) {
+      announcements.value = response.map((item) => ({
         announcementId: item.id,
         title: item.title,
-        description: item.body, // ✅ corrected
+        description: item.body, 
         date: new Date(item.date).toLocaleDateString(),
         lecturerId: item.lecturerId,
         moduleImg: item.moduleImg,
@@ -138,7 +138,7 @@ const fetchAnnouncements = async () => {
         announcementData.lecturerId = first.lecturerId
       }
     } else {
-      console.warn('No announcements found.')
+      console.warn('No announcements found or error:', response)
     }
   } catch (error) {
     console.error('Error fetching announcements:', error)

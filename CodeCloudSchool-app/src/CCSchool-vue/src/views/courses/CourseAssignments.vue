@@ -52,7 +52,7 @@ onMounted(async () => {
 const assignments = ref<Assignment[]>([]); //store the assignments fetched from the API
 
 interface Assignment {
-  assignment_ID: number;
+  Assignment_ID: number;
   title: string;
   description?: string;
   dueDate: string; // ISO date string from API
@@ -99,6 +99,7 @@ const pastAssignments = computed(() =>
 
 const onAssignmentClick = (assignmentId: number): void => {
   const courseIdParam = route.params.courseId;
+  console.log(assignmentId)
   const courseId = Array.isArray(courseIdParam) ? Number(courseIdParam[0]) : Number(courseIdParam);
 
   router.push({ name: 'AssignmentDetails', params: { courseId, assignmentId } });
@@ -136,8 +137,8 @@ const onAssignmentClick = (assignmentId: number): void => {
     <div class="card-container">
       <CardComp
         v-for="assignment in upcomingAssignments"
-        @click="onAssignmentClick(assignment.assignment_ID)"
-        :key="assignment.assignment_ID"
+        @click="onAssignmentClick(assignment.Assignment_ID)"
+        :key="assignment.Assignment_ID"
         cardType="assignment"
         :assignmentTitle="assignment.title"
         :assignmentBody="assignment.description || 'No description provided.'"
@@ -154,7 +155,7 @@ const onAssignmentClick = (assignmentId: number): void => {
     <div class="card-container">
       <CardComp
         v-for="assignment in pastAssignments"
-        :key="assignment.assignment_ID"
+        :key="assignment.Assignment_ID"
         cardType="assignment"
         :assignmentTitle="assignment.title"
         :assignmentBody="assignment.description || 'No description provided.'"

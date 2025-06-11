@@ -1,7 +1,7 @@
 import api from './api';
 
 interface Assignment {
-    id?: number;
+    Assignment_ID?: number;
     title: string;
     description: string;
     dueDate: string | Date;
@@ -15,9 +15,10 @@ interface Assignment {
 export const AssignmentService = {
     async getAssignmentsByCourseId(courseId: number): Promise<Assignment[] | string> {
         try {
-            const response = await api.get(`/assignment/course/${courseId}`);
-            return response.data.map((a: any) => ({
-                id: a.id,
+            const response = await api.get(`/assignments/by-course/${courseId}`);
+            console.log(response)
+            return response.data.$values.map((a: any) => ({
+                Assignment_ID: a.$id,
                 title: a.title,
                 description: a.description,
                 dueDate: a.dueDate,

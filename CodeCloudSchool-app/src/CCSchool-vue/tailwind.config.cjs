@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+const config = {
   content: [
     "./index.html",
     "./src/**/*.{vue,js,ts,jsx,tsx}",
@@ -7,5 +7,7 @@ module.exports = {
   theme: {
     extend: {},
   },
-  plugins: [], // leave this empty or add actual plugins like forms, typography, etc.
-}
+  plugins: [], // Add Tailwind plugins here if needed
+};
+
+module.exports = config;

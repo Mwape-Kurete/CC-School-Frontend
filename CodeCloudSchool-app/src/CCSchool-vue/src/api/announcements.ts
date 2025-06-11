@@ -64,7 +64,7 @@ export const AnnouncementService = {
   async getAllAnnouncments(): Promise<Announcement[] | string> {
     try {
       const response = await api.get('/announce')
-      return response.data
+      return response.data.$values
     } catch (error: any) {
       console.error('Error fetching all announcements:', error)
       return error.response?.data || 'Failed to fetch all announcements'
