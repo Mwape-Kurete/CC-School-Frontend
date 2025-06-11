@@ -58,7 +58,7 @@ const handleVoiceCommand = async (command: string) => {
     }
   } catch (error) {
     console.error('Error handling voice command:', error);
-    errorMessage.value = 'Please try again.';
+    errorMessage.value = 'Ehh dawg its chaai try again later , I guess 🤷🏼.';
   }
 };
 

@@ -243,7 +243,7 @@ onMounted(() => {
             Cancel
           </button>
           <button
-          ref="publishButton"
+          ref="publishButton" 
             label="Publish Announcement"
             class="send-button"
             @click="sendAnnouncement"
