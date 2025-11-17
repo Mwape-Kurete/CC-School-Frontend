@@ -1,20 +1,16 @@
 <script>
-
-import { AssignmentSubmissionService } from '@/api/assignments';
-
-
-
+import { AssignmentSubmissionService } from '@/api/assignments'
 
 export default {
   props: {
     assignmentId: {
       type: Number,
-      required: true
+      required: true,
     },
     studentId: {
       type: Number,
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return {
@@ -23,44 +19,42 @@ export default {
       toast: {
         visible: false,
         message: '',
-        severity: 'info'
+        severity: 'info',
       },
       hasSubmitted: false,
-      studentSubmission: null
+      studentSubmission: null,
     }
   },
   watch: {
     assignmentId(newVal) {
       if (newVal && this.studentId) {
-        this.getStudentSubmission(newVal, this.studentId);
+        this.getStudentSubmission(newVal, this.studentId)
       }
     },
     studentId(newVal) {
       if (newVal && this.assignmentId) {
-        this.getStudentSubmission(this.assignmentId, newVal);
+        this.getStudentSubmission(this.assignmentId, newVal)
       }
-    }
+    },
   },
 
   computed: {
     totalSize() {
-      return this.files.reduce((sum, file) => sum + file.size, 0) // calculates total size of files in bytes 
-    }
+      return this.files.reduce((sum, file) => sum + file.size, 0) // calculates total size of files in bytes
+    },
   },
-
 
   methods: {
     triggerFileInput() {
       this.$refs.fileInput.click()
     },
     handleFileSelect(event) {
-      const newFiles = Array.from(event.target.files).map(file => ({
+      const newFiles = Array.from(event.target.files).map((file) => ({
         file, // keep original File object here
-        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
-      }));
-      this.files = [...this.files, ...newFiles];
-    }
-    ,
+        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+      }))
+      this.files = [...this.files, ...newFiles]
+    },
     removeFile(index) {
       this.files.splice(index, 1)
     },
@@ -71,89 +65,88 @@ export default {
 
     async uploadFiles() {
       if (!this.files.length) {
-        this.showToast('No files to upload', 'error');
-        return;
+        this.showToast('No files to upload', 'error')
+        return
       }
 
       try {
         for (let i = 0; i < this.files.length; i++) {
-          const fileWrapper = this.files[i];
-          const file = fileWrapper.file;
+          const fileWrapper = this.files[i]
+          const file = fileWrapper.file
 
-          this.uploadProgress = Math.round((i / this.files.length) * 100);
+          this.uploadProgress = Math.round((i / this.files.length) * 100)
 
           const result = await AssignmentSubmissionService.uploadSubmission(
             this.assignmentId,
             this.studentId,
-            file
-          );
+            file,
+          )
 
           if (typeof result === 'string') {
-            this.showToast(`Failed to upload ${file.name}: ${result}`, 'error');
+            this.showToast(`Failed to upload ${file.name}: ${result}`, 'error')
           } else {
-            this.showToast(`Successfully uploaded ${file.name}`, 'success');
-            this.hasSubmitted = true;
-            this.$emit('submitted');
+            this.showToast(`Successfully uploaded ${file.name}`, 'success')
+            this.hasSubmitted = true
+            this.$emit('submitted')
           }
         }
 
-        this.uploadProgress = 100;
-        this.clearFiles();
+        this.uploadProgress = 100
+        this.clearFiles()
       } catch (err) {
-        this.showToast('An error occurred during upload', 'error');
-        console.error(err);
+        this.showToast('An error occurred during upload', 'error')
+        console.error(err)
       }
     },
     getFileUrl(path) {
-      if (!path) return '';
+      if (!path) return ''
 
       // Strip 'wwwroot' if present
-      const publicPath = path.replace(/^wwwroot[\\/]/, '');
+      const publicPath = path.replace(/^wwwroot[\\/]/, '')
 
       // Replace backslashes with forward slashes (for Windows paths)
-      const forwardSlashPath = publicPath.replace(/\\/g, '/');
+      const forwardSlashPath = publicPath.replace(/\\/g, '/')
 
       // Encode URI components to handle spaces, parentheses, etc.
       // But only encode the path parts, not the entire URL prefix
-      const encodedPath = forwardSlashPath
-        .split('/')
-        .map(encodeURIComponent)
-        .join('/');
+      const encodedPath = forwardSlashPath.split('/').map(encodeURIComponent).join('/')
 
-      return `https://cc-school-backend.onrender.com/${encodedPath}`;
+      return `https://cc-school-backend.onrender.com/${encodedPath}`
     },
 
     async getStudentSubmission(assignmentId, studentId) {
       try {
         if (!assignmentId || !studentId) {
-          console.error('Assignment ID or Student ID is missing');
-          this.hasSubmitted = false;
-          this.studentSubmission = null;
-          return;
+          console.error('Assignment ID or Student ID is missing')
+          this.hasSubmitted = false
+          this.studentSubmission = null
+          return
         }
-        const submission = await AssignmentSubmissionService.getStudentSubmissions(assignmentId, studentId);
+        const submission = await AssignmentSubmissionService.getStudentSubmissions(
+          assignmentId,
+          studentId,
+        )
         if (submission && typeof submission !== 'string') {
-          console.log('Student submission:', submission);
+          console.log('Student submission:', submission)
 
+          submission.fileUrl = this.getFileUrl(submission.filePath)
+          console.log('File URL:', submission.fileUrl)
 
-          submission.fileUrl = this.getFileUrl(submission.filePath);
-          console.log('File URL:', submission.fileUrl);
-
-          this.hasSubmitted = true;
-          this.studentSubmission = submission;
+          this.hasSubmitted = true
+          this.studentSubmission = submission
         } else if (typeof submission === 'string') {
-          console.error('Error fetching submission:', submission);
-          this.hasSubmitted = false;
-          this.studentSubmission = null;
+          console.error('Error fetching submission:', submission)
+          this.hasSubmitted = false
+          this.studentSubmission = null
         } else {
-          console.error('No submission found for this assignment');
-          this.hasSubmitted = false;
-          this.studentSubmission = null;
+          console.error('No submission found for this assignment')
+          this.hasSubmitted = false
+          this.studentSubmission = null
         }
       } catch (error) {
-        console.error('Error fetching student submission:', error);
-        this.hasSubmitted = false;
-        this.studentSubmission = null;
+        console.error('Error fetching student submission:', error)
+        this.hasSubmitted = false
+        this.studentSubmission = null
       }
     },
     formatSize(bytes) {
@@ -168,17 +161,15 @@ export default {
       setTimeout(() => {
         this.toast.visible = false
       }, 3000)
-    }
+    },
   },
   mounted() {
     if (this.assignmentId && this.studentId) {
-      this.getStudentSubmission(this.assignmentId, this.studentId);
+      this.getStudentSubmission(this.assignmentId, this.studentId)
     }
-  }
-
+  },
 }
 </script>
-
 
 <template>
   <div class="upload-container">
@@ -190,7 +181,14 @@ export default {
 
       <!-- File Upload Component -->
       <div class="file-upload">
-        <input type="file" ref="fileInput" @change="handleFileSelect" multiple accept="image/*" style="display: none">
+        <input
+          type="file"
+          ref="fileInput"
+          @change="handleFileSelect"
+          multiple
+          accept="image/*"
+          style="display: none"
+        />
 
         <!-- Header Section -->
         <div class="upload-header">
@@ -218,7 +216,13 @@ export default {
             <h5>Pending</h5>
             <div class="file-grid">
               <div v-for="(file, index) in files" :key="file.name + index" class="file-card">
-                <img v-if="file.preview" :src="file.preview" width="100" height="50" class="file-preview">
+                <img
+                  v-if="file.preview"
+                  :src="file.preview"
+                  width="100"
+                  height="50"
+                  class="file-preview"
+                />
                 <div v-else class="file-icon">📄</div>
                 <span class="file-name">{{ file.name }}</span>
                 <div class="file-size">{{ formatSize(file.size) }}</div>
@@ -236,21 +240,30 @@ export default {
             <div class="file-grid">
               <div class="file-card">
                 <img
-                  v-if="studentSubmission.fileUrl && (studentSubmission.fileUrl.endsWith('.jpg') || studentSubmission.fileUrl.endsWith('.png'))"
-                  :src="studentSubmission.fileUrl" width="100" height="50" class="file-preview" />
+                  v-if="
+                    studentSubmission.fileUrl &&
+                    (studentSubmission.fileUrl.endsWith('.jpg') ||
+                      studentSubmission.fileUrl.endsWith('.png'))
+                  "
+                  :src="studentSubmission.fileUrl"
+                  width="100"
+                  height="50"
+                  class="file-preview"
+                />
                 <div v-else class="file-icon">📄</div>
                 <span class="file-name">{{ studentSubmission.fileName }}</span>
                 <div class="file-size">{{ formatSize(studentSubmission.fileSize || 0) }}</div>
                 <span class="badge success">Submitted</span>
-                <a :href="studentSubmission.fileUrl" target="_blank" class="button secondary small">View</a>
+                <a :href="studentSubmission.fileUrl" target="_blank" class="button secondary small"
+                  >View</a
+                >
               </div>
             </div>
           </div>
 
-
           <!-- Empty State -->
           <div v-if="!files.length" class="empty-state">
-            <div class="empty-icon"><img src="./assets/CC Blk logo.png" alt=""></div>
+            <div class="empty-icon"><img src="../assets/logoshort.png" alt="" /></div>
             <p>Drag and drop files here or click to browse</p>
           </div>
         </div>
@@ -259,8 +272,6 @@ export default {
   </div>
 </template>
 
-
-
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
 
@@ -268,12 +279,10 @@ export default {
 .upload-container {
   max-width: 60vw;
   margin: 2rem auto;
-  font-family: "Quicksand", sans-serif;
+  font-family: 'Quicksand', sans-serif;
   font-optical-sizing: auto;
   font-weight: 300;
-
 }
-
 
 .card {
   background: white;
@@ -300,12 +309,12 @@ export default {
 }
 
 .toast.success {
-  background: #D0DFCC;
+  background: #d0dfcc;
   /* green */
 }
 
 .toast.error {
-  background: #EF4444;
+  background: #ef4444;
   /* red */
 }
 
@@ -334,7 +343,6 @@ export default {
 .button-group {
   display: flex;
   gap: 0.5rem;
-
 }
 
 .button {
@@ -346,7 +354,7 @@ export default {
   border: 1px solid #ddd;
   background: white;
   cursor: pointer;
-  font-family: "Quicksand", sans-serif;
+  font-family: 'Quicksand', sans-serif;
   font-optical-sizing: auto;
   font-weight: 300;
   transition: all 0.2s;
@@ -362,8 +370,8 @@ export default {
 }
 
 .button.secondary {
-  border-color: #6B7280;
-  color: #4B5563;
+  border-color: #6b7280;
+  color: #4b5563;
 }
 
 .button.secondary:hover {
@@ -374,22 +382,22 @@ export default {
 .button.success {
   background: white;
   color: #212121;
-  border-color: #D0DFCC;
+  border-color: #d0dfcc;
 }
 
 .button.success:hover {
-  background-color: #D0DFCC;
+  background-color: #d0dfcc;
   color: #212121;
 }
 
 .button.danger {
   background: white;
   color: #212121;
-  border-color: #F0F1A5;
+  border-color: #f0f1a5;
 }
 
 .button.danger:hover {
-  background-color: #F0F1A5;
+  background-color: #f0f1a5;
   color: #212121;
 }
 
@@ -407,7 +415,7 @@ export default {
 .progress-container {
   flex-grow: 1;
   max-width: 300px;
-  background: #E5E7EB;
+  background: #e5e7eb;
   border-radius: 4px;
   height: 6px;
   position: relative;
@@ -415,7 +423,7 @@ export default {
 
 .progress-bar {
   height: 100%;
-  background: #D0DFCC;
+  background: #d0dfcc;
   border-radius: 4px;
   transition: width 0.3s;
 }
@@ -447,7 +455,7 @@ export default {
 .file-card {
   padding: 1rem;
   border-radius: 6px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -476,7 +484,7 @@ export default {
 
 .file-size {
   font-size: 0.75rem;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 .badge {
@@ -493,7 +501,7 @@ export default {
 }
 
 .badge.warning:hover {
-  background-color: #FEF3C7;
+  background-color: #fef3c7;
   color: #212121;
 }
 
@@ -505,7 +513,7 @@ export default {
   justify-content: center;
   padding: 3rem;
   text-align: center;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 .empty-icon {
