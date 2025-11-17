@@ -10,12 +10,14 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@vue/tsconfig": "^0.8.1",
     "autoprefixer": "^10.4.17",
     "electron": "^35.1.4",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1"
   },
   "dependencies": {
+    "axios": "^1.13.2",
     "primeicons": "^7.0.0",
     "primevue": "^4.3.4"
   }
