@@ -131,7 +131,7 @@ defineProps({
   display: flex;
   border-radius: 20px;
   overflow: hidden;
-  background-color: #f5f5f5;
+  background-color: #F7F6FB;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   font-family: 'Quicksand', sans-serif;
   margin: 1rem auto;
@@ -164,7 +164,7 @@ defineProps({
 
 .course-title {
   text-align: center;
-  color: #555;
+  color: #F7F6FB;
   font-family: 'Josefin Sans', sans-serif;
   font-weight: 700;
   font-size: 1.3rem;
@@ -245,8 +245,8 @@ defineProps({
 
 /* Shared button styling */
 .time-button {
-  background-color: #ddd !important;
-  color: #555 !important;
+  background-color: #D8DFE9!important;
+  color: #212121 !important;
   font-size: 0.85rem;
   padding: 0.4rem 1rem;
   border-radius: 999px;

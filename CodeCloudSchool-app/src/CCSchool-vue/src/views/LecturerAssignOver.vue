@@ -9,11 +9,12 @@ interface Assignment {
   id: number;
   title: string;
   description: string;
-  dueDate: string;
-  status: 'upcoming' | 'past' | 'unpublished';
-  header?: string;
+  dueDate: string; 
+  status: 'upcoming' | 'past' | 'unpublished' | 'published';
+  header?: string; 
   format?: string;
   attempts?: number | string;
+  createdAt?: string;
 }
 
 const assignments = ref<Assignment[]>([]);
@@ -21,33 +22,44 @@ const searchQuery = ref('');
 const sortOption = ref<'recent' | 'oldest'>('recent');
 const isLoading = ref(true);
 
-// Fetch assignments from both localStorage and backend
 async function fetchAssignments() {
   try {
+    isLoading.value = true;
+    
     // Get from localStorage first for quick display
     const localAssignments = JSON.parse(localStorage.getItem('assignments') || '[]');
     
     // Then fetch from backend
-    const backendAssignments = await AssignmentService.getAssignmentsByCourseId(1); // Replace with actual course ID
+    const backendResponse = await AssignmentService.getAssignmentsByCourseId(1); 
     
-    // Merge and deduplicate assignments
-    const allAssignments = [...localAssignments];
-    
-    if (typeof backendAssignments !== 'string') {
-      backendAssignments.forEach((backendAssignment: any) => {
-        if (!allAssignments.some(a => a.id === backendAssignment.id)) {
-          allAssignments.push({
-            id: backendAssignment.id,
-            title: backendAssignment.title,
-            description: backendAssignment.description, 
-            dueDate: backendAssignment.dueDate,
-            status: getAssignmentStatus(backendAssignment.dueDate)
-          });
-        }
-      });
+    // Process backend assignments
+    let backendAssignments: Assignment[] = [];
+    if (typeof backendResponse !== 'string') { 
+      backendAssignments = backendResponse.map((a: any) => ({
+        id: a.id,
+        title: a.title,
+        description: a.description,
+        dueDate: a.dueDate,
+        status: AssignmentService.getAssignmentStatus(a.dueDate),
+        createdAt: a.createdAt
+      }));
     }
-    
-    assignments.value = allAssignments;
+
+    // Merge assignments, prioritizing backend data
+    const mergedAssignments = [...backendAssignments];
+    localAssignments.forEach((localAssignment: Assignment) => {
+      // Only keep local assignments that don't exist in backend
+      if (!backendAssignments.some(a => a.id === localAssignment.id)) {
+        mergedAssignments.push({
+          ...localAssignment,
+          status: localAssignment.status || 
+                 AssignmentService.getAssignmentStatus(localAssignment.dueDate)
+        });
+      }
+    });
+
+    assignments.value = mergedAssignments;
+    localStorage.setItem('assignments', JSON.stringify(mergedAssignments));
   } catch (error) {
     console.error('Error fetching assignments:', error);
     // Fallback to localStorage if backend fails
@@ -55,14 +67,6 @@ async function fetchAssignments() {
   } finally {
     isLoading.value = false;
   }
-}
-
-function getAssignmentStatus(dueDate: string): Assignment['status'] {
-  const today = new Date();
-  const due = new Date(dueDate);
-  
-  if (due > today) return 'upcoming';
-  return 'past';
 }
 
 function getAssignmentsByStatus(status: Assignment['status']) {
@@ -80,17 +84,26 @@ function getAssignmentsByStatus(status: Assignment['status']) {
 
 async function publishAssignment(assignmentId: number) {
   try {
-    // Update in localStorage
+    // Update in localStorage first
     const updatedAssignments = assignments.value.map(a => 
       a.id === assignmentId ? { ...a, status: 'upcoming' as Assignment['status'] } : a
     );
     localStorage.setItem('assignments', JSON.stringify(updatedAssignments));
-    assignments.value = updatedAssignments;
+    assignments.value = updatedAssignments as Assignment[];
     
     // Update in backend
-    await AssignmentService.publishAssignment(assignmentId);
+    const result = await AssignmentService.publishAssignment(assignmentId);
+    if (result !== true) {
+      throw new Error(typeof result === 'string' ? result : 'Failed to publish');
+    }
+    
+    // Refresh data
+    await fetchAssignments();
   } catch (error) {
     console.error('Failed to publish assignment:', error);
+    alert('Failed to publish assignment. Please try again.');
+    // Revert local changes
+    await fetchAssignments();
   }
 }
 
@@ -133,6 +146,47 @@ onMounted(() => {
               <p class="assignment-description">{{ assignment.description }}</p>
               <p class="due-date">Due: {{ new Date(assignment.dueDate).toLocaleDateString() }}</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Add this inside the appropriate v-for loop for assignments with status 'published' -->
+      <!-- Example: Add to the upcoming or past assignments section as needed -->
+      
+      <!-- For demonstration, here's how you might add it to the upcoming assignments section: -->
+      <section class="assignment-section">
+        <div class="assignment-controls">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search assignments..."
+            class="search-input"
+          />
+          <select v-model="sortOption" class="sort-select">
+            <option value="recent">Most Recent</option>
+            <option value="oldest">Oldest</option>
+          </select>
+        </div>
+        <h2 class="section-title">Upcoming Assignments</h2>
+        <div class="assignment-list">
+          <div 
+            v-for="assignment in getAssignmentsByStatus('upcoming')" 
+            :key="assignment.id"
+            class="assignment-card upcoming"
+          >
+            <div class="assignment-image-holder"></div>
+            <div class="assignment-details">
+              <h3 class="assignment-title">{{ assignment.title }}</h3>
+              <p class="assignment-description">{{ assignment.description }}</p>
+              <p class="due-date">Due: {{ new Date(assignment.dueDate).toLocaleDateString() }}</p>
+            </div>
+            <router-link 
+              v-if="assignment.status === 'published'"
+              :to="`/assignments/${assignment.id}/grade`"
+              class="grade-button"
+            >
+              Grade Submissions
+            </router-link>
           </div>
         </div>
       </section>

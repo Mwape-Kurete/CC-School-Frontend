@@ -4,6 +4,7 @@
     @keydown.enter="handleClick"
     @keydown.space="handleClick"
     ref="button"
+    
     class="keyboard-btn"
   >
     {{ label }}

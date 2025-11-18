@@ -24,16 +24,8 @@ import type { Course } from '@/api/courses';
 const course = ref<Course | null>(null);
 
 // Announcements state
+import type { Announcement } from '@/api/announcements';
 const announcements = ref<Announcement[]>([]);
-
-interface Announcement {
-  announcementId: number;
-  title: string;
-  description: string;
-  date: string;
-  lecturerId: number;
-  courseId: number; 
-}
 
 // Fetch announcements when component mounts
 onMounted(async () => {

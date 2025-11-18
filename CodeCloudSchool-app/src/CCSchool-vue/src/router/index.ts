@@ -19,9 +19,8 @@ const router = createRouter({
       meta: {
         layout: 'TwoCol',
         page: 'dashboard',
-        allowedRoles: ['student'] 
+        allowedRoles: ['student'],
       },
-
     },
     {
       path: '/courses',
@@ -39,75 +38,83 @@ const router = createRouter({
       meta: {
         layout: 'TwoCol',
         page: 'modules',
-        allowedRoles: ['student', 'lecturer']
+        allowedRoles: ['student', 'lecturer'],
       },
-       
     },
     // Nested course routes
     {
-  path: '/courses/:courseId',
-  component: () => import('@/layouts/CourseLayout.vue'),
-  children: [
-    {
-      path: '',
-      redirect: { name: 'stu-course-layout' }
+      path: '/courses/:courseId',
+      component: () => import('@/layouts/CourseLayout.vue'),
+      children: [
+        {
+          path: '',
+          redirect: { name: 'stu-course-layout' },
+        },
+        {
+          path: 'home',
+          name: 'CourseHome',
+          component: () => import('@/views/courses/CourseHome.vue'),
+          meta: {
+            layout: 'TwoCol',
+            page: 'stu-course-home',
+          },
+        },
+        {
+          path: 'announcements',
+          name: 'CourseAnnouncements',
+          component: () => import('@/views/courses/CourseAnnouncements.vue'),
+          meta: {
+            layout: 'TwoCol',
+            page: 'stu-course-announcements',
+          },
+        },
+        {
+          path: 'modules',
+          name: 'CourseModules',
+          component: () => import('@/views/courses/CourseModules.vue'),
+          meta: {
+            layout: 'TwoCol',
+            page: 'stu-course-modules',
+          },
+        },
+        {
+          path: 'modules/:moduleId',
+          name: 'ModuleDetail',
+          component: () => import('@/views/ModuleDetailsView.vue'),
+          meta: {
+            layout: 'TwoCol',
+            page: 'module-details',
+          },
+        },
+        {
+          path: 'assignments',
+          name: 'CourseAssignments',
+          component: () => import('@/views/courses/CourseAssignments.vue'),
+          meta: {
+            layout: 'TwoCol',
+            page: 'stu-course-assignments',
+          },
+        },
+        {
+          path: 'assignments/:assignmentId',
+          name: 'AssignmentDetails',
+          component: () => import('@/views/StudentAssignmentDetails.vue'),
+          meta: {
+            layout: 'TwoCol',
+            page: 'stu-assignment-details',
+          },
+        },
+        {
+          path: 'grades',
+          name: 'CourseGrades',
+          component: () => import('@/views/courses/CourseGrades.vue'),
+          meta: {
+            layout: 'TwoCol',
+            page: 'stu-course-grades',
+          },
+        },
+      ],
     },
-    {
-      path: 'home',
-      name: 'CourseHome',
-      component: () => import('@/views/courses/CourseHome.vue'),
-      meta: {
-        layout: 'TwoCol',
-        page: 'stu-course-home'
-      }
-    },
-    {
-      path: 'announcements',
-      name: 'CourseAnnouncements',
-      component: () => import('@/views/courses/CourseAnnouncements.vue'),
-      meta: {
-        layout: 'TwoCol',
-        page: 'stu-course-announcements'
-      }
-    },
-    {
-      path: 'modules',
-      name: 'CourseModules',
-      component: () => import('@/views/courses/CourseModules.vue'),
-      meta: {
-        layout: 'TwoCol',
-        page: 'stu-course-modules'
-      }
-    },
-    {
-      path: 'assignments',
-      name: 'CourseAssignments',
-      component: () => import('@/views/courses/CourseAssignments.vue'),
-      meta: {
-        layout: 'TwoCol',
-        page: 'stu-course-assignments'
-      }
-    },
-    {
-      path: 'assignments/:assignmentId',
-      name: 'AssignmentDetails',
-      component: () => import('@/views/StudentAssignmentDetails.vue'),
-      meta: {
-        layout: 'TwoCol',
-        page: 'stu-assignment-details'
-      }
-    },
-    {
-      path: 'grades',
-      name: 'CourseGrades',
-      component: () => import('@/views/courses/CourseGrades.vue'),
-      meta: {
-        layout: 'TwoCol',
-        page: 'stu-course-grades'
-      }
-    }
-  ]
-},
     {
       path: '/groups',
       name: 'groups',
@@ -123,7 +130,7 @@ const router = createRouter({
       component: () => import('@/views/TimetableView.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'timetable'
+        page: 'timetable',
       },
     },
     {
@@ -133,9 +140,8 @@ const router = createRouter({
       meta: {
         layout: 'TwoCol',
         page: 'account',
-        allowedRoles: ['student', 'lecturer', 'admin']
+        allowedRoles: ['student', 'lecturer', 'admin'],
       },
-       
     },
 
     {
@@ -144,7 +150,7 @@ const router = createRouter({
       component: () => import('@/views/SettingsView.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'settings'
+        page: 'settings',
       },
     },
     {
@@ -153,7 +159,7 @@ const router = createRouter({
       component: () => import('@/views/HelpView.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'help'
+        page: 'help',
       },
     },
     {
@@ -162,7 +168,7 @@ const router = createRouter({
       component: () => import('@/views/LoginView.vue'),
       meta: {
         layout: 'LoginReg',
-        page: 'login'
+        page: 'login',
       },
     },
     {
@@ -171,8 +177,8 @@ const router = createRouter({
       component: () => import('@/views/student/2FAView.vue'),
       meta: {
         layout: 'LoginReg',
-        page: '2fa'
-      }
+        page: '2fa',
+      },
     },
     {
       path: '/register-majors',
@@ -182,15 +188,42 @@ const router = createRouter({
         layout: 'TwoCol',
         allowedRoles: ['student'],
         page: 'register-majors',
-      }
+      },
     },
     {
       path: '/admin/settings',
       name: 'admin-settings',
       component: () => import('@/views/admin/SystemSettings.vue'),
-      meta: { allowedRoles: ['admin'] }
+      meta: { allowedRoles: ['admin'] },
     },
-
+    {
+      path: '/admin/dashboard',
+      name: 'admin-dash',
+      component: () => import('@/views/admin/AdminDashboard.vue'),
+      meta: {
+        layout: 'TwoCol',
+        allowedRoles: ['admin'],
+        page: 'admin-dash',
+      },
+    },
+    {
+      path:'/admin/usermanagement',
+      name: 'admin-manage',
+      component: () => import('@/views/admin/UserManagement.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'admin-manage'
+      }
+    },
+    {
+      path: '/admin/console',
+      name: 'admin-console',
+      component: () => import('@/views/admin/CourseManagement.vue'),
+      meta: {
+        layout: 'TwoCol',
+        page: 'admin-console'
+      }
+    },
     {
       path: '/layout-sandbox',
       name: 'layout-sandbox',
@@ -199,7 +232,7 @@ const router = createRouter({
     {
       path: '/sandbox',
       name: 'sandbox',
-      component: () => import('@/views/Sandbox.vue')
+      component: () => import('@/views/Sandbox.vue'),
     },
 
     {
@@ -208,7 +241,7 @@ const router = createRouter({
       component: () => import('@/views/StudentModuleDetails.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'student-module-details'
+        page: 'student-module-details',
       },
     },
     {
@@ -217,8 +250,21 @@ const router = createRouter({
       component: () => import('@/views/StudentAnnouncementDetails.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'student-announcement-details'
+        page: 'student-announcement-details',
       },
+    },
+
+    {
+      path: '/lecturer-grading',
+      name: 'LecturerGrading',
+      component: () => import('@/views/LecturerGradingView.vue'),
+      meta: { requiresAuth: true, requiresLecturer: true },
+    },
+    {
+      path: '/grades',
+      name: 'StudentGrades',
+      component: () => import('@/views/StudentGradesView.vue'),
+      meta: { requiresAuth: true, requiresStudent: true },
     },
     //lecturer pages
 
@@ -228,7 +274,7 @@ const router = createRouter({
       component: () => import('@/views/LectureDashboardView.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'lecturer-dashboard'
+        page: 'lecturer-dashboard',
       },
     },
     {
@@ -237,16 +283,16 @@ const router = createRouter({
       component: () => import('@/views/LecturerCourses.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'lecturer-courses'
+        page: 'lecturer-courses',
       },
     },
     {
-      path: '/lecturer-course-details',
+      path: '/lecturer-course-details/:id',
       name: 'lecturer-course-details',
       component: () => import('@/views/LecturerCourseDetails.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'lecturer-course-details'
+        page: 'lecturer-course-details',
       },
     },
 
@@ -256,27 +302,27 @@ const router = createRouter({
       component: () => import('@/views/Lecturer-AnnouncementsView.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'LecturerAnnounce'
+        page: 'LecturerAnnounce',
       },
     },
 
-     {
+    {
       path: '/LecturerAnnounceOver',
       name: 'LecturerAnnounceOver',
       component: () => import('@/views/LecturerAnnounceOver.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'LecturerAnnounceOver'
+        page: 'LecturerAnnounceOver',
       },
     },
 
-     {
+    {
       path: '/LecturerAssign',
       name: 'LecturerAssign',
       component: () => import('@/views/Lecturer-AssignmentsView.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'LecturerAssign'
+        page: 'LecturerAssign',
       },
     },
 
@@ -286,7 +332,7 @@ const router = createRouter({
       component: () => import('@/views/LecturerAssignOver.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'LecturerAssignOver'
+        page: 'LecturerAssignOver',
       },
     },
     {
@@ -295,7 +341,7 @@ const router = createRouter({
       component: () => import('@/views/LecturerModules.vue'),
       meta: {
         layout: 'TwoCol',
-        page: 'lecturer-modules'
+        page: 'lecturer-modules',
       },
     },
     {
@@ -305,10 +351,10 @@ const router = createRouter({
       meta: {
         layout: 'TwoCol',
         page: 'lecturer-create-modules',
-        public: true
+        public: true,
       },
     },
-  ]
+  ],
 })
 
 export default router

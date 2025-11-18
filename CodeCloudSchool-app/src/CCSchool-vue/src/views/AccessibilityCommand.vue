@@ -10,7 +10,7 @@
 
 <script setup>
 import { ref } from 'vue';
-
+  
 const isListening = ref(false);
 const spokenText = ref("");
 const error = ref("");
@@ -50,9 +50,10 @@ const startListening = () => {
 };
 
 const executeCommand = (command) => {
-  if (command.includes("submit")) {
+  if (command.includes("publish announcement") || command.includes("submit form")) {
     alert("Form submitted via voice!");
-  } else if (command.includes("navigate")) {
+    router.push('/LecturerAnnounceOver');
+  } else if (command.includes("navigate")) { 
     alert("Navigating to home page...");
   } else if (command.includes("grades")){
     alert("Opening grades page...");

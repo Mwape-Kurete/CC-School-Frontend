@@ -1,61 +1,83 @@
-import api from './api';
+import api from './api'
 
-// Represents the structure of an announcement returned by the backend  
 export interface Announcement {
   announcementId: number;
-  title: string;
+  id: string;
   description: string;
+  title: string;
+  body: string;
   date: string;
   lecturerId: number;
-}  
+  createdAt: string;
+  moduleImg?: string; 
+
+}
 
 export const AnnouncementService = {
-    
   async getAnnouncementsByCourseId(courseId: number): Promise<Announcement[] | string> {
     try {
-      const response = await api.get(`/api/announcements/course/${courseId}`);
-      return response.data; // Expects backend to return Announcement[]
+      const response = await api.get(`/announce/by-course/${courseId}`)
+      console.log('Announcement Data Fetched: ', response.data.$values)
+      return response.data.$values
     } catch (error: any) {
-      console.error('Error fetching announcements:', error);
-      if (error.response?.data) {
-        return error.response.data;
-      }
-      return 'Failed to fetch announcements';
+      console.error('Error fetching announcements:', error)
+      return error.response?.data || 'Failed to fetch announcements'
     }
   },
 
-  async getAnnouncementById(announcementId: number): Promise<Announcement | string> {
+  async getAnnouncementById(id: string): Promise<Announcement | string> {
     try {
-      // Changed from '/api/announcements/' to '/api/Announce/'
-      const response = await api.get(`/announce/${announcementId}`);
-      return response.data;
+      const response = await api.get(`/announce/${id}`)
+
+      return response.data
     } catch (error: any) {
-      console.error('Error fetching announcement:', error);
-      if (error.response?.data) {
-        return error.response.data;
-      }
-      return 'Failed to fetch announcement';
+      console.error('Error fetching announcement by ID:', error)
+      return error.response?.data || 'Failed to fetch announcement'
     }
   },
 
-  async postAnnouncement(courseId: number, announcement: Announcement): Promise<Announcement | string> {
+  async postAnnouncement(
+    courseId: number,
+    announcement: Announcement,
+  ): Promise<Announcement | string> {
     try {
-      const response = await api.post(`/courses/${courseId}/announcements`, announcement);
-      return response.data;
+      const response = await api.post(`/announce/course/${courseId}`, announcement)
+      return response.data
     } catch (error: any) {
-      if (error.response && error.response.data) {
-        return error.response.data;
-      }
-      return 'An unknown error occurred';
+      console.error('Error posting announcement:', error)
+      return error.response?.data || 'An unknown error occurred'
     }
   },
+
+  async getAnnouncementsByLecturerId(lecturerId: number): Promise<Announcement[] | string> {
+    try {
+      const response = await api.get(`/announce/lecturer/${lecturerId}`)
+
+      return response.data
+    } catch (error: any) {
+      console.error('Error fetching announcements by lecturer ID:', error)
+      return error.response?.data || 'Failed to fetch announcements by lecturer'
+    }
+  },
+
+  //MWAPE CHANGES START
+  async getAllAnnouncments(): Promise<Announcement[] | string> {
+    try {
+      const response = await api.get('/announce')
+      return response.data
+    } catch (error: any) {
+      console.error('Error fetching all announcements:', error)
+      return error.response?.data || 'Failed to fetch all announcements'
+    }
+  },
+  //MWAPE CHANGES END
 
   formatAnnouncementDate(isoDate: string): string {
-    const date = new Date(isoDate);
-    const day = date.getUTCDate();
-    const month = date.toLocaleString('default', { month: 'long', timeZone: 'UTC' });
-    const hours = date.getUTCHours().toString().padStart(2, '0');
-    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
-    return `${day} ${month} - ${hours}:${minutes}`;
-  }
-};
+    const date = new Date(isoDate)
+    const day = date.getUTCDate()
+    const month = date.toLocaleString('default', { month: 'long', timeZone: 'UTC' })
+    const hours = date.getUTCHours().toString().padStart(2, '0')
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0')
+    return `${day} ${month} - ${hours}:${minutes}`
+  },
+}

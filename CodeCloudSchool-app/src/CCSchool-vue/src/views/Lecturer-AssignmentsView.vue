@@ -1,16 +1,73 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { AssignmentService } from '@/api/assignments';
+import DOMPurify from 'dompurify';
 
+const isLoading = ref(false);
+const errorMessage = ref('');
+const spokenText = ref('');
 const router = useRouter();
 
-// Form state
+// Speech Recognition Setup
+interface Window {
+  SpeechRecognition: typeof SpeechRecognition;
+  webkitSpeechRecognition: typeof SpeechRecognition;
+}
+
+declare var SpeechRecognition: { new (): any };
+declare var webkitSpeechRecognition: { new (): any };
+
+const recognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+const recognizer = recognition ? new recognition() : null;
+
+const startListening = () => {
+  if (!recognizer) {
+    errorMessage.value = 'Speech recognition not supported in this browser.';
+    return;
+  }
+
+  recognizer.continuous = false;
+  recognizer.lang = 'en-US';
+
+  recognizer.onresult = (event: any) => {
+    const transcript = event.results[0][0].transcript.toLowerCase();
+    handleVoiceCommand(transcript);
+  };
+
+  recognizer.onerror = (event: any) => {
+    errorMessage.value = `Speech recognition error: ${event.error}`;
+  };
+
+  recognizer.start();
+};
+
+const handleVoiceCommand = async (command: string) => { 
+  spokenText.value = command;
+  
+  try {
+    if (command.includes('save') || command.includes('submit') || 
+        command.includes('publish') || command.includes('send')) {
+      await saveAssignment();
+    } else if (command.includes('clear') || command.includes('reset')) {
+      resetForm();
+    } else if (command.includes('cancel') || command.includes('back')) {
+      router.push('/LecturerAssignOver');
+    } else {
+      errorMessage.value = "Command not recognized. Try 'save', 'clear', or 'cancel'";
+    }
+  } catch (error) {
+    console.error('Error handling voice command:', error);
+    errorMessage.value = 'Ehh dawg its chaai try again later , I guess 🤷🏼.';
+  }
+};
+
+// Form state and other existing code remains the same...
 const assignmentTitle = ref('');
 const attemptCount = ref(1);
 const unlimitedAttempts = ref(false);
 const dueDate = ref('');
-const submissionFormat = ref('');
+const submissionFormat = ref(''); 
 const assignmentDetailsHeader = ref('');
 const assignmentDetailsDescription = ref('');
 
@@ -19,6 +76,49 @@ const submissionFormats = [
   { value: 'docx', label: 'DOCX' },
   { value: 'txt', label: 'TXT' }
 ];
+
+// Rich text editor functionality
+const editorRef = ref<HTMLElement | null>(null);
+const activeFormats = ref({
+  bold: false,
+  italic: false,
+  underline: false
+});
+
+function formatText(command: string, value: string = '') {
+  document.execCommand(command, false, value);
+  updateDescriptionContent();
+  checkActiveFormats();
+}
+
+function checkActiveFormats() {
+  if (!editorRef.value) return;
+  
+  activeFormats.value = {
+    bold: document.queryCommandState('bold'),
+    italic: document.queryCommandState('italic'),
+    underline: document.queryCommandState('underline')
+  };
+}
+
+function updateDescriptionContent() {
+  if (editorRef.value) {
+    assignmentDetailsDescription.value = editorRef.value.innerText;
+  }
+}
+
+function handlePaste(e: ClipboardEvent) {
+  e.preventDefault();
+  const text = e.clipboardData?.getData('text/plain') || '';
+  document.execCommand('insertText', false, text);
+  updateDescriptionContent();
+}
+
+onMounted(() => {
+  if (editorRef.value && assignmentDetailsDescription.value) {
+    editorRef.value.innerHTML = assignmentDetailsDescription.value;
+  }
+});
 
 // Attempt controls
 function decrementAttempts() {
@@ -38,6 +138,13 @@ function toggleUnlimitedAttempts() {
 }
 
 async function saveAssignment() {
+  if (!assignmentTitle.value.trim() || !assignmentDetailsDescription.value.trim()) {
+    errorMessage.value = 'Title and description are required';
+    return;
+  }
+
+  isLoading.value = true;
+
   const assignmentData = {
     title: assignmentTitle.value,
     dueDate: dueDate.value,
@@ -49,9 +156,9 @@ async function saveAssignment() {
   };
 
   try {
-    saveToLocalStorage(assignmentData);
+    const localStorageId = saveToLocalStorage(assignmentData);
     
-    const response = await AssignmentService.createAssignment({
+    const backendResponse = await AssignmentService.createAssignment({
       title: assignmentTitle.value,
       description: `${assignmentDetailsHeader.value}\n\n${assignmentDetailsDescription.value}`,
       dueDate: dueDate.value,
@@ -60,24 +167,39 @@ async function saveAssignment() {
       maxAttempts: unlimitedAttempts.value ? null : attemptCount.value
     });
 
-    console.log('Assignment saved:', response);
+    if (typeof backendResponse !== 'string' && backendResponse.id) {
+      updateLocalStorageId(localStorageId, backendResponse.id);
+    }
+
     resetForm();
     router.push('/LecturerAssignOver');
   } catch (error) {
     console.error('Failed to save assignment:', error);
+    errorMessage.value = 'Failed to save assignment. Please try again.';
+  } finally {
+    isLoading.value = false;
   }
 }
 
-function saveToLocalStorage(assignmentData: any) {
+function saveToLocalStorage(assignmentData: any): number {
   const assignments = JSON.parse(localStorage.getItem('assignments') || '[]');
   const newAssignment = {
     ...assignmentData,
     id: Date.now(),
-    dueDate: assignmentData.dueDate,
-    status: 'unpublished' 
+    createdAt: new Date().toISOString()
   };
   assignments.push(newAssignment);
   localStorage.setItem('assignments', JSON.stringify(assignments));
+  return newAssignment.id;
+}
+
+function updateLocalStorageId(tempId: number, backendId: number) {
+  const assignments = JSON.parse(localStorage.getItem('assignments') || '[]');
+  const assignmentIndex = assignments.findIndex((a: any) => a.id === tempId);
+  if (assignmentIndex !== -1) {
+    assignments[assignmentIndex].id = backendId;
+    localStorage.setItem('assignments', JSON.stringify(assignments));
+  }
 }
 
 function resetForm() {
@@ -88,6 +210,9 @@ function resetForm() {
   assignmentDetailsDescription.value = '';
   attemptCount.value = 1;
   unlimitedAttempts.value = false;
+  if (editorRef.value) {
+    editorRef.value.innerHTML = '';
+  }
 }
 </script>
 
@@ -96,7 +221,7 @@ function resetForm() {
     <h1 class="page-title">Create a New Assignment</h1>
     
     <div class="assignment-form">
-      <!-- Assignment Title -->
+      <!-- Existing form fields remain the same -->
       <div class="form-group">
         <label class="form-label">Assignment Title</label>
         <input 
@@ -181,38 +306,171 @@ function resetForm() {
             <label class="form-label">Assignment Details Description</label>
             <div class="description-editor">
               <div class="editor-toolbar">
-                <button class="toolbar-button" title="Bold"><strong>B</strong></button>
-                <button class="toolbar-button" title="Italic"><em>I</em></button>
-                <button class="toolbar-button" title="Link"><span class="underline">Link</span></button>
-                <button class="toolbar-button" title="Bullet List"><span>• List</span></button>
-                <button class="toolbar-button" title="Numbered List"><span>1. List</span></button>
+                <button 
+                  @click="formatText('bold')" 
+                  class="toolbar-button" 
+                  :class="{ active: activeFormats.bold }"
+                  title="Bold"
+                >
+                  <strong>B</strong>
+                </button>
+                <button 
+                  @click="formatText('italic')" 
+                  class="toolbar-button" 
+                  :class="{ active: activeFormats.italic }"
+                  title="Italic"
+                >
+                  <em>I</em>
+                </button>
+                <button 
+                  @click="formatText('underline')" 
+                  class="toolbar-button" 
+                  :class="{ active: activeFormats.underline }"
+                  title="Underline"
+                >
+                  <span style="text-decoration: underline">U</span>
+                </button>
+                <button 
+                  @click="formatText('insertUnorderedList')" 
+                  class="toolbar-button" 
+                  title="Bullet List"
+                >
+                  <span>• List</span>
+                </button>
+                <button 
+                  @click="formatText('insertOrderedList')" 
+                  class="toolbar-button" 
+                  title="Numbered List"
+                >
+                  <span>1. List</span>
+                </button>
               </div>
-              <textarea 
-                v-model="assignmentDetailsDescription"
-                placeholder="Type assignment description here" 
-                rows="8"
-                class="editor-textarea"
-              ></textarea>
+              <div
+                ref="editorRef"
+                class="editor-content"
+                contenteditable="true"
+                @input="updateDescriptionContent"
+                @paste="handlePaste"
+                @mouseup="checkActiveFormats"
+                @keyup="checkActiveFormats"
+                placeholder="Type assignment description here"
+              ></div>
             </div>
           </div>
         </div>
       </div>
       
-      <!-- Save Button -->
+      <!-- Voice feedback -->
+      <p v-if="spokenText" class="voice-feedback">You said: "{{ spokenText }}"</p>
+      <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+      
+      <!-- Save Button with Voice Command -->
       <button 
         @click="saveAssignment"
-        class="save-button" 
+        @keydown.space="startListening"
+        @keydown.enter="saveAssignment"
+        class="save-button"
+        :disabled="isLoading"
       >
-        SAVE ASSIGNMENT
+        <i class="fi fi-ts-ear-sound"></i> 
+        {{ isLoading ? 'Saving...' : 'SAVE ASSIGNMENT' }}
+      </button>
+      
+      <button 
+        @click="startListening"
+        class="voice-trigger-button"
+        :disabled="isLoading"
+        aria-label="Activate voice commands"
+        title="Press and hold to speak"
+      >
+        <i class="fi fi-ts-microphone"></i>
       </button>
     </div>
   </div>
 </template>
 
-
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=Quicksand:wght@300..700&display=swap');
+@import url('https://cdn-uicons.flaticon.com/3.0.0/uicons-thin-straight/css/uicons-thin-straight.css');
 
+/* Existing styles remain the same, add these new ones: */
+
+.voice-feedback {
+  font-size: 0.9rem;
+  color: #4b5563;
+  margin: 1rem 0;
+  font-style: italic;
+  text-align: center;
+}
+
+.error-message {
+  color: #dc2626;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.save-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 60%;
+  height: 50px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 80px;
+  background-color: #D0DFCC;
+  color: white;
+  font-weight: 500;
+  margin: 0 auto;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.save-button:hover {
+  background-color: #abb7a8;
+}
+
+.save-button:disabled {
+  background-color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.save-button i {
+  font-size: 1.2rem;
+}
+
+.voice-trigger-button {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #D0DFCC;
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.voice-trigger-button:hover {
+  background-color: #9da99a;
+  transform: scale(1.05);
+}
+
+.voice-trigger-button:active { 
+  background-color: #7a8577;
+  transform: scale(0.95);
+}
+
+.voice-trigger-button i {
+  font-size: 1.5rem;
+}
 /* Base Styles */
 .assignment-view {
   padding: 60px;
@@ -295,9 +553,7 @@ function resetForm() {
 }
 
 .attempt-button.unlimited.active {
-  background-color: #dbeafe;
-    background-color: #D0DFCC;
-
+  background-color: #D0DFCC;
 }
 
 .attempt-count {
@@ -361,22 +617,33 @@ function resetForm() {
   background-color: #e5e7eb;
 }
 
-.editor-textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: none;
-  resize: vertical;
-  min-height: 150px;
-  font-family: inherit;
-  background-color: white;
-  border-bottom-left-radius: 0.5rem;
-  border-bottom-right-radius: 0.5rem;
+.toolbar-button.active {
+  background-color: #D0DFCC;
+  color: white;
 }
 
-.editor-textarea:focus {
+.editor-content {
+  min-height: 150px;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0 0 0.5rem 0.5rem;
+  outline: none;
+  background-color: white;
+  font-family: inherit;
+}
+
+.editor-content:focus {
   outline: none;
   box-shadow: 0 0 0 2px #d0dfccab;
+}
 
+.editor-content[placeholder]:empty:before {
+  content: attr(placeholder);
+  color: #9ca3af;
+}
+
+.hidden-textarea {
+  display: none;
 }
 
 /* Save Button */
@@ -395,13 +662,30 @@ function resetForm() {
 }
 
 .save-button:hover {
-    background-color: #abb7a8;
-
+  background-color: #abb7a8;
 }
 
 .save-button:focus {
   outline: none;
   box-shadow: 0 0 0 2px #d0dfccab;
-  
+}
+
+.voice-command-button {
+  background-color: #dbeafe;
+  border: 1px solid #60a5fa;
+  border-radius: 50px;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: "Lexend", sans-serif;
+  cursor: pointer;
+}
+
+.voice-command-button:hover {
+  background-color: #bfdbfe;
+}
+
+.voice-command-button:focus {
+  outline: 3px solid #788176;
 }
 </style>
