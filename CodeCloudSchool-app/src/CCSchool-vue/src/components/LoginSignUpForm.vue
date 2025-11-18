@@ -187,15 +187,21 @@ const signUp = async () => {
 
             console.log('Sign up response:', response);
 
-            if (typeof response === 'string' && response.includes('Verification email sent')) {
-                // success case
+            // Check if response is an object with success indicators
+            if (typeof response === 'object' && response !== null && (response.message || response.lecturerId)) {
+                // success case - response is an object with message or lecturerId
                 console.log('Sign up successful');
                 localStorage.setItem('userRole', role.value);
-                localStorage.setItem('lectId', user.lecturerId);
+                localStorage.setItem('lectId', response.lecturerId || response.id);
+                router.push({ name: '2FAView' });
+            } else if (typeof response === 'string' && response.includes('Verification email sent')) {
+                // success case - response is a string
+                console.log('Sign up successful');
+                localStorage.setItem('userRole', role.value);
                 router.push({ name: '2FAView' });
             } else {
                 // failure case
-                errorMessage.value = typeof response === 'string' ? response : 'Sign-up failed.';
+                errorMessage.value = typeof response === 'string' ? response : (response?.message || 'Sign-up failed.');
             }
         } catch (error) {
             errorMessage.value = 'Sign Up failed. Please check your credentials.';
