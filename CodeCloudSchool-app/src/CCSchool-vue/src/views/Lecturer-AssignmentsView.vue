@@ -167,8 +167,9 @@ async function saveAssignment() {
       maxAttempts: unlimitedAttempts.value ? null : attemptCount.value
     });
 
-    if (typeof backendResponse !== 'string' && backendResponse.id) {
-      updateLocalStorageId(localStorageId, backendResponse.id);
+    // If the backend response does not have 'id', use the correct property or update the type
+    if (typeof backendResponse !== 'string' && 'id' in backendResponse) {
+      updateLocalStorageId(localStorageId, (backendResponse as any).id);
     }
 
     resetForm();
