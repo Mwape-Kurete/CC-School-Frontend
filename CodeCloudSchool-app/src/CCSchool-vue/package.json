@@ -25,7 +25,6 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.17",
     "@tsconfig/node22": "^22.0.5",
-    "@types/dompurify": "^3.2.0",
     "@types/node": "^24.10.1",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vitejs/plugin-vue-jsx": "^5.1.1",
