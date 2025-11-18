@@ -34,6 +34,7 @@ const isOpen = ref(props.initiallyOpen)
         v-for="(item, index) in items"
         :key="index"
         class="accordion-item"
+        @click="$emit('item-clicked', item)"
       >
         <div class="circle-icon" />
         <div class="item-title">{{ item.title }}</div>

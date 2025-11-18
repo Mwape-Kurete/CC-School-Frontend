@@ -14,6 +14,37 @@ const props = defineProps({
   },
 })
 
+//MWAPE ADJUSTMENT START
+const emit = defineEmits(['submitModule'])
+
+//function to handle form data when Save module is clicked
+function submitModuleForm() {
+  const payload = {
+    title: moduleForm.value.title,
+    groupTitle: moduleForm.value.pageName, // maps to GroupTitle
+    description: moduleForm.value.description,
+    slideUrl: moduleForm.value.slides || '',
+    AdditionalResources: moduleForm.value.resources || '',
+  }
+
+  emit('submitModule', payload)
+}
+
+defineExpose({
+  resetForm: () => {
+    moduleForm.value = {
+      title: '',
+      pageName: '',
+      description: '',
+      slides: '',
+      resources: '',
+      embedCode: '',
+    }
+  },
+})
+
+//MWAPE ADJUSTMENT END
+
 /* Assignment Form State */
 const assignmentForm = ref({
   title: '',
@@ -173,14 +204,25 @@ const moduleForm = ref({
       </div>
 
       <div class="mb-4">
-        <label class="block mb-2">Module Page Slides</label>
+        <!-- <label class="block mb-2">Module Page Slides</label>
         <FileUpload
           mode="basic"
           class="w-full rounded-input"
           name="slides"
           chooseLabel="Upload Page Slides"
           @select="(e) => (moduleForm.slides = e.files)"
+        /> -->
+
+        <!-------------------------------------------------------------->
+
+        <!--Mwape Change (to match backend) start-->
+        <label class="block mb-2">Module Page Slides</label>
+        <InputText
+          v-model="moduleForm.slides"
+          class="w-full rounded-input"
+          placeholder="Paste Share Link here"
         />
+        <!--Mwape Change (to match backend) End-->
       </div>
 
       <div class="mb-4">
@@ -193,6 +235,7 @@ const moduleForm = ref({
         />
       </div>
 
+      <!--Mwape Change (refactor because this is not in the backend)
       <div class="mb-6">
         <label class="block mb-2">Embed Video/Content</label>
         <InputText
@@ -201,9 +244,14 @@ const moduleForm = ref({
           placeholder="Paste Embed code here"
         />
       </div>
+-->
 
       <div class="flex gap-4">
-        <Button label="Save Module" class="flex-1 rounded-input button-clr" />
+        <Button
+          label="Save Module"
+          class="flex-1 rounded-input button-clr"
+          @click="submitModuleForm"
+        />
         <Button
           label="Add Another Page to This Module"
           icon="pi pi-plus"

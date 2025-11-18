@@ -1,5 +1,162 @@
-<script></script>
+<template>
+  <div class="lecturer-courses">
+    <!-- Header -->
+    <div class="Course-header">
+      <div class="header-content">
+        <h1 class="title">My Courses</h1>
+        <div class="controls-container">
+          <div class="icon-buttons"></div>
+        </div>
+      </div>
+      <div class="divider"></div>
+    </div>
 
-<template></template>
+    <!-- Course List -->
+    <div class="course-list">
+      <div v-for="course in courses" :key="course.id" class="course-card">
+        <RouterLink :to="`/lecturer-course-details/${course.id}`">
+          <div class="course-card-content">
+            <h3>{{ course.courseName }}</h3>
+            <p>{{ course.courseCode }}</p>
+            <div class="course-meta">
+              <span>{{ course.studentCount }} students</span>
+              <span>{{ course.moduleCount }} modules</span>
+            </div>
+          </div>
+        </RouterLink>
+      </div>
+    </div>
+  </div>
+</template>
 
-<style></style>
+<script setup lang="ts">
+//importing from vue
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { reactive } from 'vue'
+
+//importing services
+import { LecturerCourseService } from '@/api/courses'
+import { lecturerService } from '@/api/lecturer'
+
+//import utils
+import { generateCourseSummary } from '@/utils/courseUtils'
+
+//importing componets
+import { BellRing } from 'lucide-vue-next'
+
+//initialising constants
+const storedLectId = localStorage.getItem('lecturerId')
+const lecturerId = storedLectId && !isNaN(Number(storedLectId)) ? parseInt(storedLectId, 10) : 2
+
+//functions
+//initial fetch
+// fetch courses
+onMounted(async () => {
+  try {
+    const {
+      success,
+      courses: fetchedCourses,
+      error,
+    } = await LecturerCourseService.getLecturerCourses(lecturerId.toString())
+
+    await fetchLecturerUserID()
+
+    if (success && fetchedCourses?.length) {
+      // 🔧 Map and transform each course with utility
+      courses.value = fetchedCourses.map(generateCourseSummary)
+
+      const firstCourse = fetchedCourses[0]
+      localStorage.setItem('courseId', firstCourse.id.toString())
+
+      if (firstCourse.courseName) {
+        localStorage.setItem('courseName', firstCourse.courseName)
+      }
+
+      if (firstCourse.courseCode) {
+        localStorage.setItem('courseCode', firstCourse.courseCode.toString())
+      }
+
+      console.log('Lecturer courses fetched successfully:', courses.value)
+    } else {
+      console.error('Error fetching lecturer courses:', error)
+    }
+  } catch (err) {
+    console.error('Failed loading dashboard:', err)
+  }
+})
+
+//fetching lecturer user Id to get the
+const fetchLecturerUserID = async () => {
+  try {
+    const lecturer = await lecturerService.getLecturerByID(lecturerId)
+
+    if (typeof lecturer === 'string') {
+      console.error('Error from service:', lecturer)
+      return
+    }
+
+    localStorage.setItem('lecturerId', lecturer.lecturerId.toString())
+    const userId = localStorage.setItem('userId', lecturer.userId?.toString() || '')
+
+    console.log('Lecturer IDs stored:', {
+      lecturerId: lecturer.lecturerId,
+      userId: lecturer.userId,
+    })
+  } catch (err) {
+    console.error('Failed to fetch lecturer details:', err)
+  }
+}
+
+// Mock data - replace with your API calls
+const courses = ref<any[]>([])
+</script>
+
+<style scoped>
+/* Use similar styles to your student courses view */
+.lecturer-courses {
+  padding: 1rem 2rem;
+}
+
+.course-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.course-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.course-card:hover {
+  transform: translateY(-4px);
+}
+
+.course-card-content {
+  padding: 1.5rem;
+}
+
+.course-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.course-card p {
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.course-meta {
+  display: flex;
+  justify-content: space-between;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+/* Reuse your existing header styles from CourseHome.vue */
+</style>

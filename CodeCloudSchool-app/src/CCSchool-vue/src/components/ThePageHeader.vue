@@ -1,6 +1,6 @@
 <script setup>
-import { useRoute } from 'vue-router'
-import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted } from 'vue'
 
 import CSearch from './ui/CSearch.vue'
 import CButtonIcon from './ui/CButton-icon.vue'
@@ -8,15 +8,75 @@ import CDropdown from './ui/CDropdown.vue'
 import { EllipsisVertical } from 'lucide-vue-next'
 import { GraduationCap } from 'lucide-vue-next'
 import { BellRing } from 'lucide-vue-next'
+import { lecturerService } from '@/api/lecturer'
+import { StudentService } from '@/api/student'
+import { UserRound } from 'lucide-vue-next'
 
+const router = useRouter()
 const route = useRoute()
+
 const courseId = route.params.courseId
 
 const props = defineProps({
   page: String,
 })
 
-const selectedRange = ref(null)
+// State refs
+const userId = ref('')
+const userRole = ref('')
+const userName = ref('')
+
+// Fetch user data from local storage and API
+// Get and fetch user details
+
+onMounted(async () => {
+  userRole.value = localStorage.getItem('userRole') || ''
+  const cachedName = localStorage.getItem('userName')
+
+  if (cachedName) {
+    userName.value = cachedName
+    return
+  }
+
+  try {
+    switch (userRole.value) {
+      case 'Student': {
+        userId.value = localStorage.getItem('studentNumber') || ''
+        const student = await StudentService.getStudentByStudentNumber(userId.value)
+        userName.value = student.name || `${student.firstName} ${student.lastName}`
+        break
+      }
+
+      case 'Lecturer': {
+        userId.value = localStorage.getItem('lectId') || ''
+        const lecturer = await lecturerService.getLecturerByID(userId.value)
+        userName.value = lecturer.name || `${lecturer.firstName} ${lecturer.lastName}`
+        break
+      }
+
+      case 'Admin':
+        userId.value = localStorage.getItem('adminId') || ''
+        userName.value = 'Admin'
+        break
+
+      default:
+        console.warn('Unrecognized role:', userRole.value)
+        userName.value = 'Guest'
+    }
+
+    // Cache the fetched name
+    localStorage.setItem('userName', userName.value)
+  } catch (error) {
+    console.error('Error fetching user info:', error)
+    userName.value = 'Error loading name'
+  }
+})
+
+//navs
+//navs
+const goToAccount = () => {
+  router.push({ name: 'account' })
+}
 </script>
 
 <template>
@@ -71,41 +131,36 @@ const selectedRange = ref(null)
           "
           class="cont-button-group"
         >
-          <CDropdown
-            v-model="selectedRange"
-            :options="['Today', 'This Week', 'This Month']"
-            simple-options
-            placeholder="Today"
-            type="secondary"
-            size="md"
-          />
           <CButtonIcon
             class="btn-icon-custom"
             type="primary"
             size="sm"
             :disabled="true"
-            btnIconLabel="student name view"
+            :btnIconLabel="userName || 'Guest User'"
           >
             <template #icon>
               <GraduationCap />
             </template>
           </CButtonIcon>
           <div class="right-icons">
-            <BellRing size="34" />
-            <EllipsisVertical size="34" />
+            <UserRound size="34" @click="goToAccount" />
           </div>
         </div>
         <!-- <div v-else><CSearch /></div> -->
 
         <div v-else class="search-actions-alt">
-          <CButtonIcon type="primary" size="sm" :disabled="true" btnIconLabel="student name view">
+          <CButtonIcon
+            type="primary"
+            size="sm"
+            :disabled="true"
+            :btnIconLabel="userName || 'Guest User'"
+          >
             <template #icon>
               <GraduationCap />
             </template>
           </CButtonIcon>
           <div class="right-icons">
-            <BellRing size="34" />
-            <EllipsisVertical size="34" />
+            <UserRound size="34" @click="goToAccount" />
           </div>
         </div>
       </div>
@@ -146,7 +201,7 @@ const selectedRange = ref(null)
 }
 
 .btn-icon-custom {
-  width: 60%;
+  width: 100%;
 }
 
 .right {
@@ -183,5 +238,11 @@ const selectedRange = ref(null)
   padding: 0.5rem;
   border-radius: 999999px;
   box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+}
+
+.right-icons > *:hover {
+  background-color: #212121;
+  color: white;
+  cursor: pointer;
 }
 </style>
