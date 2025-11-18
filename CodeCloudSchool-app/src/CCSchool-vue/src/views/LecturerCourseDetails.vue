@@ -23,7 +23,7 @@ import CListGroup from '@/components/CListGroup.vue'
 import CButton from '@/components/ui/CButton.vue'
 import CMarkBreakdown from '@/components/CMarkBreakdown.vue'
 import LecturerCard from '@/components/LecturerCard.vue'
-import CButtonIcon from '@/components/ui/Cbutton-icon.vue'
+import CButtonIcon from '@/components/ui/CButton-icon.vue'
 import placeholderImg from '@/components/placeholderImg.vue'
 
 //FUNCTIONALITY IMPLEMENTATION STARTS HERE
