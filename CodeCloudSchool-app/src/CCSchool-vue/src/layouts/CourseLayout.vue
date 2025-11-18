@@ -5,15 +5,15 @@
       <!-- <h2 class="text-2xl font-bold">{{ $route.params.courseId }}</h2> -->
       <!-- You could add breadcrumbs or secondary nav here -->
     </div>
-    
+
     <!-- This will render the matched course page component -->
     <router-view></router-view>
   </div>
 </template>
 
 <script setup>
-import { useRoute } from 'vue-router';
-const route = useRoute();
+import { useRoute } from 'vue-router'
+const route = useRoute()
 
 // You can access the courseId anywhere in this layout using:
 // route.params.courseId
@@ -21,9 +21,11 @@ const route = useRoute();
 
 <style scoped>
 .course-layout {
-  @apply p-4;
+  padding: 1rem; /* replaces p-4 */
 }
 .course-header {
-  @apply mb-6 pb-4 border-b border-gray-200;
+  margin-bottom: 1.5rem; /* replaces mb-6 */
+  padding-bottom: 1rem; /* replaces pb-4 */
+  border-bottom: 1px solid #e5e7eb; /* replaces border-b border-gray-200 */
 }
 </style>
