@@ -11,9 +11,16 @@
       <div class="divider"></div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="loading" class="loading">Loading courses...</div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="error">{{ error }}</div>
+
     <!-- Course List -->
-    <div class="course-list">
-      <div v-for="course in courses" :key="course.id" class="course-card">
+    <div v-else class="course-list">
+      <div v-if="courses.length === 0" class="no-courses">No courses found.</div>
+      <div v-else v-for="course in courses" :key="course.id" class="course-card">
         <RouterLink :to="`/lecturer-course-details/${course.id}`">
           <div class="course-card-content">
             <h3>{{ course.courseName }}</h3>
@@ -30,92 +37,140 @@
 </template>
 
 <script setup lang="ts">
-//importing from vue
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { reactive } from 'vue'
-
-//importing services
 import { LecturerCourseService } from '@/api/courses'
 import { lecturerService } from '@/api/lecturer'
-
-//import utils
 import { generateCourseSummary } from '@/utils/courseUtils'
 
-//importing componets
-import { BellRing } from 'lucide-vue-next'
+// Reactive data
+const courses = ref<any[]>([])
+const loading = ref(true)
+const error = ref<string | null>(null)
 
-//initialising constants
-const storedLectId = localStorage.getItem('lecturerId')
-const lecturerId = storedLectId && !isNaN(Number(storedLectId)) ? parseInt(storedLectId, 10) : 2
+// Get lecturer ID from localStorage
+const getLecturerId = (): number => {
+  const storedLectId = localStorage.getItem('lecturerId')
+  return storedLectId && !isNaN(Number(storedLectId)) ? parseInt(storedLectId, 10) : 2
+}
 
-//functions
-//initial fetch
-// fetch courses
-onMounted(async () => {
+// Fetch lecturer user ID
+const fetchLecturerUserID = async (lecturerId: number): Promise<boolean> => {
   try {
-    const {
-      success,
-      courses: fetchedCourses,
-      error,
-    } = await LecturerCourseService.getLecturerCourses(lecturerId.toString())
+    console.log('Fetching lecturer details for ID:', lecturerId)
 
-    await fetchLecturerUserID()
+    const result = await lecturerService.getLecturerByID(lecturerId)
 
-    if (success && fetchedCourses?.length) {
-      // 🔧 Map and transform each course with utility
-      courses.value = fetchedCourses.map(generateCourseSummary)
-
-      const firstCourse = fetchedCourses[0]
-      localStorage.setItem('courseId', firstCourse.id.toString())
-
-      if (firstCourse.courseName) {
-        localStorage.setItem('courseName', firstCourse.courseName)
-      }
-
-      if (firstCourse.courseCode) {
-        localStorage.setItem('courseCode', firstCourse.courseCode.toString())
-      }
-
-      console.log('Lecturer courses fetched successfully:', courses.value)
-    } else {
-      console.error('Error fetching lecturer courses:', error)
-    }
-  } catch (err) {
-    console.error('Failed loading dashboard:', err)
-  }
-})
-
-//fetching lecturer user Id to get the
-const fetchLecturerUserID = async () => {
-  try {
-    const lecturer = await lecturerService.getLecturerByID(lecturerId)
-
-    if (typeof lecturer === 'string') {
-      console.error('Error from service:', lecturer)
-      return
+    // Check if result is an error string or Lecturer object
+    if (typeof result === 'string') {
+      console.error('Error fetching lecturer details:', result)
+      error.value = `Failed to fetch lecturer: ${result}`
+      return false
     }
 
-    localStorage.setItem('lecturerId', lecturer.lecturerId.toString())
-    const userId = localStorage.setItem('userId', lecturer.userId?.toString() || '')
+    // Success case - result is a Lecturer object
+    console.log('Lecturer details fetched:', result)
+
+    // Store the IDs
+    localStorage.setItem('lecturerId', result.lecturerId.toString())
+    if (result.userId) {
+      localStorage.setItem('userId', result.userId.toString())
+    }
 
     console.log('Lecturer IDs stored:', {
-      lecturerId: lecturer.lecturerId,
-      userId: lecturer.userId,
+      lecturerId: result.lecturerId,
+      userId: result.userId,
     })
+
+    return true
   } catch (err) {
-    console.error('Failed to fetch lecturer details:', err)
+    console.error('Exception in fetchLecturerUserID:', err)
+    error.value = 'Failed to fetch lecturer details'
+    return false
   }
 }
 
-// Mock data - replace with your API calls
-const courses = ref<any[]>([])
+// Fetch courses
+const fetchCourses = async (lecturerId: number): Promise<boolean> => {
+  try {
+    console.log('Fetching courses for lecturer:', lecturerId)
+
+    const result = await LecturerCourseService.getLecturerCourses(lecturerId.toString())
+
+    if (!result.success || !result.courses?.length) {
+      console.error('Error fetching courses:', result.error)
+      error.value = result.error || 'Failed to fetch courses'
+      return false
+    }
+
+    // Transform courses
+    courses.value = result.courses.map(generateCourseSummary)
+
+    // Store first course info
+    const firstCourse = result.courses[0]
+    localStorage.setItem('courseId', firstCourse.id.toString())
+
+    if (firstCourse.courseName) {
+      localStorage.setItem('courseName', firstCourse.courseName)
+    }
+
+    if (firstCourse.courseCode) {
+      localStorage.setItem('courseCode', firstCourse.courseCode.toString())
+    }
+
+    console.log('Courses fetched successfully:', courses.value)
+    return true
+  } catch (err) {
+    console.error('Exception in fetchCourses:', err)
+    error.value = 'Failed to load courses'
+    return false
+  }
+}
+
+// Main initialization
+onMounted(async () => {
+  try {
+    const lecturerId = getLecturerId()
+    console.log('Initializing with lecturerId:', lecturerId)
+
+    // First fetch lecturer details to ensure we have the latest data
+    const lecturerSuccess = await fetchLecturerUserID(lecturerId)
+
+    if (!lecturerSuccess) {
+      loading.value = false
+      return
+    }
+
+    // Then fetch courses
+    const coursesSuccess = await fetchCourses(lecturerId)
+
+    if (!coursesSuccess) {
+      loading.value = false
+      return
+    }
+  } catch (err) {
+    console.error('Failed loading dashboard:', err)
+    error.value = 'Failed to load dashboard'
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>
-/* Use similar styles to your student courses view */
 .lecturer-courses {
   padding: 1rem 2rem;
+}
+
+.loading,
+.error,
+.no-courses {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.error {
+  color: #d32f2f;
 }
 
 .course-list {
@@ -157,6 +212,4 @@ const courses = ref<any[]>([])
   color: #888;
   font-size: 0.9rem;
 }
-
-/* Reuse your existing header styles from CourseHome.vue */
 </style>

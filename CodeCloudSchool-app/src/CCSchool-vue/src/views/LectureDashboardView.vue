@@ -1,8 +1,7 @@
 <script setup lang="ts">
 //importing from vue
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { reactive } from 'vue'
 
 //import services
 import { LecturerCourseService } from '@/api/courses'
@@ -10,10 +9,10 @@ import { lecturerService } from '@/api/lecturer'
 import { AnnouncementService } from '@/api/announcements'
 import { ClassesService } from '@/api/classes'
 
-//impor utils
+//import utils
 import { getRandomGradient } from '@/utils/colourUtils'
 
-//importing comopponents and icons
+//importing components and icons
 import LecturerKnob from '@/components/LecturerKnob.vue'
 import ToDoComp from '@/components/ToDoComp.vue'
 import CardComp from '@/components/CardComp.vue'
@@ -22,15 +21,17 @@ import CButtonIcon from '@/components/ui/CButton-icon.vue'
 import { PlusCircleIcon } from 'lucide-vue-next'
 import placeholderImg from '@/components/placeholderImg.vue'
 
-//Functionality Start
-//fetching & setting const variables
+// Functionality Start
+// fetching & setting const variables
 const storedLectId = localStorage.getItem('lecturerId')
 const lecturerId = storedLectId && !isNaN(Number(storedLectId)) ? parseInt(storedLectId, 10) : 2
 
 const userId = ref('')
+const loading = ref(false)
+const error = ref<string | null>(null)
 
 // announcements state
-const announcements = ref<any[]>([]) // type properly if known
+const announcements = ref<any[]>([])
 const announcementData = reactive({
   title: '',
   description: '',
@@ -38,7 +39,7 @@ const announcementData = reactive({
   lecturerId: '',
 })
 
-//setting up class states
+// setting up class states
 const classes = ref<any[]>([])
 const classData = reactive({
   classID: '',
@@ -53,83 +54,159 @@ const classData = reactive({
   Classroom: '',
 })
 
-//using routing for inpage navigation
+// using routing for inpage navigation
 const router = useRouter()
 
-// fetch courses and announcements
+// Main initialization
 onMounted(async () => {
-  try {
-    const { success, courses, error } = await LecturerCourseService.getLecturerCourses(
-      lecturerId.toString(),
-    )
-
-    await fetchLecturerUserID()
-    await fetchAnnouncements()
-    await fetchLecturerClasses()
-
-    if (success && courses?.length) {
-      const firstCourse = courses[0]
-      localStorage.setItem('courseId', firstCourse.id.toString())
-
-      if (firstCourse.courseName) {
-        localStorage.setItem('courseName', firstCourse.courseName)
-      }
-
-      if (firstCourse.courseCode) {
-        localStorage.setItem('courseCode', firstCourse.courseCode.toString())
-      }
-
-      console.log('Lecturer courses fetched successfully:', courses)
-    } else {
-      console.error('Error fetching lecturer courses:', error)
-    }
-  } catch (err) {
-    console.error('Failed loading dashboard:', err)
-  }
+  await initializeDashboard()
 })
 
-const fetchLecturerUserID = async () => {
-  try {
-    const lecturer = await lecturerService.getLecturerByID(lecturerId)
+const initializeDashboard = async () => {
+  loading.value = true
+  error.value = null
 
-    if (typeof lecturer === 'string') {
-      console.error('Error from service:', lecturer)
+  try {
+    console.log('Initializing dashboard for lecturer:', lecturerId)
+
+    // First fetch lecturer details
+    const lecturerSuccess = await fetchLecturerUserID()
+    if (!lecturerSuccess) {
+      error.value = 'Failed to fetch lecturer details'
       return
     }
 
-    localStorage.setItem('lecturerId', lecturer.lecturerId.toString())
-    localStorage.setItem('userId', lecturer.userId?.toString() || '')
-
-    console.log('Lecturer IDs stored:', {
-      lecturerId: lecturer.lecturerId,
-      userId: lecturer.userId,
-    })
+    // Then fetch all data in parallel for better performance
+    await Promise.all([fetchCourses(), fetchAnnouncements(), fetchLecturerClasses()])
   } catch (err) {
-    console.error('Failed to fetch lecturer details:', err)
+    console.error('Failed loading dashboard:', err)
+    error.value = 'Failed to load dashboard data'
+  } finally {
+    loading.value = false
   }
 }
 
-const formatDate = (iso: string): string => {
-  const date = new Date(iso)
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+// Fetch lecturer user ID
+const fetchLecturerUserID = async (): Promise<boolean> => {
+  try {
+    console.log('Fetching lecturer details for ID:', lecturerId)
+
+    const result = await lecturerService.getLecturerByID(lecturerId)
+
+    if (typeof result === 'string') {
+      console.error('Error from service:', result)
+      error.value = `Failed to fetch lecturer: ${result}`
+      return false
+    }
+
+    // Success case - result is a Lecturer object
+    console.log('Lecturer details fetched:', result)
+
+    // Store the IDs
+    localStorage.setItem('lecturerId', result.lecturerId.toString())
+    if (result.userId) {
+      localStorage.setItem('userId', result.userId.toString())
+      userId.value = result.userId.toString()
+    }
+
+    console.log('Lecturer IDs stored:', {
+      lecturerId: result.lecturerId,
+      userId: result.userId,
+    })
+
+    return true
+  } catch (err) {
+    console.error('Exception in fetchLecturerUserID:', err)
+    error.value = 'Failed to fetch lecturer details'
+    return false
+  }
 }
 
-//announcemnets
-const fetchAnnouncements = async () => {
+// Fetch courses - DEBUG VERSION
+const fetchCourses = async (): Promise<boolean> => {
   try {
+    console.log('Fetching courses for lecturer:', lecturerId)
+
+    const result = await LecturerCourseService.getLecturerCourses(lecturerId.toString())
+
+    // DEBUG: Log the entire result object
+    console.log('RAW RESULT FROM COURSES SERVICE:', result)
+    console.log('Result type:', typeof result)
+    console.log('Result keys:', Object.keys(result || {}))
+
+    // Check if result exists and has the expected structure
+    if (!result) {
+      console.error('Courses service returned undefined or null')
+      return false
+    }
+
+    // Check different possible response structures
+    if (result.success && result.courses?.length) {
+      console.log('Courses found via success path:', result.courses)
+    } else if (result.$values?.length) {
+      console.log('Courses found via $values path:', result.$values)
+      // Store first course info from $values
+      const firstCourse = result.$values[0]
+      localStorage.setItem('courseId', firstCourse.id.toString())
+      if (firstCourse.courseName) {
+        localStorage.setItem('courseName', firstCourse.courseName)
+      }
+      if (firstCourse.courseCode) {
+        localStorage.setItem('courseCode', firstCourse.courseCode.toString())
+      }
+      return true
+    } else if (Array.isArray(result)) {
+      console.log('Courses found as direct array:', result)
+      // Handle if it returns a direct array
+      if (result.length > 0) {
+        const firstCourse = result[0]
+        localStorage.setItem('courseId', firstCourse.id.toString())
+        if (firstCourse.courseName) {
+          localStorage.setItem('courseName', firstCourse.courseName)
+        }
+        if (firstCourse.courseCode) {
+          localStorage.setItem('courseCode', firstCourse.courseCode.toString())
+        }
+      }
+      return true
+    }
+
+    console.error('No courses found in response. Full result:', result)
+    return false
+  } catch (err) {
+    console.error('Exception in fetchCourses:', err)
+    return false
+  }
+}
+
+// Format date helper
+const formatDate = (iso: string): string => {
+  try {
+    const date = new Date(iso)
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+  } catch {
+    return iso // Return original if parsing fails
+  }
+}
+
+// Announcements
+const fetchAnnouncements = async (): Promise<boolean> => {
+  try {
+    console.log('Fetching announcements...')
+
     const response = await AnnouncementService.getAllAnnouncments()
 
     if (response && response.$values) {
       announcements.value = response.$values.map((item) => ({
         announcementId: item.id,
         title: item.title,
-        description: item.body, // ✅ corrected
+        description: item.body,
         date: new Date(item.date).toLocaleDateString(),
         lecturerId: item.lecturerId,
         moduleImg: item.moduleImg,
       }))
 
-      // Optional: set first announcement details if needed
+      // Set first announcement details if available
       if (announcements.value.length > 0) {
         const first = announcements.value[0]
         announcementData.title = first.title
@@ -137,42 +214,57 @@ const fetchAnnouncements = async () => {
         announcementData.date = first.date
         announcementData.lecturerId = first.lecturerId
       }
+
+      console.log('Announcements fetched successfully:', announcements.value.length)
+      return true
     } else {
       console.warn('No announcements found.')
+      return true // Not an error, just no data
     }
   } catch (error) {
     console.error('Error fetching announcements:', error)
+    return false
   }
 }
 
-//classes
-const fetchLecturerClasses = async () => {
-  const storedUserId = localStorage.getItem('userId')
-  const userId = storedUserId && !isNaN(Number(storedUserId)) ? parseInt(storedUserId, 10) : null
+// Classes
+const fetchLecturerClasses = async (): Promise<boolean> => {
+  try {
+    const storedUserId = localStorage.getItem('userId')
+    const userId = storedUserId && !isNaN(Number(storedUserId)) ? parseInt(storedUserId, 10) : null
 
-  if (!userId) {
-    console.error('Missing or invalid userId')
+    if (!userId) {
+      console.error('Missing or invalid userId')
+      return false
+    }
+
+    console.log('Fetching classes for user:', userId)
+
+    const result = await ClassesService.getClassesByLecturerId(userId)
+    classes.value = result
+
+    console.log('Classes fetched successfully:', classes.value.length)
+    return true
+  } catch (err) {
+    console.error('Error fetching classes:', err)
+    return false
+  }
+}
+
+// Navigation
+function handleGoToAnnouncement(lecturerId: string) {
+  if (!lecturerId) {
+    console.error('No lecturerId available for navigation')
     return
   }
 
-  try {
-    const result = await ClassesService.getClassesByLecturerId(userId)
-    classes.value = result
-  } catch (err) {
-    console.error('Error fetching classes:', err)
-  }
-}
-
-//navs
-function handleGoToAnnouncement(lecturerId: string) {
   router.push({
     name: 'LecturerAnnounce',
     params: { lecturerId },
   })
 }
 
-//placeholder handling
-
+// Placeholder handling
 function getImageOrGradient(img: string | null | undefined) {
   return img || getRandomGradient()
 }
@@ -180,17 +272,22 @@ function getImageOrGradient(img: string | null | undefined) {
 
 <template>
   <div class="dashboard-container">
-    <!-- Main Content Area -->
-    <!-- Your main dashboard content -->
-    <div class="content-section">
-      <!-- Add more components/content as needed -->
+    <!-- Loading State -->
+    <div v-if="loading" class="loading">Loading dashboard...</div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="error">{{ error }}</div>
+
+    <!-- Main Content -->
+    <div v-else class="content-section">
+      <!-- Announcements Section -->
       <div class="announcement-header">
         <h1 class="ps-header pt-0">Your Announcements</h1>
         <CButtonIcon
           class="btn-icon-custom"
           type="primary"
           size="sm"
-          :disabled="true"
+          :disabled="!announcementData.lecturerId"
           btnIconLabel="New Announcement"
           @click="() => handleGoToAnnouncement(announcementData.lecturerId)"
         >
@@ -199,6 +296,7 @@ function getImageOrGradient(img: string | null | undefined) {
           </template>
         </CButtonIcon>
       </div>
+
       <div class="card-container">
         <!-- Display up to 3 announcements -->
         <CardComp
@@ -208,9 +306,7 @@ function getImageOrGradient(img: string | null | undefined) {
           :announcementTitle="item.title"
           :announcementBody="item.description"
           :announcementDate="item.date"
-          :moduleImg="
-            item.moduleImg || 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?...'
-          "
+          :moduleImg="item.moduleImg || getRandomGradient()"
         />
 
         <div class="divider-card"></div>
@@ -230,7 +326,13 @@ function getImageOrGradient(img: string | null | undefined) {
 
       <hr />
 
+      <!-- Schedule Section -->
       <h1 class="ps-header pt-5">This Weeks Schedule</h1>
+
+      <div v-if="classes.length === 0" class="text-gray-500 mt-4">
+        No classes scheduled for this week.
+      </div>
+
       <CardComp
         v-for="cls in classes"
         :key="cls.classID"
@@ -244,23 +346,30 @@ function getImageOrGradient(img: string | null | undefined) {
         :moduleImg="getImageOrGradient(cls.moduleImg)"
       />
     </div>
-    <!-- Right Side Panel
-    <aside class="side-panel">
-      <div class="panel-content">
-        <h3 class="text-center">Class Analytics</h3>
-        <div class="panel-section">
-          <ToDoComp />
-        </div>
-      </div>
-    </aside>
-    -->
   </div>
 </template>
 
 <style scoped>
+.loading,
+.error {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.1rem;
+}
+
+.error {
+  color: #d32f2f;
+  background: #ffebee;
+  border-radius: 8px;
+  margin: 1rem;
+}
+
 /* announcements */
 .announcement-header {
   margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .card-container {
@@ -286,65 +395,32 @@ function getImageOrGradient(img: string | null | undefined) {
   margin-left: 1.5%;
 }
 
-/*module section*/
-
-/*layout below */
-
-.dashboard-view {
-  padding: 2rem;
-}
+/* Layout */
 .dashboard-container {
   display: grid;
-  grid-template-columns: 1fr 300px; /* Main content takes remaining space, aside fixed at 300px */
+  grid-template-columns: 1fr;
   gap: 2rem;
   min-height: 100vh;
   padding: 2rem;
 }
 
-.pa-header {
-  margin-top: -1.5rem;
-  padding-top: -1.5rem;
-}
-.side-panel {
-  border-left: 1px solid #e5e7eb;
-  padding-left: 0rem;
-}
-
-.panel-content {
-  position: sticky;
-  top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-/* Responsive behavior */
-@media (max-width: 1024px) {
-  .dashboard-container {
-    grid-template-columns: 1fr;
-  }
-
-  .side-panel {
-    border-left: none;
-    border-top: 1px solid #e5e7eb;
-    padding-left: 0;
-    padding-top: 2rem;
-  }
-}
-
-/* Additional styling as needed */
 .content-section {
   background: white;
   padding: 1.5rem;
   border-radius: 0.5rem;
 }
 
-.panel-section {
-  background: white;
-  padding: 2rem;
-  width: 100%;
+/* Responsive behavior */
+@media (max-width: 1024px) {
+  .dashboard-container {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
 
-  border-radius: 0.5rem;
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 2px 0px;
+  .announcement-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
 }
 </style>
